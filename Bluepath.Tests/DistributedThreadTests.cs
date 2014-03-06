@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using Shouldly;
+using Bluepath.Threading;
 
 namespace Bluepath.Tests
 {

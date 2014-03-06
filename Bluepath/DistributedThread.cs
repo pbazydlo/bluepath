@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Bluepath
 {
+    /// <summary>
+    /// TODO: Description, Remote Execution, Choosing executing node
+    /// </summary>
     public class DistributedThread
     {
 
@@ -20,12 +23,8 @@ namespace Bluepath
 
         public void Start(object[] parameters)
         {
-            this.executor = new Thread(() =>
-            {
-                this.Result = this.function(parameters);
-            });
-
-            this.executor.Start();
+            this.executor = new LocalExecutor(this.function);
+            this.executor.Execute(parameters);
         }
 
         public void Join()
@@ -33,12 +32,18 @@ namespace Bluepath
             this.executor.Join();
         }
 
-        public object Result { get; private set; }
-
-        private Thread executor;
-        
-        private Func<object[], object> function;
+        public object Result
+        {
+            get
+            {
+                return this.executor.Result;
+            }
+        }
 
         private DistributedThread() { }
+
+        private IExecutor executor;
+
+        private Func<object[], object> function;
     }
 }

@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Bluepath.Executor
 {
-    public class RemoteExecutor : IExecutor
+    public class RemoteExecutor : IExecutor, IDisposable
     {
+        public RemoteExecutor()
+        {
+            this.client = new Services.ExecutorClient();
+        }
+
         public void Execute(object[] parameters)
         {
             throw new NotImplementedException();
@@ -29,5 +34,11 @@ namespace Bluepath.Executor
         }
 
         private Services.ExecutorClient client;
+
+        public void Dispose()
+        {
+            this.client.Close();
+            ((IDisposable)this.client).Dispose();
+        }
     }
 }

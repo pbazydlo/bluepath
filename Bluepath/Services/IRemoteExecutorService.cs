@@ -2,6 +2,7 @@
 {
     using System.ServiceModel;
 
+    [ServiceContract]
     public interface IRemoteExecutorService : Executor.IExecutor
     {
         [OperationContract]

@@ -1,5 +1,6 @@
 ﻿namespace Bluepath.Services
 {
+    using Executor;
     using System;
     using System.Threading;
 
@@ -8,7 +9,7 @@
     /// </summary>
     public class RemoteExecutorService : IRemoteExecutorService
     {
-        private IExecutor executor;
+        private IFunctionExecutor executor;
 
         private Func<object[], object> function;
 

@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bluepath.cs" />
+    <Compile Include="Executor\IFunctionExecutor.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />

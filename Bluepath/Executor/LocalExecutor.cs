@@ -3,7 +3,7 @@
     using System;
     using System.Threading;
 
-    public class LocalExecutor : IExecutor
+    public class LocalExecutor : IFunctionExecutor
     {
         private object result;
         private Thread executor;
@@ -11,9 +11,9 @@
         private bool finishedRunning;
         private object finishedRunningLock = new object();
 
-        public LocalExecutor(Func<object[], object> function)
+        public LocalExecutor()
         {
-            this.function = function;
+
         }
 
         public void Execute(object[] parameters)
@@ -59,6 +59,11 @@
                     throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
                 }
             }
+        }
+
+        public void Initialize(Func<object[], object> function)
+        {
+            this.function = function;
         }
     }
 }

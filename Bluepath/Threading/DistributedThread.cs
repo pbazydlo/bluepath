@@ -9,7 +9,7 @@
     /// </summary>
     public class DistributedThread
     {
-        private IExecutor executor;
+        private IFunctionExecutor executor;
 
         private Func<object[], object> function;
 
@@ -26,7 +26,8 @@
         public void Start(object[] parameters)
         {
             // TODO: replace with RemoteExecutor
-            this.executor = new LocalExecutor(this.function);
+            this.executor = new LocalExecutor();
+            this.executor.Initialize(this.function);
             this.executor.Execute(parameters);
         }
 

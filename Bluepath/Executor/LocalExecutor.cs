@@ -44,7 +44,17 @@
 
             this.thread = new Thread(() =>
             {
-                this.result = this.function(parameters);
+                try
+                {
+                    // Run user code
+                    this.result = this.function(parameters);
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions that are caused by user code
+                    this.Exception = ex;
+                }
+
                 lock (this.finishedRunningLock)
                 {
                     this.finishedRunning = true;
@@ -55,7 +65,7 @@
             this.timeStarted = DateTime.Now;
             this.thread.Start();
         }
-        
+
         public void Join()
         {
             this.thread.Join();
@@ -65,7 +75,7 @@
         {
             return this.Result;
         }
-        
+
         public object Result
         {
             get
@@ -96,16 +106,5 @@
         }
 
         public Exception Exception { get; private set; }
-
-        public void ReportException(Exception exception)
-        {
-            this.Exception = exception;
-
-            lock (this.finishedRunningLock)
-            {
-                this.finishedRunning = true;
-                this.timeStopped = DateTime.Now;
-            }
-        }
     }
 }

@@ -31,28 +31,13 @@
 
             var executor = new LocalExecutor();
             var eId = Guid.NewGuid();
+            // TODO: Invoke(null -> what about non-static functions?
+            executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters));
+
             while (!Executors.TryAdd(eId, executor))
             {
                 eId = Guid.NewGuid();
             }
-
-            executor.Initialize(
-                (parameters) =>
-                {
-                    object result = null;
-                    try
-                    {
-                        // TODO: Invoke(null -> what about non-static functions?
-                        result = methodFromHandle.Invoke(null, parameters);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Handle exceptions that are caused by user code
-                        executor.ReportException(ex);
-                    }
-
-                    return result;
-                });
 
             return eId;
         }
@@ -71,7 +56,7 @@
             var result = new RemoteExecutorServiceResult();
 
             result.ElapsedTime = executor.ElapsedTime;
-            
+
             if (executor.Exception != null)
             {
                 result.ExecutorState = RemoteExecutorServiceResult.State.Faulted;

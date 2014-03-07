@@ -44,8 +44,9 @@
   <ItemGroup>
     <Compile Include="Bluepath.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />
-    <Compile Include="Executor\RemoteExecutorService.cs" />
+    <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />
+    <Compile Include="Service References\RemoteExecutorService.cs" />
     <Compile Include="Threading\DistributedThread.cs" />
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />

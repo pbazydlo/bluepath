@@ -1,18 +1,20 @@
-﻿using Bluepath.Executor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Bluepath.Threading
+﻿namespace Bluepath.Threading
 {
+    using System;
+
+    using global::Bluepath.Executor;
+
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
     /// </summary>
     public class DistributedThread
     {
+        private IExecutor executor;
+
+        private Func<object[], object> function;
+
+        private DistributedThread() { }
+
         public static DistributedThread Create(Func<object[], object> function)
         {
             return new DistributedThread()
@@ -23,6 +25,7 @@ namespace Bluepath.Threading
 
         public void Start(object[] parameters)
         {
+            // TODO: replace with RemoteExecutor
             this.executor = new LocalExecutor(this.function);
             this.executor.Execute(parameters);
         }
@@ -39,11 +42,5 @@ namespace Bluepath.Threading
                 return this.executor.Result;
             }
         }
-
-        private DistributedThread() { }
-
-        private IExecutor executor;
-
-        private Func<object[], object> function;
     }
 }

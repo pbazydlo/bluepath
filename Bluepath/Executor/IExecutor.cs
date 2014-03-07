@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Executor
+﻿namespace Bluepath.Executor
 {
+    using System.ServiceModel;
+
     [ServiceContract]
     public interface IExecutor
     {
+        object Result { get; }
+
         [OperationContract]
         void Execute(object[] parameters);
 
@@ -18,7 +15,5 @@ namespace Bluepath.Executor
 
         [OperationContract]
         object GetResult();
-
-        object Result { get; }
     }
 }

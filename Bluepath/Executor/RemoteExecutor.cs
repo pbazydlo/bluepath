@@ -1,39 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Executor
+﻿namespace Bluepath.Executor
 {
+    using System;
+
     public class RemoteExecutor : IExecutor, IDisposable
     {
-        public RemoteExecutor()
+        private Services.ExecutorClient client;
+        private object result;
+        private bool finishedRunning;
+        private object finishedRunningLock = new object();
+
+        public RemoteExecutor(Func<object[], object> function)
         {
             this.client = new Services.ExecutorClient();
+            // TODO: this.client.Initialize(serializedMethodHandle);
         }
 
-        public void Execute(object[] parameters)
+        public async void Execute(object[] parameters)
         {
-            throw new NotImplementedException();
+            await this.client.ExecuteAsync(parameters);
         }
 
-        public void Join()
+        // TODO: Assign 'true' to this.finishedRunning somewhere (after callback?)
+        public async void Join()
         {
-            throw new NotImplementedException();
+            await this.client.JoinAsync();
         }
 
+        // TODO: async?, callback with result?
         public object GetResult()
         {
-            throw new NotImplementedException();
+            this.result = this.client.GetResultAsync().Result;
+            return this.result;
         }
 
         public object Result
         {
-            get { throw new NotImplementedException(); }
-        }
+            get
+            {
+                lock (this.finishedRunningLock)
+                {
+                    if (this.finishedRunning)
+                    {
+                        return this.result;
+                    }
 
-        private Services.ExecutorClient client;
+                    throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
+                }
+            }
+        }
 
         public void Dispose()
         {

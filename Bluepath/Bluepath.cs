@@ -1,14 +1,11 @@
-﻿using Bluepath.Executor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Description;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath
+﻿namespace Bluepath
 {
+    using System;
+    using System.ServiceModel;
+    using System.ServiceModel.Description;
+
+    using global::Bluepath.Services;
+
     public class Bluepath
     {
         private static object bluepathSingletonLock = new object();
@@ -16,7 +13,6 @@ namespace Bluepath
 
         private Bluepath()
         {
-
         }
 
         public static Bluepath Instance

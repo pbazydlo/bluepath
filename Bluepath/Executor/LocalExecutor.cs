@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Bluepath.Executor
+﻿namespace Bluepath.Executor
 {
+    using System;
+    using System.Threading;
+
     public class LocalExecutor : IExecutor
     {
+        private object result;
+        private Thread executor;
+        private Func<object[], object> function;
+        private bool finishedRunning;
+        private object finishedRunningLock = new object();
+
         public LocalExecutor(Func<object[], object> function)
         {
             this.function = function;
@@ -47,9 +49,9 @@ namespace Bluepath.Executor
         {
             get
             {
-                lock(this.finishedRunningLock)
+                lock (this.finishedRunningLock)
                 {
-                    if(this.finishedRunning)
+                    if (this.finishedRunning)
                     {
                         return this.result;
                     }
@@ -58,14 +60,5 @@ namespace Bluepath.Executor
                 }
             }
         }
-
-        private object result;
-
-        private Thread executor;
-
-        private Func<object[], object> function;
-
-        private bool finishedRunning;
-        private object finishedRunningLock = new object();
     }
 }

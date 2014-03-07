@@ -14,7 +14,7 @@ namespace Bluepath.Tests
         {
             var listToProcess = new List<int>()
             {
-                1,2,3,4,5,6,7,8,9
+                1, 2, 3, 4, 5, 6, 7, 8, 9
             };
 
             Func<List<int>, int, int, int, int?> t1Action = (list, start, stop, threshold) =>

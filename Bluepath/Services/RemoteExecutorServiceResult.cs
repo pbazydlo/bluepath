@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Services
+﻿namespace Bluepath.Services
 {
+    using System;
+    using System.Runtime.Serialization;
+
     [DataContract]
     public class RemoteExecutorServiceResult
     {
         [DataMember]
-        public State IsFinished { get; set; }
+        public State ExecutorState { get; set; }
 
         [DataMember]
         public object Result { get; set; }

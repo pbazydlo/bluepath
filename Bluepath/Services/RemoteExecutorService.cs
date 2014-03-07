@@ -15,7 +15,7 @@
         private static object ExecutorsLock = new object();
         private static ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
 
-        Guid Initialize(byte[] methodHandle)
+        public Guid Initialize(byte[] methodHandle)
         {
             BinaryFormatter frm = new BinaryFormatter();
             using (var stream = new MemoryStream())
@@ -26,13 +26,31 @@
                 var mb = System.Reflection.MethodInfo.GetMethodFromHandle(mh);
                 var executor = new LocalExecutor();
 
-                // TODO: Invoke(null -> what about non-static functions?
-                executor.Initialize((parameters) => mb.Invoke(null, parameters));
+                
                 var eId = Guid.NewGuid();
                 while (!Executors.TryAdd(eId, executor))
                 {
                     eId = Guid.NewGuid();
                 }
+
+                executor.Initialize(
+                    (parameters) =>
+                        {
+                            object result = null;
+                            try
+                            {
+                                // TODO: Invoke(null -> what about non-static functions?
+                                result = mb.Invoke(null, parameters);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Handle exceptions that are caused by user code
+                                var currentExecutor = GetExecutor(eId);
+                                currentExecutor.ReportException(ex);
+                            }
+
+                            return result;
+                        });
 
                 return eId;
             }
@@ -44,42 +62,39 @@
             executor.Execute(parameters);
         }
 
+        // TODO: maybe we should rename this method to TryGetResult or sth.
+        // and TryJoin shuold really only 'try join' and sometimes cause timeouts
         public RemoteExecutorServiceResult TryJoin(Guid eId)
         {
             var executor = GetExecutor(eId);
-            switch(executor.State)
-            {
-                case ThreadState.Unstarted:
-                    return new RemoteExecutorServiceResult()
-                    {
-                        IsFinished = RemoteExecutorServiceResult.State.NotStarted
-                    };
+            var result = new RemoteExecutorServiceResult();
 
-                case ThreadState.Stopped:
-                    try
-                    {
-                        var result = executor.Result;
-                        return new RemoteExecutorServiceResult()
-                        {
-                            Result = result,
-                            IsFinished = RemoteExecutorServiceResult.State.Finished
-                        };
-                    }
-                    catch (Exception ex)
-                    {
-                        return new RemoteExecutorServiceResult()
-                        {
-                            Error = ex,
-                            IsFinished = RemoteExecutorServiceResult.State.Faulted
-                        };
-                    }
-                    
-                default:
-                    return new RemoteExecutorServiceResult()
-                    {
-                        IsFinished = RemoteExecutorServiceResult.State.Running
-                    };
+            if (executor.Exception != null)
+            {
+                result.ExecutorState = RemoteExecutorServiceResult.State.Faulted;
+                result.Error = executor.Exception;
             }
+            else
+            {
+                switch (executor.ThreadState)
+                {
+                    case ThreadState.Unstarted:
+                        result.ExecutorState = RemoteExecutorServiceResult.State.NotStarted;
+                        break;
+                    case ThreadState.Stopped:
+                    case ThreadState.Aborted:
+                        result.Result = executor.Result;
+                        result.ExecutorState = RemoteExecutorServiceResult.State.Finished;
+
+                        // TODO: remove the executor from dictionary after the result has been retrieved?
+                        break;
+                    default:
+                        result.ExecutorState = RemoteExecutorServiceResult.State.Running;
+                        break;
+                }
+            }
+
+            return result;
         }
 
         private static ILocalExecutor GetExecutor(Guid eId)

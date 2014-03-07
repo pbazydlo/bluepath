@@ -6,7 +6,7 @@
     public class LocalExecutor : ILocalExecutor
     {
         private object result;
-        private Thread executor;
+        private Thread thread;
         private Func<object[], object> function;
         private bool finishedRunning;
         private object finishedRunningLock = new object();
@@ -23,7 +23,7 @@
                 this.finishedRunning = false;
             }
 
-            this.executor = new Thread(() =>
+            this.thread = new Thread(() =>
             {
                 this.result = this.function(parameters);
                 lock (this.finishedRunningLock)
@@ -32,12 +32,12 @@
                 }
             });
 
-            this.executor.Start();
+            this.thread.Start();
         }
         
         public void Join()
         {
-            this.executor.Join();
+            this.thread.Join();
         }
 
         public object GetResult()
@@ -64,6 +64,21 @@
         public void Initialize(Func<object[], object> function)
         {
             this.function = function;
+        }
+
+        public ThreadState ThreadState
+        {
+            get
+            {
+                return this.thread != null ? this.thread.ThreadState : ThreadState.Unstarted;
+            }
+        }
+
+        public Exception Exception { get; private set; }
+
+        public void ReportException(Exception exception)
+        {
+            this.Exception = exception;
         }
     }
 }

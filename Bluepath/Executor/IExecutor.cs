@@ -1,5 +1,7 @@
 ﻿namespace Bluepath.Executor
 {
+    using System;
+
     public interface IExecutor
     {
         object Result { get; }

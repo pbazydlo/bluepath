@@ -10,6 +10,10 @@ namespace Bluepath.Executor
 {
     public interface ILocalExecutor : IExecutor
     {
-        ThreadState State { get; }
+        ThreadState ThreadState { get; }
+
+        Exception Exception { get; }
+
+        void ReportException(Exception exception);
     }
 }

@@ -9,7 +9,7 @@
     /// </summary>
     public class DistributedThread
     {
-        private IFunctionExecutor executor;
+        private IExecutor executor;
 
         private Func<object[], object> function;
 

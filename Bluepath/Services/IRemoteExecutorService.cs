@@ -1,11 +1,18 @@
 ﻿namespace Bluepath.Services
 {
+    using System;
     using System.ServiceModel;
 
     [ServiceContract]
-    public interface IRemoteExecutorService : Executor.IExecutor
+    public interface IRemoteExecutorService
     {
         [OperationContract]
-        void Initialize(byte[] methodHandle);
+        Guid Initialize(byte[] methodHandle);
+
+        [OperationContract]
+        void Execute(Guid eId, object[] parameters);
+
+        [OperationContract]
+        RemoteExecutorServiceResult TryJoin(Guid eId);
     }
 }

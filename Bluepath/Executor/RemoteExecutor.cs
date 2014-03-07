@@ -5,7 +5,7 @@
     using System.IO;
     using System.Runtime.Serialization.Formatters.Binary;
 
-    public class RemoteExecutor : IFunctionExecutor, IDisposable
+    public class RemoteExecutor : IExecutor, IDisposable
     {
         private object result;
         private bool finishedRunning;

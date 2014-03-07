@@ -3,7 +3,7 @@
     using System;
     using System.Threading;
 
-    public class LocalExecutor : IFunctionExecutor
+    public class LocalExecutor : ILocalExecutor
     {
         private object result;
         private Thread executor;

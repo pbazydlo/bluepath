@@ -15,7 +15,7 @@
     public class RemoteExecutorService : IRemoteExecutorService
     {
         private static object ExecutorsLock = new object();
-        private static ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
+        private static readonly ConcurrentDictionary<Guid, ILocalExecutor> executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
 
         public Guid Initialize(byte[] methodHandle)
         {
@@ -34,7 +34,7 @@
             // TODO: Invoke(null -> what about non-static functions?
             executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters));
 
-            while (!Executors.TryAdd(eId, executor))
+            while (!executors.TryAdd(eId, executor))
             {
                 eId = Guid.NewGuid();
             }
@@ -42,9 +42,16 @@
             return eId;
         }
 
+        /// <summary>
+        /// Executes method set previously by Initialize method.
+        /// </summary>
+        /// <param name="eId">Unique identifier of the executor.</param>
+        /// <param name="parameters">Parameters for the method. Note that it gets interpreted as object1, object2, etc.
+        /// So if method expects one argument of type object[], you need to wrap it with additional object[] 
+        /// (object[] { object[] } - outer array indicates that method accepts one parameter, and inner is actual parameter).</param>
         public void Execute(Guid eId, object[] parameters)
         {
-            ILocalExecutor executor = GetExecutor(eId);
+            var executor = GetExecutor(eId);
             executor.Execute(parameters);
         }
 
@@ -85,12 +92,12 @@
             return result;
         }
 
-        private static ILocalExecutor GetExecutor(Guid eId)
+        public static ILocalExecutor GetExecutor(Guid eId)
         {
             ILocalExecutor executor;
             lock (ExecutorsLock)
             {
-                if (!Executors.ContainsKey(eId))
+                if (!executors.ContainsKey(eId))
                 {
                     throw new ArgumentOutOfRangeException(string.Format("eId: {0} doesn't exist!", eId));
                 }
@@ -98,7 +105,7 @@
                 bool getSuccess = false;
                 do
                 {
-                    getSuccess = Executors.TryGetValue(eId, out executor);
+                    getSuccess = executors.TryGetValue(eId, out executor);
                 } while (!getSuccess);
             }
             return executor;

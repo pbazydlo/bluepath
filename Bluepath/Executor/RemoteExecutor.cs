@@ -1,5 +1,7 @@
 ﻿namespace Bluepath.Executor
 {
+    using System.Reflection;
+
     using ServiceReferences;
     using System;
     using System.IO;
@@ -59,14 +61,7 @@
         public void Initialize(Func<object[], object> function)
         {
             this.client = new RemoteExecutorServiceClient();
-            var formatter = new BinaryFormatter();
-            using (var stream = new MemoryStream())
-            {
-                formatter.Serialize(stream, function.Method.MethodHandle);
-                stream.Seek(0, SeekOrigin.Begin);
-                var serializedMethodHandle = stream.GetBuffer();
-                this.client.Initialize(serializedMethodHandle);
-            }
+            this.client.Initialize(MethodHandleSerializer.GetSerializedMethodHandle(function));
         }
     }
 }

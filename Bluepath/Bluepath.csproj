@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Bluepath.cs" />
     <Compile Include="Executor\ILocalExecutor.cs" />
+    <Compile Include="Executor\MethodHandleSerializer.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />

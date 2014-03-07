@@ -14,7 +14,6 @@
 
         public RemoteExecutor()
         {
-            
         }
 
         public async void Execute(object[] parameters)
@@ -60,10 +59,10 @@
         public void Initialize(Func<object[], object> function)
         {
             this.client = new RemoteExecutorServiceClient();
-            BinaryFormatter frm = new BinaryFormatter();
+            var formatter = new BinaryFormatter();
             using (var stream = new MemoryStream())
             {
-                frm.Serialize(stream, function.Method.MethodHandle);
+                formatter.Serialize(stream, function.Method.MethodHandle);
                 stream.Seek(0, SeekOrigin.Begin);
                 var serializedMethodHandle = stream.GetBuffer();
                 this.client.Initialize(serializedMethodHandle);

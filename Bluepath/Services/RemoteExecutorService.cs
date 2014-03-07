@@ -1,5 +1,7 @@
 ﻿namespace Bluepath.Services
 {
+    using System.Reflection;
+
     using Executor;
     using System;
     using System.Collections.Concurrent;
@@ -17,43 +19,42 @@
 
         public Guid Initialize(byte[] methodHandle)
         {
-            BinaryFormatter frm = new BinaryFormatter();
+            var methodFromHandle = default(MethodBase);
+            var formatter = new BinaryFormatter();
             using (var stream = new MemoryStream())
             {
                 stream.Write(methodHandle, 0, methodHandle.Length);
                 stream.Seek(0, SeekOrigin.Begin);
-                var mh = (RuntimeMethodHandle)frm.Deserialize(stream);
-                var mb = System.Reflection.MethodInfo.GetMethodFromHandle(mh);
-                var executor = new LocalExecutor();
-
-                
-                var eId = Guid.NewGuid();
-                while (!Executors.TryAdd(eId, executor))
-                {
-                    eId = Guid.NewGuid();
-                }
-
-                executor.Initialize(
-                    (parameters) =>
-                        {
-                            object result = null;
-                            try
-                            {
-                                // TODO: Invoke(null -> what about non-static functions?
-                                result = mb.Invoke(null, parameters);
-                            }
-                            catch (Exception ex)
-                            {
-                                // Handle exceptions that are caused by user code
-                                var currentExecutor = GetExecutor(eId);
-                                currentExecutor.ReportException(ex);
-                            }
-
-                            return result;
-                        });
-
-                return eId;
+                var runtimeMethodHandle = (RuntimeMethodHandle)formatter.Deserialize(stream);
+                methodFromHandle = MethodBase.GetMethodFromHandle(runtimeMethodHandle);
             }
+
+            var executor = new LocalExecutor();
+            var eId = Guid.NewGuid();
+            while (!Executors.TryAdd(eId, executor))
+            {
+                eId = Guid.NewGuid();
+            }
+
+            executor.Initialize(
+                (parameters) =>
+                {
+                    object result = null;
+                    try
+                    {
+                        // TODO: Invoke(null -> what about non-static functions?
+                        result = methodFromHandle.Invoke(null, parameters);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle exceptions that are caused by user code
+                        executor.ReportException(ex);
+                    }
+
+                    return result;
+                });
+
+            return eId;
         }
 
         public void Execute(Guid eId, object[] parameters)
@@ -69,6 +70,8 @@
             var executor = GetExecutor(eId);
             var result = new RemoteExecutorServiceResult();
 
+            result.ElapsedTime = executor.ElapsedTime;
+            
             if (executor.Exception != null)
             {
                 result.ExecutorState = RemoteExecutorServiceResult.State.Faulted;

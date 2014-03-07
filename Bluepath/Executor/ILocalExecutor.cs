@@ -15,5 +15,7 @@ namespace Bluepath.Executor
         Exception Exception { get; }
 
         void ReportException(Exception exception);
+
+        TimeSpan? ElapsedTime { get; }
     }
 }

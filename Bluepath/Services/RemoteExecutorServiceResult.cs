@@ -16,7 +16,7 @@
         public Exception Error { get; set; }
 
         [DataMember]
-        public TimeSpan ElapsedTime { get; set; }
+        public TimeSpan? ElapsedTime { get; set; }
 
         public enum State
         {

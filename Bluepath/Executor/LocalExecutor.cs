@@ -10,10 +10,29 @@
         private Func<object[], object> function;
         private bool finishedRunning;
         private object finishedRunningLock = new object();
+        private DateTime? timeStarted;
+        private DateTime? timeStopped;
 
         public LocalExecutor()
         {
+        }
 
+        public TimeSpan? ElapsedTime
+        {
+            get
+            {
+                if (this.timeStarted == null)
+                {
+                    return null;
+                }
+
+                if (this.timeStopped == null)
+                {
+                    return DateTime.Now - this.timeStarted;
+                }
+
+                return this.timeStopped - this.timeStarted;
+            }
         }
 
         public void Execute(object[] parameters)
@@ -29,9 +48,11 @@
                 lock (this.finishedRunningLock)
                 {
                     this.finishedRunning = true;
+                    this.timeStopped = DateTime.Now;
                 }
             });
 
+            this.timeStarted = DateTime.Now;
             this.thread.Start();
         }
         
@@ -79,6 +100,12 @@
         public void ReportException(Exception exception)
         {
             this.Exception = exception;
+
+            lock (this.finishedRunningLock)
+            {
+                this.finishedRunning = true;
+                this.timeStopped = DateTime.Now;
+            }
         }
     }
 }

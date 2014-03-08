@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bluepath.cs" />
+    <Compile Include="BluepathSingleton.cs" />
     <Compile Include="Executor\ILocalExecutor.cs" />
     <Compile Include="Executor\IRemoteExecutor.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />

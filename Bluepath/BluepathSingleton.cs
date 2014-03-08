@@ -6,27 +6,27 @@
 
     using global::Bluepath.Services;
 
-    public class Bluepath
+    public class BluepathSingleton
     {
-        private static object bluepathSingletonLock = new object();
-        private static Bluepath BluepathSingleton;
+        private static readonly object instanceLock = new object();
+        private static BluepathSingleton instance;
 
-        private Bluepath()
+        private BluepathSingleton()
         {
         }
 
-        public static Bluepath Instance
+        public static BluepathSingleton Instance
         {
             get
             {
-                lock (bluepathSingletonLock)
+                lock (instanceLock)
                 {
-                    if (BluepathSingleton == null)
+                    if (instance == null)
                     {
-                        BluepathSingleton = new Bluepath();
+                        instance = new BluepathSingleton();
                     }
 
-                    return BluepathSingleton;
+                    return instance;
                 }
             }
         }

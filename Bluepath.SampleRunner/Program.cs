@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            Bluepath.Instance.Initialize("127.0.0.1");
+            BluepathSingleton.Instance.Initialize("127.0.0.1");
         }
     }
 }

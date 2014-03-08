@@ -91,6 +91,8 @@
             {
                 result.ExecutorState = RemoteExecutorServiceResult.State.Faulted;
                 result.Error = executor.Exception;
+
+                DisposeExecutor(executor);
             }
             else
             {

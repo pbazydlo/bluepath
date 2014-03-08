@@ -109,5 +109,10 @@
         {
             this.function = function;
         }
+
+        public void Dispose()
+        {
+            // TODO: Add executor dispose logic here
+        }
     }
 }

@@ -6,7 +6,7 @@
 
     using global::Bluepath.ServiceReferences;
 
-    public class RemoteExecutor : IRemoteExecutor, IDisposable
+    public class RemoteExecutor : IRemoteExecutor
     {
         private readonly object finishedRunningLock = new object();
         private object result;

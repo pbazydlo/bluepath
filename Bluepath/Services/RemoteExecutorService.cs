@@ -18,6 +18,30 @@
         private static readonly ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
 
         /// <summary>
+        /// Gets executor with given id.
+        /// </summary>
+        /// <param name="eid">Identifier of the executor.</param>
+        /// <returns>Local executor.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
+        public static ILocalExecutor GetExecutor(Guid eid)
+        {
+            ILocalExecutor executor;
+            var getSuccess = false;
+            do
+            {
+                if (!Executors.ContainsKey(eid))
+                {
+                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
+                }
+
+                getSuccess = Executors.TryGetValue(eid, out executor);
+            } 
+            while (!getSuccess);
+
+            return executor;
+        }
+
+        /// <summary>
         /// Initializes remote executor.
         /// </summary>
         /// <param name="methodHandle">Serialized runtime method handle.</param>
@@ -61,9 +85,7 @@
         public RemoteExecutorServiceResult TryJoin(Guid eid)
         {
             var executor = GetExecutor(eid);
-            var result = new RemoteExecutorServiceResult();
-
-            result.ElapsedTime = executor.ElapsedTime;
+            var result = new RemoteExecutorServiceResult { ElapsedTime = executor.ElapsedTime };
 
             if (executor.Exception != null)
             {
@@ -94,46 +116,30 @@
             return result;
         }
 
-        public static ILocalExecutor GetExecutor(Guid eid)
-        {
-            ILocalExecutor executor;
-            var getSuccess = false;
-            do
-            {
-                if (!Executors.ContainsKey(eid))
-                {
-                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
-                }
-
-                getSuccess = Executors.TryGetValue(eid, out executor);
-            } while (!getSuccess);
-
-            return executor;
-        }
-
         private static void DisposeExecutor(ILocalExecutor executor)
         {
             var eid = executor.Eid;
 
             if (!(executor.ThreadState == ThreadState.Stopped
-                || executor.ThreadState == ThreadState.Aborted
-                || executor.ThreadState == ThreadState.Unstarted))
+               || executor.ThreadState == ThreadState.Aborted
+               || executor.ThreadState == ThreadState.Unstarted))
             {
                 throw new Exception("Can't dispose running executor.");
             }
+
+            executor.Dispose();
 
             var removed = false;
             do
             {
                 if (!Executors.ContainsKey(eid))
                 {
-                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
+                    break;
                 }
 
                 removed = Executors.TryRemove(eid, out executor);
-            } while (!removed);
-
-            // TODO: executor.Dispose?
+            } 
+            while (!removed);
         }
     }
 }

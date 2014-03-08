@@ -5,16 +5,17 @@
 
     public class LocalExecutor : ILocalExecutor
     {
+        private readonly object finishedRunningLock = new object();
         private object result;
         private Thread thread;
         private Func<object[], object> function;
         private bool finishedRunning;
-        private object finishedRunningLock = new object();
         private DateTime? timeStarted;
         private DateTime? timeStopped;
 
         public LocalExecutor()
         {
+            this.Eid = Guid.NewGuid();
         }
 
         public TimeSpan? ElapsedTime
@@ -34,6 +35,34 @@
                 return this.timeStopped - this.timeStarted;
             }
         }
+
+        public Guid Eid { get; private set; }
+
+        public object Result
+        {
+            get
+            {
+                lock (this.finishedRunningLock)
+                {
+                    if (this.finishedRunning)
+                    {
+                        return this.result;
+                    }
+
+                    throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
+                }
+            }
+        }
+
+        public ThreadState ThreadState
+        {
+            get
+            {
+                return this.thread != null ? this.thread.ThreadState : ThreadState.Unstarted;
+            }
+        }
+
+        public Exception Exception { get; private set; }
 
         public void Execute(object[] parameters)
         {
@@ -76,35 +105,9 @@
             return this.Result;
         }
 
-        public object Result
-        {
-            get
-            {
-                lock (this.finishedRunningLock)
-                {
-                    if (this.finishedRunning)
-                    {
-                        return this.result;
-                    }
-
-                    throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
-                }
-            }
-        }
-
         public void Initialize(Func<object[], object> function)
         {
             this.function = function;
         }
-
-        public ThreadState ThreadState
-        {
-            get
-            {
-                return this.thread != null ? this.thread.ThreadState : ThreadState.Unstarted;
-            }
-        }
-
-        public Exception Exception { get; private set; }
     }
 }

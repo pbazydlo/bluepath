@@ -4,6 +4,8 @@
 
     public interface IExecutor
     {
+        Guid Eid { get; }
+
         object Result { get; }
 
         void Execute(object[] parameters);

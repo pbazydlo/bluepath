@@ -3,6 +3,7 @@
     using System;
 
     using global::Bluepath.Executor;
+    using global::Bluepath.Extensions;
     using global::Bluepath.Services;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -19,7 +20,7 @@
             var testMethod = new Func<int, int, int>((a, b) => a + b);
 
             var service = new RemoteExecutorService();
-            var serializedMethodHandle = global::Bluepath.Executor.MethodHandleSerializer.GetSerializedMethodHandle(testMethod);
+            var serializedMethodHandle = testMethod.GetSerializedMethodHandle();
             var eid = service.Initialize(serializedMethodHandle);
 
             // the following method was private, but it should be public to allow this kind of test
@@ -45,7 +46,7 @@
             var testMethod = new Func<object>(() => { throw new Exception("test"); });
 
             var service = new RemoteExecutorService();
-            var serializedMethodHandle = MethodHandleSerializer.GetSerializedMethodHandle(testMethod);
+            var serializedMethodHandle = testMethod.GetSerializedMethodHandle();
             var eid = service.Initialize(serializedMethodHandle);
             var executor = RemoteExecutorService.GetExecutor(eid);
 

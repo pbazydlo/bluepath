@@ -1,17 +1,16 @@
 ﻿namespace Bluepath.Executor
 {
-    using System.Reflection;
-
-    using ServiceReferences;
     using System;
-    using System.IO;
-    using System.Runtime.Serialization.Formatters.Binary;
 
-    public class RemoteExecutor : IExecutor, IDisposable
+    using global::Bluepath.Extensions;
+
+    using global::Bluepath.ServiceReferences;
+
+    public class RemoteExecutor : IRemoteExecutor, IDisposable
     {
+        private readonly object finishedRunningLock = new object();
         private object result;
         private bool finishedRunning;
-        private object finishedRunningLock = new object();
         private RemoteExecutorServiceClient client;
 
         public RemoteExecutor()
@@ -32,9 +31,19 @@
         // TODO: async?, callback with result?
         public object GetResult()
         {
-            this.result = this.client.GetResultAsync().Result;
+            lock (this.finishedRunningLock)
+            {
+                if (!this.finishedRunning)
+                {
+                    this.result = this.client.GetResultAsync().Result;
+                    this.finishedRunning = true;
+                }
+            }
+
             return this.result;
         }
+
+        public Guid Eid { get; private set; }
 
         public object Result
         {
@@ -58,10 +67,35 @@
             ((IDisposable)this.client).Dispose();
         }
 
+        #region Initialize
         public void Initialize(Func<object[], object> function)
         {
+            this.Initialize();
+            this.client.Initialize(function.GetSerializedMethodHandle());
+        }
+
+        public void Initialize<TResult>(Func<TResult> function)
+        {
+            this.Initialize();
+            this.client.Initialize(function.GetSerializedMethodHandle());
+        }
+
+        public void Initialize<T1, TResult>(Func<T1, TResult> function)
+        {
+            this.Initialize();
+            this.client.Initialize(function.GetSerializedMethodHandle());
+        }
+
+        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
+        {
+            this.Initialize();
+            this.client.Initialize(function.GetSerializedMethodHandle());
+        }
+        #endregion
+
+        private void Initialize()
+        {
             this.client = new RemoteExecutorServiceClient();
-            this.client.Initialize(MethodHandleSerializer.GetSerializedMethodHandle(function));
         }
     }
 }

@@ -62,7 +62,7 @@
         /// TODO: async, return Task?, callback with result instead of calling TryJoin?
         /// </summary>
         /// <exception cref="RemoteException">Rethrows exception that occured on the remote executor.</exception>
-        /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly.</exception>
+        /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
         public void Join()
         {
             lock (this.executorStateLock)

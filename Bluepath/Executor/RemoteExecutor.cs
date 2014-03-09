@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
+    using System.Reflection;
     using System.Runtime.Remoting;
     using System.Threading;
 
@@ -25,6 +26,8 @@
         public Guid Eid { get; private set; }
 
         public ExecutorState ExecutorState { get; private set; }
+
+        public TimeSpan? ElapsedTime { get; private set; }
 
         public object Result
         {
@@ -132,6 +135,7 @@
                         if (this.ExecutorState == ExecutorState.Running)
                         {
                             this.ExecutorState = ExecutorState.Finished;
+                            this.ElapsedTime = joinResult.ElapsedTime;
                             this.result = joinResult.Result;
                         }
                     }
@@ -161,30 +165,57 @@
             }
         }
 
-        #region Call remote Initialize method
-        public async void Initialize(Func<object[], object> function)
+        #region Generic Initialize overloads
+        public void Initialize(Func<object[], object> function)
         {
-            this.Initialize();
-            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Initialize(function.Method);
         }
 
-        public async void Initialize<TResult>(Func<TResult> function)
+        public void Initialize<TResult>(Func<TResult> function)
         {
-            this.Initialize();
-            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Initialize(function.Method);
         }
 
-        public async void Initialize<T1, TResult>(Func<T1, TResult> function)
+        public void Initialize<T1, TResult>(Func<T1, TResult> function)
         {
-            this.Initialize();
-            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Initialize(function.Method);
         }
 
-        public async void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
+        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
         {
-            this.Initialize();
-            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Initialize(function.Method);
         }
+
+        public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
+        {
+            this.Initialize(function.Method);
+        }
+
         #endregion
 
         /// <summary>
@@ -193,6 +224,17 @@
         protected virtual void Initialize()
         {
             this.Client = new RemoteExecutorServiceClient();
+        }
+
+        protected async void Initialize(MethodInfo method)
+        {
+            if (!method.IsStatic)
+            {
+                throw new ArgumentException("Remote executor supports only static methods.", "method");
+            }
+
+            this.Initialize();
+            this.Eid = await this.Client.InitializeAsync(method.SerializeMethodHandle());
         }
     }
 }

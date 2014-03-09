@@ -8,6 +8,8 @@
 
         ExecutorState ExecutorState { get; }
 
+        TimeSpan? ElapsedTime { get; }
+
         object Result { get; }
 
         void Execute(object[] parameters);

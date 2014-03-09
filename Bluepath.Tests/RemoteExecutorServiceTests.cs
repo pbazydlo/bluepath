@@ -20,7 +20,7 @@
             var testMethod = new Func<int, int, int>((a, b) => a + b);
 
             var service = new RemoteExecutorService();
-            var serializedMethodHandle = testMethod.GetSerializedMethodHandle();
+            var serializedMethodHandle = testMethod.SerializeMethodHandle();
             var eid = service.Initialize(serializedMethodHandle);
 
             // the following method was private, but it should be public to allow this kind of test
@@ -46,7 +46,7 @@
             var testMethod = new Func<object>(() => { throw new Exception("test"); });
 
             var service = new RemoteExecutorService();
-            var serializedMethodHandle = testMethod.GetSerializedMethodHandle();
+            var serializedMethodHandle = testMethod.SerializeMethodHandle();
             var eid = service.Initialize(serializedMethodHandle);
             var executor = RemoteExecutorService.GetExecutor(eid);
 

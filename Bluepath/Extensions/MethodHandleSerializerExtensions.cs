@@ -7,22 +7,27 @@ namespace Bluepath.Extensions
 
     public static class MethodHandleSerializerExtensions
     {
-        public static byte[] GetSerializedMethodHandle<TResult>(this Func<TResult> function)
+        public static byte[] SerializeMethodHandle<TResult>(this Func<TResult> function)
         {
-            return GetSerializedMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle);
         }
 
-        public static byte[] GetSerializedMethodHandle<T1, TResult>(this Func<T1, TResult> function)
+        public static byte[] SerializeMethodHandle<T1, TResult>(this Func<T1, TResult> function)
         {
-            return GetSerializedMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle);
         }
 
         // TODO: Extend it like this? 
         // IExecutor.Initialize should then also accept parameters in this form
         // See RemoteExecutorServiceTests.RemoteExecutorServiceExecuteTest for sample usage
-        public static byte[] GetSerializedMethodHandle<T1, T2, TResult>(this Func<T1, T2, TResult> function)
+        public static byte[] SerializeMethodHandle<T1, T2, TResult>(this Func<T1, T2, TResult> function)
         {
-            return GetSerializedMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+
+        public static byte[] SerializeMethodHandle(this MethodBase method)
+        {
+            return SerializeMethodHandle(method.MethodHandle);
         }
 
         public static MethodBase DeserializeMethodHandle(this byte[] methodHandle)
@@ -40,7 +45,7 @@ namespace Bluepath.Extensions
             return methodFromHandle;
         }
 
-        private static byte[] GetSerializedMethodHandle(RuntimeMethodHandle methodHandle)
+        private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
         {
             var formatter = new BinaryFormatter();
             using (var stream = new MemoryStream())

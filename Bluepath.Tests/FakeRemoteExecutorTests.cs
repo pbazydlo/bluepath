@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Tests
 {
     using System;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -18,23 +19,28 @@
         [TestMethod]
         public void FakeRemoteExecutorJoinTest()
         {
-            var testMethod = new Func<int, int, int>((a, b) => { Thread.Sleep(50); return a + b; });
+            const int delayMilliseconds = 50;
+            var testMethod = new Func<int, int, int, int>((a, b, delay) => { Thread.Sleep(delay); return a + b; });
 
             var executor = new TestRemoteExecutor();
             executor.Initialize(testMethod);
-            executor.Execute(new object[] { 1, 2 });
+            executor.ExecutorState.ShouldBe(Executor.ExecutorState.NotStarted);
+
+            executor.Execute(new object[] { 1, 2, delayMilliseconds });
+            executor.ExecutorState.ShouldBe(Executor.ExecutorState.Running);
 
             executor.Join();
             executor.ExecutorState.ShouldBe(Executor.ExecutorState.Finished);
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
+            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMilliseconds));
         }
 
         [TestMethod]
         public void FakeRemoteExecutorJoinWithExceptionTest()
         {
-            var testMethod = new Func<int, int, int>((a, b) => { Thread.Sleep(50); throw new Exception("test"); });
+            var testMethod = new Func<int, int, int>((a, b) => { throw new Exception("test"); });
 
             var executor = new TestRemoteExecutor();
             executor.Initialize(testMethod);
@@ -51,11 +57,19 @@
 
                 if (ex is RemoteException)
                 {
-                    ex.InnerException.InnerException.Message.ShouldBe("test");
+                    if (ex.InnerException is TargetInvocationException)
+                    {
+                        // RemoteException -> TargetInvocationException -> Exception("test")
+                        ex.InnerException.InnerException.Message.ShouldBe("test");
+                    }
+                    else
+                    {
+                        Assert.Fail(string.Format("TargetInvocationException was expected but another ('{0}') was thrown on remote site.", ex.InnerException.GetType()));
+                    }
                 }
                 else
                 {
-                    Assert.Fail(string.Format("RemoteException was expected but another ('{0}') was thrown.", ex.GetType()));
+                    Assert.Fail(string.Format("RemoteException was expected but another ('{0}') was thrown on local site.", ex.GetType()));
                 }
             }
         }

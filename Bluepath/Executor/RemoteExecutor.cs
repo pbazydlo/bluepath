@@ -15,7 +15,6 @@
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
         private object result;
-        private RemoteExecutorServiceClient client;
         private Thread joinThread;
 
         public RemoteExecutor()
@@ -43,6 +42,8 @@
             }
         }
 
+        protected Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
+
         public async void Execute(object[] parameters)
         {
             lock (this.executorStateLock)
@@ -50,7 +51,7 @@
                 this.ExecutorState = ExecutorState.Running;
             }
 
-            await this.client.ExecuteAsync(this.Eid, parameters);
+            await this.Client.ExecuteAsync(this.Eid, parameters);
         }
 
         /// <summary>
@@ -84,7 +85,7 @@
                             {
                                 try
                                 {
-                                    joinResult = await this.client.TryJoinAsync(this.Eid);
+                                    joinResult = await this.Client.TryJoinAsync(this.Eid);
                                 }
                                 catch (TimeoutException)
                                 {
@@ -99,7 +100,7 @@
                                 {
                                     // if TryJoin is non-blocking, wait some time before checking again.
                                     // TODO: remote TryJoin should block and throw TimeoutException
-                                    Thread.Sleep(2000);
+                                    Thread.Sleep(1000);
                                 }
                             }
                             while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running);
@@ -153,42 +154,45 @@
 
         public void Dispose()
         {
-            this.client.Close();
-            ((IDisposable)this.client).Dispose();
+            if (this.Client is System.ServiceModel.ClientBase<Bluepath.ServiceReferences.IRemoteExecutorService>)
+            {
+                (this.Client as System.ServiceModel.ClientBase<Bluepath.ServiceReferences.IRemoteExecutorService>).Close();
+                (this.Client as IDisposable).Dispose();
+            }
         }
 
         #region Call remote Initialize method
         public async void Initialize(Func<object[], object> function)
         {
             this.Initialize();
-            this.Eid = await this.client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
         }
 
         public async void Initialize<TResult>(Func<TResult> function)
         {
             this.Initialize();
-            this.Eid = await this.client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
         }
 
         public async void Initialize<T1, TResult>(Func<T1, TResult> function)
         {
             this.Initialize();
-            this.Eid = await this.client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
         }
 
         public async void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
         {
             this.Initialize();
-            this.Eid = await this.client.InitializeAsync(function.GetSerializedMethodHandle());
+            this.Eid = await this.Client.InitializeAsync(function.GetSerializedMethodHandle());
         }
         #endregion
 
         /// <summary>
         /// This method is invoked before calling Initialize on remote executor.
         /// </summary>
-        private void Initialize()
+        protected virtual void Initialize()
         {
-            this.client = new RemoteExecutorServiceClient();
+            this.Client = new RemoteExecutorServiceClient();
         }
     }
 }

@@ -3,11 +3,13 @@
     using System;
     using System.Runtime.Serialization;
 
+    using Bluepath.Executor;
+
     [DataContract]
     public class RemoteExecutorServiceResult
     {
         [DataMember]
-        public State ExecutorState { get; set; }
+        public ExecutorState ExecutorState { get; set; }
 
         [DataMember]
         public object Result { get; set; }
@@ -17,13 +19,7 @@
 
         [DataMember]
         public TimeSpan? ElapsedTime { get; set; }
-
-        public enum State
-        {
-            NotStarted,
-            Running,
-            Finished,
-            Faulted
-        }
     }
+
+    
 }

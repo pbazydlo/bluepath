@@ -9,17 +9,22 @@
 
     public class RemoteExecutor : IRemoteExecutor
     {
-        private readonly object finishedRunningLock = new object();
+        private readonly object executorStateLock = new object();
         private object result;
-        private bool finishedRunning;
         private RemoteExecutorServiceClient client;
 
         public RemoteExecutor()
         {
+            this.ExecutorState = ExecutorState.NotStarted;
         }
 
         public async void Execute(object[] parameters)
         {
+            lock (this.executorStateLock)
+            {
+                this.ExecutorState = ExecutorState.Running;    
+            }
+
             await this.client.ExecuteAsync(this.Eid, parameters);
         }
 
@@ -31,9 +36,9 @@
         /// <exception cref="RemotingException">Rethrows exception that occured on the remote executor.</exception>
         public async void Join()
         {
-            lock (this.finishedRunningLock)
+            lock (this.executorStateLock)
             {
-                if (this.finishedRunning)
+                if (this.ExecutorState != ExecutorState.Running)
                 {
                     return;
                 }
@@ -42,20 +47,24 @@
             var joinResult = await this.client.TryJoinAsync(this.Eid);
             switch (joinResult.ExecutorState)
             {
-                case RemoteExecutorServiceResult.State.Finished:
-                    lock (this.finishedRunningLock)
+                case ServiceReferences.ExecutorState.Finished:
+                    lock (this.executorStateLock)
                     {
-                        if (!this.finishedRunning)
+                        if (this.ExecutorState == ExecutorState.Running)
                         {
-                            this.finishedRunning = true;
+                            this.ExecutorState = ExecutorState.Finished;
                             this.result = joinResult.Result;
                         }
                     }
 
                     break;
-                case RemoteExecutorServiceResult.State.Faulted:
-                    throw new RemotingException("Exception was thrown on remote executor. See inner exception for details.", joinResult.Error);
-                    break;
+                case ServiceReferences.ExecutorState.Faulted:
+                    lock (this.executorStateLock)
+                    {
+                        this.ExecutorState = ExecutorState.Faulted;
+                    }
+
+                    throw new RemotingException("Exception was thrown on the remote executor. See inner exception for details.", joinResult.Error);
             }
         }
 
@@ -66,18 +75,20 @@
 
         public Guid Eid { get; private set; }
 
+        public ExecutorState ExecutorState { get; private set; }
+
         public object Result
         {
             get
             {
-                lock (this.finishedRunningLock)
+                lock (this.executorStateLock)
                 {
-                    if (this.finishedRunning)
+                    if (this.ExecutorState == ExecutorState.Finished)
                     {
                         return this.result;
                     }
 
-                    throw new NullReferenceException("Result is not available. The executor is still running.");
+                    throw new NullReferenceException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
                 }
             }
         }

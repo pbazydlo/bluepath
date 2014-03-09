@@ -5,8 +5,6 @@
 
     public interface ILocalExecutor : IExecutor
     {
-        ThreadState ThreadState { get; }
-
         Exception Exception { get; }
 
         TimeSpan? ElapsedTime { get; }

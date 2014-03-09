@@ -38,6 +38,33 @@
 
         public Guid Eid { get; private set; }
 
+        public ExecutorState ExecutorState
+        {
+            get
+            {
+                if (this.Exception != null)
+                {
+                    return ExecutorState.Faulted;
+                }
+
+                if (this.thread == null)
+                {
+                    return ExecutorState.NotStarted;
+                }
+
+                switch (this.thread.ThreadState)
+                {
+                    case ThreadState.Unstarted:
+                        return ExecutorState.NotStarted;
+                    case ThreadState.Stopped:
+                    case ThreadState.Aborted:
+                        return ExecutorState.Finished;
+                    default:
+                        return ExecutorState.Running;
+                }
+            }
+        }
+
         public object Result
         {
             get
@@ -51,14 +78,6 @@
 
                     throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
                 }
-            }
-        }
-
-        public ThreadState ThreadState
-        {
-            get
-            {
-                return this.thread != null ? this.thread.ThreadState : ThreadState.Unstarted;
             }
         }
 

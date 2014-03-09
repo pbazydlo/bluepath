@@ -6,6 +6,8 @@
     {
         Guid Eid { get; }
 
+        ExecutorState ExecutorState { get; }
+
         object Result { get; }
 
         void Execute(object[] parameters);

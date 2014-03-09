@@ -34,7 +34,7 @@
             // use method exposed by the service to get computation state
             var result = service.TryJoin(eid);
 
-            result.ExecutorState.ShouldBe(RemoteExecutorServiceResult.State.Finished);
+            result.ExecutorState.ShouldBe(ExecutorState.Finished);
             result.Result.ShouldBe(3);
             result.Error.ShouldBe(null);
             result.ElapsedTime.HasValue.ShouldBe(true);
@@ -58,7 +58,7 @@
             // use method exposed by the service to get computation state
             var result = service.TryJoin(eid);
 
-            result.ExecutorState.ShouldBe(RemoteExecutorServiceResult.State.Faulted);
+            result.ExecutorState.ShouldBe(ExecutorState.Faulted);
             result.Error.InnerException.Message.ShouldBe("test");
             result.ElapsedTime.HasValue.ShouldBe(true);
         }

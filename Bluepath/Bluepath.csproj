@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BluepathSingleton.cs" />
+    <Compile Include="Executor\ExecutorState.cs" />
     <Compile Include="Executor\ILocalExecutor.cs" />
     <Compile Include="Executor\IRemoteExecutor.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />

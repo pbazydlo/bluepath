@@ -13,11 +13,29 @@ namespace Bluepath.ServiceReferences
     using System.Runtime.Serialization;
     
     
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="ExecutorState", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Executor")]
+    public enum ExecutorState : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotStarted = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Running = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Finished = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Faulted = 3,
+    }
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="RemoteExecutorServiceResult", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Services")]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(object[]))]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.RemoteExecutorServiceResult.State))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.Exception))]
     public partial class RemoteExecutorServiceResult : object, System.Runtime.Serialization.IExtensibleDataObject
     {
@@ -28,7 +46,7 @@ namespace Bluepath.ServiceReferences
         
         private System.Exception ErrorField;
         
-        private Bluepath.ServiceReferences.RemoteExecutorServiceResult.State ExecutorStateField;
+        private Bluepath.ServiceReferences.ExecutorState ExecutorStateField;
         
         private object ResultField;
         
@@ -71,7 +89,7 @@ namespace Bluepath.ServiceReferences
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bluepath.ServiceReferences.RemoteExecutorServiceResult.State ExecutorState
+        public Bluepath.ServiceReferences.ExecutorState ExecutorState
         {
             get
             {
@@ -95,24 +113,6 @@ namespace Bluepath.ServiceReferences
                 this.ResultField = value;
             }
         }
-        
-        [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
-        [System.Runtime.Serialization.DataContractAttribute(Name="RemoteExecutorServiceResult.State", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Services")]
-        public enum State : int
-        {
-            
-            [System.Runtime.Serialization.EnumMemberAttribute()]
-            NotStarted = 0,
-            
-            [System.Runtime.Serialization.EnumMemberAttribute()]
-            Running = 1,
-            
-            [System.Runtime.Serialization.EnumMemberAttribute()]
-            Finished = 2,
-            
-            [System.Runtime.Serialization.EnumMemberAttribute()]
-            Faulted = 3,
-        }
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -127,10 +127,10 @@ namespace Bluepath.ServiceReferences
         System.Threading.Tasks.Task<System.Guid> InitializeAsync(byte[] methodHandle);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/Execute", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteResponse")]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(object[]))]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.RemoteExecutorServiceResult))]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.RemoteExecutorServiceResult.State))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.Exception))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.RemoteExecutorServiceResult))]
         void Execute(System.Guid eId, object[] parameters);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/Execute", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteResponse")]

@@ -35,7 +35,7 @@
                 }
 
                 getSuccess = Executors.TryGetValue(eid, out executor);
-            } 
+            }
             while (!getSuccess);
 
             return executor;
@@ -85,34 +85,25 @@
         public RemoteExecutorServiceResult TryJoin(Guid eid)
         {
             var executor = GetExecutor(eid);
-            var result = new RemoteExecutorServiceResult { ElapsedTime = executor.ElapsedTime };
+            var result = new RemoteExecutorServiceResult
+                             {
+                                 ElapsedTime = executor.ElapsedTime,
+                                 ExecutorState = executor.ExecutorState
+                             };
 
-            if (executor.Exception != null)
+            switch (executor.ExecutorState)
             {
-                result.ExecutorState = RemoteExecutorServiceResult.State.Faulted;
-                result.Error = executor.Exception;
+                case ExecutorState.Finished:
+                    result.Result = executor.Result;
 
-                DisposeExecutor(executor);
-            }
-            else
-            {
-                switch (executor.ThreadState)
-                {
-                    case ThreadState.Unstarted:
-                        result.ExecutorState = RemoteExecutorServiceResult.State.NotStarted;
-                        break;
-                    case ThreadState.Stopped:
-                    case ThreadState.Aborted:
-                        result.Result = executor.Result;
-                        result.ExecutorState = RemoteExecutorServiceResult.State.Finished;
+                    // we have to make sure that the message with the result is not lost
+                    DisposeExecutor(executor);
+                    break;
+                case ExecutorState.Faulted:
+                    result.Error = executor.Exception;
 
-                        // we have to make sure that the message with the result is not lost
-                        DisposeExecutor(executor);
-                        break;
-                    default:
-                        result.ExecutorState = RemoteExecutorServiceResult.State.Running;
-                        break;
-                }
+                    DisposeExecutor(executor);
+                    break;
             }
 
             return result;
@@ -122,9 +113,7 @@
         {
             var eid = executor.Eid;
 
-            if (!(executor.ThreadState == ThreadState.Stopped
-               || executor.ThreadState == ThreadState.Aborted
-               || executor.ThreadState == ThreadState.Unstarted))
+            if (executor.ExecutorState == ExecutorState.Running)
             {
                 throw new Exception("Can't dispose running executor.");
             }
@@ -140,7 +129,7 @@
                 }
 
                 removed = Executors.TryRemove(eid, out executor);
-            } 
+            }
             while (!removed);
         }
     }

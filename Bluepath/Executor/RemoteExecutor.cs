@@ -2,6 +2,9 @@
 {
     using System;
     using System.Runtime.Remoting;
+    using System.Threading;
+
+    using Bluepath.Exceptions;
 
     using global::Bluepath.Extensions;
 
@@ -10,67 +13,14 @@
     public class RemoteExecutor : IRemoteExecutor
     {
         private readonly object executorStateLock = new object();
+        private readonly object joinThreadLock = new object();
         private object result;
         private RemoteExecutorServiceClient client;
+        private Thread joinThread;
 
         public RemoteExecutor()
         {
             this.ExecutorState = ExecutorState.NotStarted;
-        }
-
-        public async void Execute(object[] parameters)
-        {
-            lock (this.executorStateLock)
-            {
-                this.ExecutorState = ExecutorState.Running;    
-            }
-
-            await this.client.ExecuteAsync(this.Eid, parameters);
-        }
-
-        /// <summary>
-        /// Call Join on remote executor and get result if available.
-        /// NOTE: This method is non-blocking. Check manually if execution has finished.
-        /// TODO: async?, callback with result? make this method blocking.
-        /// </summary>
-        /// <exception cref="RemotingException">Rethrows exception that occured on the remote executor.</exception>
-        public async void Join()
-        {
-            lock (this.executorStateLock)
-            {
-                if (this.ExecutorState != ExecutorState.Running)
-                {
-                    return;
-                }
-            }
-
-            var joinResult = await this.client.TryJoinAsync(this.Eid);
-            switch (joinResult.ExecutorState)
-            {
-                case ServiceReferences.ExecutorState.Finished:
-                    lock (this.executorStateLock)
-                    {
-                        if (this.ExecutorState == ExecutorState.Running)
-                        {
-                            this.ExecutorState = ExecutorState.Finished;
-                            this.result = joinResult.Result;
-                        }
-                    }
-
-                    break;
-                case ServiceReferences.ExecutorState.Faulted:
-                    lock (this.executorStateLock)
-                    {
-                        this.ExecutorState = ExecutorState.Faulted;
-                    }
-
-                    throw new RemotingException("Exception was thrown on the remote executor. See inner exception for details.", joinResult.Error);
-            }
-        }
-
-        public object GetResult()
-        {
-            return this.Result;
         }
 
         public Guid Eid { get; private set; }
@@ -91,6 +41,114 @@
                     throw new NullReferenceException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
                 }
             }
+        }
+
+        public async void Execute(object[] parameters)
+        {
+            lock (this.executorStateLock)
+            {
+                this.ExecutorState = ExecutorState.Running;
+            }
+
+            await this.client.ExecuteAsync(this.Eid, parameters);
+        }
+
+        /// <summary>
+        /// Call Join on remote executor and get result if available. This method is blocking.
+        /// TODO: async, return Task?, callback with result instead of calling TryJoin?
+        /// </summary>
+        /// <exception cref="RemoteException">Rethrows exception that occured on the remote executor.</exception>
+        /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly.</exception>
+        public void Join()
+        {
+            lock (this.executorStateLock)
+            {
+                if (this.ExecutorState != ExecutorState.Running)
+                {
+                    return;
+                }
+            }
+
+            var joinThreadException = default(Exception);
+            var joinResult = default(ServiceReferences.RemoteExecutorServiceResult);
+
+            lock (this.joinThreadLock)
+            {
+                if (this.joinThread == null)
+                {
+                    this.joinThread = new Thread(
+                        async () =>
+                        {
+                            // wait for remote join
+                            do
+                            {
+                                try
+                                {
+                                    joinResult = await this.client.TryJoinAsync(this.Eid);
+                                }
+                                catch (TimeoutException)
+                                {
+                                }
+                                catch (Exception ex)
+                                {
+                                    joinThreadException = ex;
+                                    break;
+                                }
+
+                                if (joinResult != null && joinResult.ExecutorState == ServiceReferences.ExecutorState.Running)
+                                {
+                                    // if TryJoin is non-blocking, wait some time before checking again.
+                                    // TODO: remote TryJoin should block and throw TimeoutException
+                                    Thread.Sleep(2000);
+                                }
+                            }
+                            while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running);
+
+                            lock (this.joinThreadLock)
+                            {
+                                this.joinThread = null;
+                            }
+                        });
+
+                    this.joinThread.Start();
+                }
+            }
+
+            this.joinThread.Join();
+
+            if (joinResult == null)
+            {
+                throw new RemoteJoinAbortedException(
+                    "Remote thread awaiter has joined but the result is not available. See inner exception for details.",
+                    joinThreadException);
+            }
+
+            switch (joinResult.ExecutorState)
+            {
+                case ServiceReferences.ExecutorState.Finished:
+                    lock (this.executorStateLock)
+                    {
+                        if (this.ExecutorState == ExecutorState.Running)
+                        {
+                            this.ExecutorState = ExecutorState.Finished;
+                            this.result = joinResult.Result;
+                        }
+                    }
+
+                    break;
+                case ServiceReferences.ExecutorState.Faulted:
+                    lock (this.executorStateLock)
+                    {
+                        this.ExecutorState = ExecutorState.Faulted;
+                    }
+
+                    throw new RemoteException("Exception was thrown on the remote executor. See inner exception for details.", joinResult.Error);
+            }
+        }
+
+        public object GetResult()
+        {
+            return this.Result;
         }
 
         public void Dispose()

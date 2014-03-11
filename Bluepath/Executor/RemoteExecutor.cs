@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
+    using System.Diagnostics;
     using System.Reflection;
     using System.Runtime.Remoting;
     using System.Threading;
@@ -158,9 +159,13 @@
 
         public void Dispose()
         {
-            if (this.Client is System.ServiceModel.ClientBase<Bluepath.ServiceReferences.IRemoteExecutorService>)
+            if (this.Client is System.ServiceModel.ClientBase<IRemoteExecutorService>)
             {
-                (this.Client as System.ServiceModel.ClientBase<Bluepath.ServiceReferences.IRemoteExecutorService>).Close();
+                (this.Client as System.ServiceModel.ClientBase<IRemoteExecutorService>).Close();
+            }
+
+            if (this.Client is IDisposable)
+            {
                 (this.Client as IDisposable).Dispose();
             }
         }

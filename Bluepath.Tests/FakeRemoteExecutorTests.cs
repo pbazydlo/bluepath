@@ -22,6 +22,8 @@
             const int delayMilliseconds = 50;
             var testMethod = new Func<int, int, int, int>((a, b, delay) => { Thread.Sleep(delay); return a + b; });
 
+            testMethod.Method.IsStatic.ShouldBe(true);
+
             var executor = new TestRemoteExecutor();
             executor.Initialize(testMethod);
             executor.ExecutorState.ShouldBe(Executor.ExecutorState.NotStarted);

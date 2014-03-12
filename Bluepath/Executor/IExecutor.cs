@@ -17,7 +17,5 @@
         void Join();
 
         object GetResult();
-
-        void Initialize(Func<object[], object> function);
     }
 }

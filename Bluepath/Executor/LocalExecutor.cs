@@ -16,6 +16,7 @@
         public LocalExecutor()
         {
             this.Eid = Guid.NewGuid();
+            Log.TraceMessage("Local executor created.", keywords: this.Eid.AsLogKeywords("eid"));
         }
 
         public TimeSpan? ElapsedTime
@@ -101,6 +102,7 @@
                 {
                     // Handle exceptions that are caused by user code
                     this.Exception = ex;
+                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException, this.Eid.AsLogKeywords("eid"));
                 }
 
                 lock (this.finishedRunningLock)
@@ -132,6 +134,7 @@
         public void Dispose()
         {
             // TODO: Add executor dispose logic here
+            Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.AsLogKeywords("eid"));
         }
     }
 }

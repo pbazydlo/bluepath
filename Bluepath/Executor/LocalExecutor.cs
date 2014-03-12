@@ -74,10 +74,22 @@
                 {
                     if (this.finishedRunning)
                     {
+                        Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.AsLogKeywords("eid"));
                         return this.result;
                     }
 
                     throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
+                }
+            }
+        }
+
+        public bool IsResultAvailable
+        {
+            get
+            {
+                lock (this.finishedRunningLock)
+                {
+                    return this.finishedRunning;
                 }
             }
         }
@@ -93,6 +105,8 @@
 
             this.thread = new Thread(() =>
             {
+                Log.TraceMessage("Local executor has started thread running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.AsLogKeywords("eid"));
+
                 try
                 {
                     // Run user code
@@ -102,7 +116,7 @@
                 {
                     // Handle exceptions that are caused by user code
                     this.Exception = ex;
-                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException, this.Eid.AsLogKeywords("eid"));
+                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged, this.Eid.AsLogKeywords("eid"));
                 }
 
                 lock (this.finishedRunningLock)
@@ -110,6 +124,8 @@
                     this.finishedRunning = true;
                     this.timeStopped = DateTime.Now;
                 }
+
+                Log.TraceMessage("Local executor finished running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.AsLogKeywords("eid"));
             });
 
             this.timeStarted = DateTime.Now;
@@ -118,6 +134,7 @@
 
         public void Join()
         {
+            Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.AsLogKeywords("eid"));
             this.thread.Join();
         }
 
@@ -129,6 +146,7 @@
         public void Initialize(Func<object[], object> function)
         {
             this.function = function;
+            Log.TraceMessage("Local executor initialized.", keywords: this.Eid.AsLogKeywords("eid"));
         }
 
         public void Dispose()

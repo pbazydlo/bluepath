@@ -137,7 +137,7 @@
                                 if (joinResult != null && joinResult.ExecutorState == ServiceReferences.ExecutorState.Running)
                                 {
                                     // TryJoin is non-blocking, wait some time before checking again.
-                                    Thread.Sleep(repeatedTryJoinDelayTime);
+                                    Thread.Sleep(this.repeatedTryJoinDelayTime);
                                 }
                             }
                             while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running);
@@ -185,6 +185,9 @@
         /// <summary>
         /// Invoked after receiving remote callback with 'processing finished' message.
         /// </summary>
+        /// <param name="result">
+        /// Result that came along with callback.
+        /// </param>
         public void Pulse(RemoteExecutorServiceResult result)
         {
             lock (this.waitForCallbackLock)

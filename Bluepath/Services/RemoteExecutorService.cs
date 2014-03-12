@@ -79,6 +79,9 @@
         public void Execute(Guid eid, object[] parameters, ServiceUri callbackUri)
         {
             var executor = GetExecutor(eid);
+
+            Log.TraceMessage(string.Format("Starting local executor. Upon completion callback will{0} be sent{1}{2}.", callbackUri != null ? string.Empty : " not", callbackUri != null ? " to " : string.Empty, callbackUri != null ? callbackUri.Address : string.Empty), keywords: executor.Eid.AsLogKeywords("eid"));
+
             executor.Execute(parameters);
 
             if (callbackUri != null)
@@ -94,8 +97,11 @@
                         // Exception caused by user code (if any) can be accessed using Exception property
                         executor.Join();
 
+                        Log.TraceMessage("Sending callback with result.", keywords: executor.Eid.AsLogKeywords("eid"));
+
                         var result = new RemoteExecutorServiceResult
                         {
+                            Result = executor.IsResultAvailable ? executor.Result : null,
                             ElapsedTime = executor.ElapsedTime,
                             ExecutorState = executor.ExecutorState,
                             Error = executor.Exception

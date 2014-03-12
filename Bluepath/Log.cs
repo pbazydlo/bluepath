@@ -11,12 +11,18 @@
         {
         }
 
+        [Flags]
         public enum MessageType
         {
-            Unspecified = 0,
-            Exception = 1,
-            Trace = 2,
-            UserCodeException = 3
+            // General
+            Unspecified             = 0x00,
+            Exception               = 0x01,
+            Trace                   = 0x02,
+            
+            // User code execution
+            UserCodeExecution       = 0x100,
+            UserCodeException       = UserCodeExecution | 0x01,
+            UserTaskStateChanged    = UserCodeExecution | 0x02,
         }
 
         public static void ExceptionMessage(

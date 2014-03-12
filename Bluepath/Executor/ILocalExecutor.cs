@@ -4,7 +4,10 @@
 
     public interface ILocalExecutor : IExecutor
     {
-        void Initialize(Func<object[], object> function);
         Exception Exception { get; }
+
+        bool IsResultAvailable { get; }
+
+        void Initialize(Func<object[], object> function);
     }
 }

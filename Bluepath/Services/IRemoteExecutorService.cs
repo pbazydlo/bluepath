@@ -10,7 +10,7 @@
         Guid Initialize(byte[] methodHandle);
 
         [OperationContract]
-        void Execute(Guid eId, object[] parameters);
+        void Execute(Guid eId, object[] parameters, ServiceUri callbackUri);
 
         [OperationContract]
         RemoteExecutorServiceResult TryJoin(Guid eId);

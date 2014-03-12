@@ -71,16 +71,16 @@
         /// Executes method set previously by Initialize method.
         /// </summary>
         /// <param name="eid">Unique identifier of the executor.</param>
-        /// <param name="callbackUri">Specifies uri which will be used for callback.
-        /// Null for no callback.</param>
         /// <param name="parameters">Parameters for the method. Note that it gets interpreted as object1, object2, etc.
         /// So if method expects one argument of type object[], you need to wrap it with additional object[] 
         /// (object[] { object[] } - outer array indicates that method accepts one parameter, and inner is actual parameter).</param>
-        /// TODO: Add parameter for callback URI
-        public void Execute(Guid eid, ServiceUri callbackUri, object[] parameters)
+        /// <param name="callbackUri">Specifies uri which will be used for callback.
+        /// Null for no callback.</param>
+        public void Execute(Guid eid, object[] parameters, ServiceUri callbackUri)
         {
             var executor = GetExecutor(eid);
             executor.Execute(parameters);
+
             if (callbackUri != null)
             {
                 new Thread(() =>
@@ -88,24 +88,20 @@
                     using (var client =
                         new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
                             ServiceUri.ServiceBinding,
-                            callbackUri.Address.ToEndpointAddress()
-                            ))
+                            callbackUri.Address.ToEndpointAddress()))
                     {
-                        Exception caughtException = null;
-                        try
-                        {
-                            executor.Join();
-                        }
-                        catch(Exception ex)
-                        {
-                            caughtException = ex;
-                        }
+                        // Join on local executor doesn't throw exceptions by design
+                        // Exception caused by user code (if any) can be accessed using Exception property
+                        executor.Join();
 
                         var result = new RemoteExecutorServiceResult
                         {
                             ElapsedTime = executor.ElapsedTime,
-                            ExecutorState = executor.ExecutorState
+                            ExecutorState = executor.ExecutorState,
+                            Error = executor.Exception
                         };
+
+                        // TODO: client.ExecuteCallback(eid, result);
                     }
                 }).Start();
             }

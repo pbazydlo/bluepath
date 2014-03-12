@@ -27,6 +27,7 @@
             testMethod.Method.IsStatic.ShouldBe(true);
 
             var executor = new RemoteExecutor();
+            executor.CallbacksEnabled = false;
             executor.Initialize(new FakeRemoteExecutorService(), testMethod);
             executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
@@ -47,6 +48,7 @@
             var testMethod = new Func<int, int, int>((a, b) => { throw new Exception("test"); });
 
             var executor = new RemoteExecutor();
+            executor.CallbacksEnabled = false;
             executor.Initialize(new FakeRemoteExecutorService(), testMethod);
             executor.Execute(new object[] { 1, 2 });
 

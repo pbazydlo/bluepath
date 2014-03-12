@@ -22,5 +22,7 @@
         void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, TResult> function);
 
         void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function);
+
+        void Pulse(RemoteExecutorServiceResult result);
     }
 }

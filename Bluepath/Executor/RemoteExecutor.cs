@@ -14,11 +14,12 @@
 
     public class RemoteExecutor : IRemoteExecutor
     {
+        public bool CallbacksEnabled = true;
+
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
         private readonly object waitForCallbackLock = new object();
         private readonly TimeSpan repeatedTryJoinDelayTime = new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 1, milliseconds: 0);
-        private bool callbacksEnabled = true;
         private RemoteExecutorServiceResult callbackResult;
         private object result;
         private Thread joinThread;
@@ -88,7 +89,7 @@
                     this.joinThread = new Thread(
                         () =>
                         {
-                            if (this.callbacksEnabled)
+                            if (this.CallbacksEnabled)
                             {
                                 lock (this.waitForCallbackLock)
                                 {

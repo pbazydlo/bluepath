@@ -26,7 +26,7 @@
             // the following method was private, but it should be public to allow this kind of test
             var executor = RemoteExecutorService.GetExecutor(eid);
 
-            service.Execute(eid, new object[] { 1, 2 });
+            service.Execute(eid, new object[] { 1, 2 }, null);
 
             // wait for the worker thread to complete
             executor.Join();
@@ -50,7 +50,7 @@
             var eid = service.Initialize(serializedMethodHandle);
             var executor = RemoteExecutorService.GetExecutor(eid);
 
-            service.Execute(eid, null);
+            service.Execute(eid, null, null);
 
             // wait for the worker thread to complete
             executor.Join();

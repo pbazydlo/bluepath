@@ -1,21 +1,24 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Shouldly;
-using Bluepath.Executor;
-using Moq;
-using Bluepath.ServiceReferences;
-using ExecutorState = Bluepath.Executor.ExecutorState;
-using System.Threading.Tasks;
-
-namespace Bluepath.Tests.Executor
+﻿namespace Bluepath.Tests.Executor
 {
+    using System;
+    using System.Threading.Tasks;
+
+    using Bluepath.Executor;
+    using Bluepath.ServiceReferences;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using Moq;
+
+    using Shouldly;
+
     [TestClass]
     public class RemoteExecutorTests
     {
         /// <summary>
-        /// Timeout for waiting on join in ms
+        /// Timeout for waiting on join in milliseconds
         /// </summary>
-        private int waitTimeout = 100;
+        private const int WaitTimeout = 100;
 
         [TestMethod]
         public void RemoteExecutorJoinWaitsForPulse()
@@ -23,32 +26,32 @@ namespace Bluepath.Tests.Executor
             
             var remoteServiceMock = new Mock<IRemoteExecutorService>(MockBehavior.Strict);
             
-            var methodResult = "whatever";
+            const string MethodResult = "whatever";
             var expectedResult = new RemoteExecutorServiceResult()
                 {
                     ExecutorState = ServiceReferences.ExecutorState.Finished,
-                    Result = methodResult
+                    Result = MethodResult
                 };
 
             remoteServiceMock.Setup(rs => rs.InitializeAsync(It.IsAny<byte[]>())).Returns(() => Task.Run(() => Guid.NewGuid()));
-            remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>())).Returns(() => Task.Run(() => { }));
+            remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
             executor.Initialize(remoteServiceMock.Object, () => "whatever");
-            executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
-            executor.ExecutorState.ShouldBe(ExecutorState.Running);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);
             var joinTask = Task.Run(() =>
                 {
                     executor.Join();
                 });
 
-            joinTask.Wait(waitTimeout).ShouldBe(false);
+            joinTask.Wait(WaitTimeout).ShouldBe(false);
             executor.Pulse(expectedResult);
-            joinTask.Wait(waitTimeout).ShouldBe(true);
+            joinTask.Wait(WaitTimeout).ShouldBe(true);
 
-            executor.ExecutorState.ShouldBe(ExecutorState.Finished);
-            executor.Result.ShouldBe(methodResult);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Finished);
+            executor.Result.ShouldBe(MethodResult);
         }
         [TestMethod]
         public void RemoteExecutorJoinsAfterPulse()
@@ -64,18 +67,18 @@ namespace Bluepath.Tests.Executor
             };
 
             remoteServiceMock.Setup(rs => rs.InitializeAsync(It.IsAny<byte[]>())).Returns(() => Task.Run(() => Guid.NewGuid()));
-            remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>())).Returns(() => Task.Run(() => { }));
+            remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
             executor.Initialize(remoteServiceMock.Object, () => "whatever");
-            executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
-            executor.ExecutorState.ShouldBe(ExecutorState.Running);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);
 
             executor.Pulse(expectedResult);
             executor.Join();
 
-            executor.ExecutorState.ShouldBe(ExecutorState.Finished);
+            executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Finished);
             executor.Result.ShouldBe(methodResult);
         }
 

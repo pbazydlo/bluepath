@@ -87,9 +87,14 @@
                 return this.Initialize(methodHandle);
             }
 
-            public async Task ExecuteAsync(Guid eId, object[] parameters)
+            public void Execute(Guid eId, object[] parameters, ServiceUri callbackUri)
             {
-                this.Execute(eId, parameters);
+                this.Execute(eId, parameters, callbackUri != null ? new Services.ServiceUri() { Address = callbackUri.Address } : null);
+            }
+
+            public async Task ExecuteAsync(Guid eId, object[] parameters, ServiceUri callbackUri)
+            {
+                this.Execute(eId, parameters, callbackUri);
             }
 
             public RemoteExecutorServiceResult TryJoin(Guid eId)

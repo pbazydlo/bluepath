@@ -60,7 +60,8 @@
                 this.ExecutorState = ExecutorState.Running;
             }
 
-            await this.Client.ExecuteAsync(this.Eid, parameters);
+            // TODO: pass actual callback Uri instead of null
+            await this.Client.ExecuteAsync(this.Eid, parameters, null);
         }
 
         /// <summary>

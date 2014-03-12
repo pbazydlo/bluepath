@@ -1,25 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Services
+﻿namespace Bluepath.Services
 {
+    using System.Runtime.Serialization;
+    using System.ServiceModel;
+    using System.ServiceModel.Channels;
+
     [DataContract]
     public class ServiceUri
     {
         public static Binding ServiceBinding;
 
         [DataMember]
-        public EndpointAddressAugust2004 Address { get; set; }
+        public string Address { get; set; }
 
-        public void SetAddress(EndpointAddress endpointAddress)
+        public static ServiceUri FromEndpointAddress(EndpointAddress endpointAddress)
         {
-            this.Address = EndpointAddressAugust2004.FromEndpointAddress(endpointAddress);
+            return new ServiceUri() { Address = endpointAddress.ToString() };
+        }
+
+        public EndpointAddress ToEndpointAddress()
+        {
+            return new EndpointAddress(this.Address);
         }
     }
 }

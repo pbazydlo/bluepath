@@ -88,7 +88,7 @@
                     using (var client =
                         new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
                             ServiceUri.ServiceBinding,
-                            callbackUri.Address.ToEndpointAddress()))
+                            callbackUri.ToEndpointAddress()))
                     {
                         // Join on local executor doesn't throw exceptions by design
                         // Exception caused by user code (if any) can be accessed using Exception property

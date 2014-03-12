@@ -13,6 +13,8 @@
 
     using Shouldly;
 
+    using ExecutorState = Bluepath.Executor.ExecutorState;
+
     [TestClass]
     public class FakeRemoteExecutorTests
     {
@@ -24,15 +26,16 @@
 
             testMethod.Method.IsStatic.ShouldBe(true);
 
-            var executor = new TestRemoteExecutor();
-            executor.Initialize(testMethod);
-            executor.ExecutorState.ShouldBe(Executor.ExecutorState.NotStarted);
+            var executor = new RemoteExecutor();
+            executor.CallbacksEnabled = false;
+            executor.Initialize(new FakeRemoteExecutorService(), testMethod);
+            executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
             executor.Execute(new object[] { 1, 2, delayMilliseconds });
-            executor.ExecutorState.ShouldBe(Executor.ExecutorState.Running);
+            executor.ExecutorState.ShouldBe(ExecutorState.Running);
 
             executor.Join();
-            executor.ExecutorState.ShouldBe(Executor.ExecutorState.Finished);
+            executor.ExecutorState.ShouldBe(ExecutorState.Finished);
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
@@ -44,8 +47,9 @@
         {
             var testMethod = new Func<int, int, int>((a, b) => { throw new Exception("test"); });
 
-            var executor = new TestRemoteExecutor();
-            executor.Initialize(testMethod);
+            var executor = new RemoteExecutor();
+            executor.CallbacksEnabled = false;
+            executor.Initialize(new FakeRemoteExecutorService(), testMethod);
             executor.Execute(new object[] { 1, 2 });
 
             try
@@ -55,7 +59,7 @@
             }
             catch (Exception ex)
             {
-                executor.ExecutorState.ShouldBe(Executor.ExecutorState.Faulted);
+                executor.ExecutorState.ShouldBe(ExecutorState.Faulted);
 
                 if (ex is RemoteException)
                 {
@@ -73,14 +77,6 @@
                 {
                     Assert.Fail(string.Format("RemoteException was expected but another ('{0}') was thrown on local site.", ex.GetType()));
                 }
-            }
-        }
-
-        internal class TestRemoteExecutor : RemoteExecutor
-        {
-            protected override void Initialize()
-            {
-                this.Client = new FakeRemoteExecutorService();
             }
         }
 

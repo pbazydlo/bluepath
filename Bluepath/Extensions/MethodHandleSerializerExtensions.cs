@@ -7,6 +7,12 @@ namespace Bluepath.Extensions
 
     public static class MethodHandleSerializerExtensions
     {
+        public static byte[] SerializeMethodHandle(this MethodBase method)
+        {
+            return SerializeMethodHandle(method.MethodHandle);
+        }
+
+        #region Generic SerializeMethodHandle overloads
         public static byte[] SerializeMethodHandle<TResult>(this Func<TResult> function)
         {
             return SerializeMethodHandle(function.Method.MethodHandle);
@@ -17,18 +23,41 @@ namespace Bluepath.Extensions
             return SerializeMethodHandle(function.Method.MethodHandle);
         }
 
-        // TODO: Extend it like this? 
-        // IExecutor.Initialize should then also accept parameters in this form
-        // See RemoteExecutorServiceTests.RemoteExecutorServiceExecuteTest for sample usage
         public static byte[] SerializeMethodHandle<T1, T2, TResult>(this Func<T1, T2, TResult> function)
         {
             return SerializeMethodHandle(function.Method.MethodHandle);
         }
 
-        public static byte[] SerializeMethodHandle(this MethodBase method)
+        public static byte[] SerializeMethodHandle<T1, T2, T3, TResult>(this Func<T1, T2, T3, TResult> function)
         {
-            return SerializeMethodHandle(method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle);
         }
+
+        public static byte[] SerializeMethodHandle<T1, T2, T3, T4, TResult>(this Func<T1, T2, T3, T4, TResult> function)
+        {
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+
+        public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, TResult>(this Func<T1, T2, T3, T4, T5, TResult> function)
+        {
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+
+        public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, TResult>(this Func<T1, T2, T3, T4, T5, T6, TResult> function)
+        {
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+
+        public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, T7, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
+        {
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+
+        public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
+        {
+            return SerializeMethodHandle(function.Method.MethodHandle);
+        }
+        #endregion
 
         public static MethodBase DeserializeMethodHandle(this byte[] methodHandle)
         {

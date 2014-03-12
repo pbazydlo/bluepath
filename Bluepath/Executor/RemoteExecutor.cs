@@ -109,20 +109,27 @@
                                 }
                             }
 
+                            var attemptsCounter = 0;
+                            
                             // Get the processing result
                             // I would leave this loop to allow testing without communication (callbacks)
                             do
                             {
+                                attemptsCounter++;
+
                                 try
                                 {
                                     joinResult = this.Client.TryJoin(this.Eid);
                                 }
                                 catch (TimeoutException)
                                 {
+                                    Log.TraceMessage(string.Format("Remote TryJoinAsync timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.AsLogKeywords("eid"));
                                 }
                                 catch (Exception ex)
                                 {
                                     joinThreadException = ex;
+                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoinAsync with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.AsLogKeywords("eid"));
+                                    
                                     break;
                                 }
 

@@ -19,7 +19,7 @@
 
         public static readonly List<ServiceReferences.IRemoteExecutorService> RemoteServices = new List<ServiceReferences.IRemoteExecutorService>();
 
-        public static DistributedThread Create(Func<object[], object> function, ExecutorSelectionMode mode = ExecutorSelectionMode.LocalOnly)
+        public static DistributedThread Create(Func<object[], object> function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
             return new DistributedThread()
             {

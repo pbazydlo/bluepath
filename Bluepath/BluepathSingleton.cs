@@ -73,6 +73,6 @@
             }
         }
 
-        public ServiceUri CallbackUri { get; private set; }
+        public ServiceUri CallbackUri { get; set; }
     }
 }

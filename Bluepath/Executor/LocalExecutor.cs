@@ -138,6 +138,23 @@
             this.thread.Join();
         }
 
+        public void Join(TimeSpan timeout)
+        {
+            var timer = new Timer(
+                _ =>
+                    {
+                        if (!this.finishedRunning)
+                        {
+                            this.thread.Abort();
+                        }
+                    },
+                null,
+                timeout.Milliseconds,
+                Timeout.Infinite);
+
+            this.Join();
+        }
+
         public object GetResult()
         {
             return this.Result;

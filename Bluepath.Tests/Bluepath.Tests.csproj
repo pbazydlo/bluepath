@@ -58,6 +58,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="DistributedThread\DistributedThreadTests.cs" />
+    <Compile Include="Executor\LocalExecutorTests.cs" />
     <Compile Include="Executor\RemoteExecutorTests.cs" />
     <Compile Include="Executor\FakeRemoteExecutorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

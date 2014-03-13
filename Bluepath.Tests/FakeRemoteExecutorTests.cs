@@ -7,6 +7,7 @@
 
     using Bluepath.Exceptions;
     using Bluepath.Executor;
+    using Bluepath.Extensions;
     using Bluepath.ServiceReferences;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -113,6 +114,16 @@
             public async Task<RemoteExecutorServiceResult> TryJoinAsync(Guid eId)
             {
                 return this.TryJoin(eId);
+            }
+
+            public void ExecuteCallback(Guid eId, RemoteExecutorServiceResult executeResult)
+            {
+                base.ExecuteCallback(eId, executeResult.Convert());
+            }
+
+            public async Task ExecuteCallbackAsync(Guid eId, RemoteExecutorServiceResult executeResult)
+            {
+                this.ExecuteCallback(eId, executeResult);
             }
         }
     }

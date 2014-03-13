@@ -16,25 +16,44 @@
         // we shouldn't use another lock for ConcurrentDictionary access http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
         // private static readonly object ExecutorsLock = new object();
         private static readonly ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
+        public static readonly ConcurrentDictionary<Guid, IRemoteExecutor> RemoteExecutors = new ConcurrentDictionary<Guid, IRemoteExecutor>();
 
         /// <summary>
         /// Gets executor with given id.
         /// </summary>
-        /// <param name="eid">Identifier of the executor.</param>
+        /// <param name="eId">Identifier of the executor.</param>
         /// <returns>Local executor.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
-        public static ILocalExecutor GetExecutor(Guid eid)
+        public static ILocalExecutor GetExecutor(Guid eId)
         {
             ILocalExecutor executor;
             var getSuccess = false;
             do
             {
-                if (!Executors.ContainsKey(eid))
+                if (!Executors.ContainsKey(eId))
                 {
-                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
+                    throw new ArgumentOutOfRangeException("eId", string.Format("Executor with eId '{0}' doesn't exist.", eId));
                 }
 
-                getSuccess = Executors.TryGetValue(eid, out executor);
+                getSuccess = Executors.TryGetValue(eId, out executor);
+            }
+            while (!getSuccess);
+
+            return executor;
+        }
+
+        public static IRemoteExecutor GetRemoteExecutor(Guid eId)
+        {
+            IRemoteExecutor executor;
+            var getSuccess = false;
+            do
+            {
+                if (!RemoteExecutors.ContainsKey(eId))
+                {
+                    throw new ArgumentOutOfRangeException("eId", string.Format("RemoteExecutor with eId '{0}' doesn't exist.", eId));
+                }
+
+                getSuccess = RemoteExecutors.TryGetValue(eId, out executor);
             }
             while (!getSuccess);
 
@@ -80,7 +99,12 @@
         {
             var executor = GetExecutor(eid);
 
-            Log.TraceMessage(string.Format("Starting local executor. Upon completion callback will{0} be sent{1}{2}.", callbackUri != null ? string.Empty : " not", callbackUri != null ? " to " : string.Empty, callbackUri != null ? callbackUri.Address : string.Empty), keywords: executor.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage(string.Format(
+                "Starting local executor. Upon completion callback will{0} be sent{1}{2}.",
+                callbackUri != null ? string.Empty : " not",
+                callbackUri != null ? " to " : string.Empty, 
+                callbackUri != null ? callbackUri.Address : string.Empty), 
+                keywords: executor.Eid.AsLogKeywords("eid"));
 
             executor.Execute(parameters);
 
@@ -99,18 +123,29 @@
 
                         Log.TraceMessage("Sending callback with result.", keywords: executor.Eid.AsLogKeywords("eid"));
 
-                        var result = new RemoteExecutorServiceResult
+                        var result = new ServiceReferences.RemoteExecutorServiceResult
                         {
                             Result = executor.IsResultAvailable ? executor.Result : null,
                             ElapsedTime = executor.ElapsedTime,
-                            ExecutorState = executor.ExecutorState,
+                            ExecutorState = (ServiceReferences.ExecutorState)((int)executor.ExecutorState),
                             Error = executor.Exception
                         };
 
-                        // TODO: client.ExecuteCallback(eid, result);
+                        client.ExecuteCallback(eid, result);
                     }
                 }).Start();
             }
+        }
+
+        /// <summary>
+        /// Called in response to Execute after processing has finished.
+        /// </summary>
+        /// <param name="eId">Executor identifier</param>
+        /// <param name="executeResult">Executor processing result.</param>
+        public void ExecuteCallback(Guid eId, RemoteExecutorServiceResult executeResult)
+        {
+            var executor = GetRemoteExecutor(eId);
+            executor.Pulse(executeResult.Convert());
         }
 
         /// <summary>

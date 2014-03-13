@@ -13,6 +13,9 @@
         void Execute(Guid eId, object[] parameters, ServiceUri callbackUri);
 
         [OperationContract]
+        void ExecuteCallback(Guid eId, RemoteExecutorServiceResult executeResult);
+
+        [OperationContract]
         RemoteExecutorServiceResult TryJoin(Guid eId);
     }
 }

@@ -93,6 +93,7 @@
         /// <exception cref="ArgumentException">Thrown if method pointed by the handle is not static.</exception>
         public Guid Initialize(byte[] methodHandle)
         {
+            Console.WriteLine("Initialize called");
             var methodFromHandle = methodHandle.DeserializeMethodHandle();
             if (!methodFromHandle.IsStatic)
             {
@@ -198,6 +199,7 @@
                     DisposeExecutor(executor);
                     break;
                 case ExecutorState.Faulted:
+                    // TODO: Serialize exception to string
                     result.Error = executor.Exception;
 
                     DisposeExecutor(executor);

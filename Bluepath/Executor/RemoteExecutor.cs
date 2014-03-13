@@ -152,6 +152,7 @@
 
             if (joinResult == null)
             {
+                this.ExecutorState = Executor.ExecutorState.Faulted;
                 throw new RemoteJoinAbortedException(
                     "Remote thread awaiter has joined but the result is not available. See inner exception for details.",
                     joinThreadException);

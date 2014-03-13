@@ -33,12 +33,12 @@
 
         public ServiceUri CallbackUri { get; set; }
 
-        public void Initialize(string ip)
+        public void Initialize(string ip, int? port = null)
         {
             var random = new Random();
-            var port = random.Next(49152, 65535);
+            var randomPort = random.Next(49152, 65535);
 
-            var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port);
+            var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port ?? randomPort);
             var callbackUri = listenUri;
 
             //// if (callbackUri.Contains("0.0.0.0"))
@@ -67,6 +67,7 @@
                 host.Open();
 
                 Console.WriteLine("The service is ready at {0}", listenUri);
+                Console.WriteLine("Binding {0}", host.Description.Endpoints[0].Binding.GetType().FullName);
                 Console.WriteLine("Press <Enter> to stop the service.");
                 Console.ReadLine();
 

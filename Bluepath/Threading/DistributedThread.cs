@@ -76,6 +76,7 @@
                     }
 
                     remoteExecutor.Initialize(service, this.function, BluepathSingleton.Instance.CallbackUri.Convert());
+                    System.Threading.Thread.Sleep(2000);
                     Bluepath.Services.RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
                     this.executor = remoteExecutor;
                     break;

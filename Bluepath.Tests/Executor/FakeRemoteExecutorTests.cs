@@ -1,4 +1,4 @@
-﻿namespace Bluepath.Tests
+﻿namespace Bluepath.Tests.Executor
 {
     using System;
     using System.Reflection;

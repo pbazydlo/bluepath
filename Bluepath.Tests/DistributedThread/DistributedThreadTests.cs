@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Shouldly;
 using Bluepath.Threading;
 
-namespace Bluepath.Tests
+namespace Bluepath.Tests.DistributedThread
 {
     [TestClass]
     public class DistributedThreadTests
@@ -30,7 +30,7 @@ namespace Bluepath.Tests
                     return null;
                 };
 
-            DistributedThread dt1 = DistributedThread.Create(
+            var dt1 = Bluepath.Threading.DistributedThread.Create(
                 (parameters) => t1Action(parameters[0] as List<int>, (int)parameters[1], (int)parameters[2], (int)parameters[3])
                 );
             dt1.Start(new object[] { listToProcess, 0, listToProcess.Count, 5 });

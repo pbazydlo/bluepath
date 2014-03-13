@@ -57,11 +57,11 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="DistributedThreadTests.cs" />
+    <Compile Include="DistributedThread\DistributedThreadTests.cs" />
     <Compile Include="Executor\RemoteExecutorTests.cs" />
-    <Compile Include="FakeRemoteExecutorTests.cs" />
+    <Compile Include="Executor\FakeRemoteExecutorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RemoteExecutorServiceTests.cs" />
+    <Compile Include="Executor\RemoteExecutorServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bluepath\Bluepath.csproj">

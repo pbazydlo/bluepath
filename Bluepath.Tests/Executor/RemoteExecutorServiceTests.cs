@@ -1,10 +1,10 @@
-﻿namespace Bluepath.Tests
+﻿namespace Bluepath.Tests.Executor
 {
     using System;
 
-    using global::Bluepath.Executor;
-    using global::Bluepath.Extensions;
-    using global::Bluepath.Services;
+    using Bluepath.Executor;
+    using Bluepath.Extensions;
+    using Bluepath.Services;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 

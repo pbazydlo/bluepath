@@ -1,23 +1,53 @@
 ﻿namespace Bluepath.Threading
 {
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
+
     using Bluepath.Executor;
     using Bluepath.Extensions;
-    using System.Collections.Generic;
 
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
     /// </summary>
     public class DistributedThread
     {
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
+        // ReSharper disable once InconsistentNaming
+        private static readonly List<ServiceReferences.IRemoteExecutorService> remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
+
         private IExecutor executor;
 
         private Func<object[], object> function;
 
-        private DistributedThread() { }
+        private DistributedThread()
+        {
+        }
 
-        public static readonly List<ServiceReferences.IRemoteExecutorService> RemoteServices = new List<ServiceReferences.IRemoteExecutorService>();
+        public enum ExecutorSelectionMode : int
+        {
+            LocalOnly = 0,
+            RemoteOnly = 1
+        }
+
+        public static List<ServiceReferences.IRemoteExecutorService> RemoteServices
+        {
+            get
+            {
+                return DistributedThread.remoteServices;
+            }
+        }
+
+        public ExecutorSelectionMode Mode { get; private set; }
+
+        public object Result
+        {
+            get
+            {
+                return this.executor.Result;
+            }
+        }
 
         public static DistributedThread Create(Func<object[], object> function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
@@ -27,8 +57,6 @@
                 Mode = mode
             };
         }
-
-        public ExecutorSelectionMode Mode { get; private set; }
 
         public void Start(object[] parameters)
         {
@@ -41,7 +69,7 @@
                     break;
                 case ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
-                    var service = RemoteServices.FirstOrDefault();
+                    var service = DistributedThread.RemoteServices.FirstOrDefault();
                     if(service == null)
                     {
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
@@ -59,20 +87,6 @@
         public void Join()
         {
             this.executor.Join();
-        }
-
-        public object Result
-        {
-            get
-            {
-                return this.executor.Result;
-            }
-        }
-
-        public enum ExecutorSelectionMode : int
-        {
-            LocalOnly = 0,
-            RemoteOnly = 1
         }
     }
 }

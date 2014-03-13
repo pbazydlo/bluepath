@@ -5,6 +5,7 @@
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Runtime.CompilerServices;
+    using System.Text;
 
     public class Log
     {
@@ -34,6 +35,7 @@
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
+            Debug.WriteLine("[LOG]{2} {0} ({1})", message, exception.Message, keywords.ToLogString());
         }
 
         [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
@@ -50,6 +52,7 @@
             )
         {
             // TODO: Implement logging
+            Debug.WriteLine("[LOG]{2} {0} ({1})", message, type, keywords.ToLogString());
         }
     }
 
@@ -66,6 +69,33 @@
             var d = new Dictionary<string, string>();
             d.Add(label, guid.ToString());
             return d;
+        }
+
+        public static string ToLogString(this IDictionary<string, string> keywords)
+        {
+            if (keywords == null || keywords.Count < 1)
+            {
+                return null;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("[");
+
+            foreach (var keyword in keywords)
+            {
+                if (sb.Length > 1)
+                {
+                    sb.Append("][");
+                }
+
+                sb.Append(keyword.Key);
+                sb.Append(":");
+                sb.Append(keyword.Value);
+            }
+
+            sb.Append("]");
+
+            return sb.ToString();
         }
     }
 }

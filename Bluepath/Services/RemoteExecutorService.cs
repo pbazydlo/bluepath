@@ -137,7 +137,7 @@
 
             if (callbackUri != null)
             {
-                new Thread(() =>
+                var t = new Thread(() =>
                 {
                     using (var client =
                         new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
@@ -160,7 +160,10 @@
 
                         client.ExecuteCallback(eid, result);
                     }
-                }).Start();
+                });
+
+                t.Name = string.Format("Execute callback sender thread for executor '{0}'", executor.Eid);
+                t.Start();
             }
         }
 

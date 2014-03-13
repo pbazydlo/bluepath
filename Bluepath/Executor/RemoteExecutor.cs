@@ -5,6 +5,7 @@
     using System.Reflection;
     using System.Runtime.Remoting;
     using System.Threading;
+    using System.Threading.Tasks;
 
     using Bluepath.Exceptions;
 
@@ -65,7 +66,6 @@
 
         /// <summary>
         /// Call Join on remote executor and get result if available. This method is blocking.
-        /// TODO: async, return Task?, callback with result instead of calling TryJoin?
         /// </summary>
         /// <exception cref="RemoteException">Rethrows exception that occurred on the remote executor.</exception>
         /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
@@ -110,7 +110,7 @@
                             }
 
                             var attemptsCounter = 0;
-                            
+
                             // Get the processing result
                             // I would leave this loop to allow testing without communication (callbacks)
                             do
@@ -129,7 +129,7 @@
                                 {
                                     joinThreadException = ex;
                                     Log.TraceMessage(string.Format("Executor failed on remote TryJoinAsync with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
-                                    
+
                                     break;
                                 }
 
@@ -144,6 +144,7 @@
                             this.CleanUpJoinThread();
                         });
 
+                    this.joinThread.Name = string.Format("Join thread on remote executor '{0}'", this.Eid);
                     this.joinThread.Start();
                 }
             }
@@ -180,6 +181,30 @@
 
                     throw new RemoteException("Exception was thrown on the remote executor. See inner exception for details.", joinResult.Error);
             }
+        }
+
+        public Task JoinAsync()
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            var t = new Thread(
+                () =>
+                {
+                    try
+                    {
+                        this.Join();
+                        tcs.SetResult(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.SetException(ex);
+                    }
+                });
+
+            t.Name = string.Format("JoinAsync thread on remote executor '{0}'", this.Eid);
+            t.Start();
+
+            return tcs.Task;
         }
 
         /// <summary>
@@ -299,7 +324,7 @@
             {
                 this.callbacksEnabled = false;
             }
-            
+
             this.Eid = await this.Client.InitializeAsync(method.SerializeMethodHandle());
         }
 

@@ -129,6 +129,7 @@
             });
 
             this.timeStarted = DateTime.Now;
+            this.thread.Name = string.Format("User code runner thread on executor '{0}'", this.Eid);
             this.thread.Start();
         }
 

@@ -51,6 +51,7 @@
     <Compile Include="Executor\RemoteExecutor.cs" />
     <Compile Include="Extensions\MethodHandleSerializerExtensions.cs" />
     <Compile Include="Extensions\RemoteExecutorServiceResultExtensions.cs" />
+    <Compile Include="Extensions\ServiceUriExtensions.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />

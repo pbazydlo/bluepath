@@ -37,7 +37,7 @@
             remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
-            executor.Initialize(remoteServiceMock.Object, () => "whatever");
+            executor.Initialize(remoteServiceMock.Object, () => "whatever", new ServiceUri());
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);
@@ -70,7 +70,7 @@
             remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
-            executor.Initialize(remoteServiceMock.Object, () => "whatever");
+            executor.Initialize(remoteServiceMock.Object, () => "whatever", new ServiceUri());
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);

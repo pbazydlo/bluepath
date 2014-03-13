@@ -14,8 +14,6 @@
 
     public class RemoteExecutor : IRemoteExecutor
     {
-        public bool CallbacksEnabled = true;
-
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
         private readonly object waitForCallbackLock = new object();
@@ -23,6 +21,8 @@
         private RemoteExecutorServiceResult callbackResult;
         private object result;
         private Thread joinThread;
+        private ServiceUri callbackUri;
+        private bool callbacksEnabled = true;
 
         public RemoteExecutor()
         {
@@ -60,8 +60,7 @@
                 this.ExecutorState = ExecutorState.Running;
             }
 
-            // TODO: pass actual callback Uri instead of null
-            await this.Client.ExecuteAsync(this.Eid, parameters, null);
+            await this.Client.ExecuteAsync(this.Eid, parameters, this.callbackUri);
         }
 
         /// <summary>
@@ -90,7 +89,7 @@
                     this.joinThread = new Thread(
                         () =>
                         {
-                            if (this.CallbacksEnabled)
+                            if (this.callbacksEnabled)
                             {
                                 lock (this.waitForCallbackLock)
                                 {
@@ -224,49 +223,49 @@
         }
 
         #region Generic Initialize overloads
-        public void Initialize<TResult>(IRemoteExecutorService remoteExecutorService, Func<TResult> function)
+        public void Initialize<TResult>(IRemoteExecutorService remoteExecutorService, Func<TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, TResult> function)
+        public void Initialize<T1, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, TResult> function)
+        public void Initialize<T1, T2, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, TResult> function)
+        public void Initialize<T1, T2, T3, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, T4, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, TResult> function)
+        public void Initialize<T1, T2, T3, T4, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, TResult> function)
+        public void Initialize<T1, T2, T3, T4, T5, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, TResult> function)
+        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function, ServiceUri callbackUri)
         {
-            this.Initialize(remoteExecutorService, function.Method);
+            this.Initialize(remoteExecutorService, function.Method, callbackUri);
         }
 
         #endregion
@@ -279,7 +278,7 @@
             this.Client = remoteExecutorService;
         }
 
-        protected async void Initialize(IRemoteExecutorService remoteExecutorService, MethodInfo method)
+        protected async void Initialize(IRemoteExecutorService remoteExecutorService, MethodInfo method, ServiceUri callbackUri)
         {
             if (!method.IsStatic)
             {
@@ -287,7 +286,16 @@
             }
 
             this.Initialize(remoteExecutorService);
-            // TODO: pass callback URI (here or on 'Execute') and set this.callbacksEnabled to true
+            if(callbackUri != null)
+            {
+                this.callbackUri = callbackUri;
+                this.callbacksEnabled = true;
+            }
+            else
+            {
+                this.callbacksEnabled = false;
+            }
+            
             this.Eid = await this.Client.InitializeAsync(method.SerializeMethodHandle());
         }
 

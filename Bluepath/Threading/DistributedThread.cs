@@ -2,7 +2,8 @@
 {
     using System;
     using System.Linq;
-    using global::Bluepath.Executor;
+    using Bluepath.Executor;
+    using Bluepath.Extensions;
     using System.Collections.Generic;
 
     /// <summary>
@@ -46,7 +47,8 @@
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
                     }
 
-                    remoteExecutor.Initialize(service, this.function);
+                    remoteExecutor.Initialize(service, this.function, BluepathSingleton.Instance.CallbackUri.Convert());
+                    Bluepath.Services.RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
                     this.executor = remoteExecutor;
                     break;
             }

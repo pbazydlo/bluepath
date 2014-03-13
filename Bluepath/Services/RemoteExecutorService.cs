@@ -13,13 +13,14 @@
     /// </summary>
     public class RemoteExecutorService : IRemoteExecutorService
     {
+        // TODO: When should we remove executors (both local and remote), after Join/Callback?
         // we shouldn't use another lock for ConcurrentDictionary access http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
         // private static readonly object ExecutorsLock = new object();
         private static readonly ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
-        public static readonly ConcurrentDictionary<Guid, IRemoteExecutor> RemoteExecutors = new ConcurrentDictionary<Guid, IRemoteExecutor>();
+        private static readonly ConcurrentDictionary<Guid, IRemoteExecutor> RemoteExecutors = new ConcurrentDictionary<Guid, IRemoteExecutor>();
 
         /// <summary>
-        /// Gets executor with given id.
+        /// Gets local executor with given id.
         /// </summary>
         /// <param name="eId">Identifier of the executor.</param>
         /// <returns>Local executor.</returns>
@@ -42,6 +43,12 @@
             return executor;
         }
 
+        /// <summary>
+        /// Gets remote executor with given id.
+        /// </summary>
+        /// <param name="eId">Executor identifier</param>
+        /// <returns>Remote executor.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
         public static IRemoteExecutor GetRemoteExecutor(Guid eId)
         {
             IRemoteExecutor executor;
@@ -58,6 +65,23 @@
             while (!getSuccess);
 
             return executor;
+        }
+
+        public static void RegisterRemoteExecutor(IRemoteExecutor executor)
+        {
+            if (executor.Eid == default(Guid))
+            {
+                throw new ArgumentException("executor", "Remote executor needs to be initialized first.");
+            }
+
+            do
+            {
+                // TODO: It would be good to have some way of checking that before calling Register...
+                if (RemoteExecutors.ContainsKey(executor.Eid))
+                {
+                    throw new ArgumentException("executor", "Given remote executor already exists.");
+                }
+            } while (!RemoteExecutors.TryAdd(executor.Eid, executor));
         }
 
         /// <summary>
@@ -102,8 +126,8 @@
             Log.TraceMessage(string.Format(
                 "Starting local executor. Upon completion callback will{0} be sent{1}{2}.",
                 callbackUri != null ? string.Empty : " not",
-                callbackUri != null ? " to " : string.Empty, 
-                callbackUri != null ? callbackUri.Address : string.Empty), 
+                callbackUri != null ? " to " : string.Empty,
+                callbackUri != null ? callbackUri.Address : string.Empty),
                 keywords: executor.Eid.AsLogKeywords("eid"));
 
             executor.Execute(parameters);

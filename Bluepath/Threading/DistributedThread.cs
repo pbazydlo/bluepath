@@ -41,6 +41,14 @@
 
         public ExecutorSelectionMode Mode { get; private set; }
 
+        public ExecutorState State
+        {
+            get
+            {
+                return this.executor.ExecutorState;
+            }
+        }
+
         public object Result
         {
             get

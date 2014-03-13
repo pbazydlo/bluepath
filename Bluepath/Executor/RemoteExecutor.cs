@@ -307,7 +307,7 @@
             this.Client = remoteExecutorService;
         }
 
-        protected async void Initialize(IRemoteExecutorService remoteExecutorService, MethodInfo method, ServiceUri callbackUri)
+        protected void Initialize(IRemoteExecutorService remoteExecutorService, MethodInfo method, ServiceUri callbackUri)
         {
             if (!method.IsStatic)
             {
@@ -325,7 +325,7 @@
                 this.callbacksEnabled = false;
             }
 
-            this.Eid = await this.Client.InitializeAsync(method.SerializeMethodHandle());
+            this.Eid = this.Client.Initialize(method.SerializeMethodHandle());
         }
 
         private void CleanUpJoinThread()

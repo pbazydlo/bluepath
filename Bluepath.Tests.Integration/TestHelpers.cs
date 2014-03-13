@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bluepath.Tests.Acceptance
+namespace Bluepath.Tests.Integration
 {
     public static class TestHelpers
     {
@@ -14,6 +14,7 @@ namespace Bluepath.Tests.Acceptance
         public static bool SpawnRemoteService(int port)
         {
             var process = Process.Start(new ProcessStartInfo(TestHelpers.RemoteServicePath, port.ToString()));
+            SpawnedServices.Add(process);
             System.Threading.Thread.Sleep(1000);
             return true;
         }

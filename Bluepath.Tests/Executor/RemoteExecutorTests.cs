@@ -33,11 +33,11 @@
                     Result = MethodResult
                 };
 
-            remoteServiceMock.Setup(rs => rs.InitializeAsync(It.IsAny<byte[]>())).Returns(() => Task.Run(() => Guid.NewGuid()));
+            remoteServiceMock.Setup(rs => rs.Initialize(It.IsAny<byte[]>())).Returns(() => Guid.NewGuid());
             remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
-            executor.Initialize(remoteServiceMock.Object, () => "whatever", new ServiceUri());
+            executor.Initialize(remoteServiceMock.Object, () => MethodResult, new ServiceUri());
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);
@@ -59,18 +59,18 @@
 
             var remoteServiceMock = new Mock<IRemoteExecutorService>(MockBehavior.Strict);
 
-            var methodResult = "whatever";
+            const string MethodResult = "whatever";
             var expectedResult = new RemoteExecutorServiceResult()
             {
                 ExecutorState = ServiceReferences.ExecutorState.Finished,
-                Result = methodResult
+                Result = MethodResult
             };
 
-            remoteServiceMock.Setup(rs => rs.InitializeAsync(It.IsAny<byte[]>())).Returns(() => Task.Run(() => Guid.NewGuid()));
+            remoteServiceMock.Setup(rs => rs.Initialize(It.IsAny<byte[]>())).Returns(() => Guid.NewGuid());
             remoteServiceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<ServiceUri>())).Returns(() => Task.Run(() => { }));
             remoteServiceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(expectedResult);
             var executor = new RemoteExecutor();
-            executor.Initialize(remoteServiceMock.Object, () => "whatever", new ServiceUri());
+            executor.Initialize(remoteServiceMock.Object, () => MethodResult, new ServiceUri());
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.NotStarted);
             executor.Execute(new object[0] { });
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Running);
@@ -79,7 +79,7 @@
             executor.Join();
 
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Finished);
-            executor.Result.ShouldBe(methodResult);
+            executor.Result.ShouldBe(MethodResult);
         }
 
     }

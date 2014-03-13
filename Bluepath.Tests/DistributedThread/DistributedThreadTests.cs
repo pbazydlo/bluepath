@@ -55,12 +55,12 @@ namespace Bluepath.Tests.DistributedThread
 
             Guid remoteExecutorId = Guid.Empty;
             var serviceMock = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            serviceMock.Setup(rs => rs.InitializeAsync(It.IsAny<byte[]>()))
-                .Returns(() => Task.Run(() => 
+            serviceMock.Setup(rs => rs.Initialize(It.IsAny<byte[]>()))
+                .Returns(() => 
                 {
                     remoteExecutorId = Guid.NewGuid();
                     return remoteExecutorId;
-                }));
+                });
             serviceMock.Setup(rs => rs.ExecuteAsync(It.IsAny<Guid>(), It.IsAny<object[]>(), It.IsAny<Bluepath.ServiceReferences.ServiceUri>()))
                 .Returns(() => Task.Run(() => 
                 {

@@ -48,6 +48,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Bluepath.Tests.Integration\Bluepath.Tests.Integration.csproj">
+      <Project>{4098fe5c-2aed-411e-94de-1743dfe55ffd}</Project>
+      <Name>Bluepath.Tests.Integration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Bluepath\Bluepath.csproj">
       <Project>{d75600c0-febc-4654-923a-e6544bd0810f}</Project>
       <Name>Bluepath</Name>

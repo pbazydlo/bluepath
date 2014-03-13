@@ -93,23 +93,31 @@
         /// <exception cref="ArgumentException">Thrown if method pointed by the handle is not static.</exception>
         public Guid Initialize(byte[] methodHandle)
         {
-            Console.WriteLine("Initialize called");
-            var methodFromHandle = methodHandle.DeserializeMethodHandle();
-            if (!methodFromHandle.IsStatic)
+            try
             {
-                throw new ArgumentException("Executor supports only static methods.", "methodHandle");
-            }
+                var methodFromHandle = methodHandle.DeserializeMethodHandle();
+                if (!methodFromHandle.IsStatic)
+                {
+                    throw new ArgumentException("Executor supports only static methods.", "methodHandle");
+                }
 
-            ILocalExecutor executor;
-            do
+                ILocalExecutor executor;
+                do
+                {
+                    executor = new LocalExecutor();
+                }
+                while (!Executors.TryAdd(executor.Eid, executor));
+
+                executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters));
+
+                return executor.Eid;
+            }
+            catch(Exception ex)
             {
-                executor = new LocalExecutor();
+                Console.WriteLine(ex);
+                Log.ExceptionMessage(ex);
+                throw ex;
             }
-            while (!Executors.TryAdd(executor.Eid, executor));
-
-            executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters));
-
-            return executor.Eid;
         }
 
         /// <summary>

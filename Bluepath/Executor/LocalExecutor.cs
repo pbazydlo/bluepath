@@ -16,7 +16,7 @@
         public LocalExecutor()
         {
             this.Eid = Guid.NewGuid();
-            Log.TraceMessage("Local executor created.", keywords: this.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage("Local executor created.", keywords: this.Eid.EidAsLogKeywords());
         }
 
         public TimeSpan? ElapsedTime
@@ -74,7 +74,7 @@
                 {
                     if (this.finishedRunning)
                     {
-                        Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.AsLogKeywords("eid"));
+                        Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
                         return this.result;
                     }
 
@@ -105,7 +105,7 @@
 
             this.thread = new Thread(() =>
             {
-                Log.TraceMessage("Local executor has started thread running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.AsLogKeywords("eid"));
+                Log.TraceMessage("Local executor has started thread running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.EidAsLogKeywords());
 
                 try
                 {
@@ -116,7 +116,7 @@
                 {
                     // Handle exceptions that are caused by user code
                     this.Exception = ex;
-                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged, this.Eid.AsLogKeywords("eid"));
+                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged, this.Eid.EidAsLogKeywords());
                 }
 
                 lock (this.finishedRunningLock)
@@ -125,7 +125,7 @@
                     this.timeStopped = DateTime.Now;
                 }
 
-                Log.TraceMessage("Local executor finished running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.AsLogKeywords("eid"));
+                Log.TraceMessage("Local executor finished running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.EidAsLogKeywords());
             });
 
             this.timeStarted = DateTime.Now;
@@ -134,7 +134,7 @@
 
         public void Join()
         {
-            Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.EidAsLogKeywords());
             this.thread.Join();
         }
 
@@ -146,13 +146,13 @@
         public void Initialize(Func<object[], object> function)
         {
             this.function = function;
-            Log.TraceMessage("Local executor initialized.", keywords: this.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage("Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
         }
 
         public void Dispose()
         {
             // TODO: Add executor dispose logic here
-            Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
         }
     }
 }

@@ -81,6 +81,8 @@
 
         protected class FakeRemoteExecutorService : Bluepath.Services.RemoteExecutorService, Bluepath.ServiceReferences.IRemoteExecutorService
         {
+            // This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+            // ReSharper disable once CSharpWarnings::CS1998
             public async Task<Guid> InitializeAsync(byte[] methodHandle)
             {
                 return this.Initialize(methodHandle);
@@ -91,12 +93,14 @@
                 this.Execute(eId, parameters, callbackUri != null ? new Services.ServiceUri() { Address = callbackUri.Address } : null);
             }
 
+            // This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+            // ReSharper disable once CSharpWarnings::CS1998
             public async Task ExecuteAsync(Guid eId, object[] parameters, ServiceUri callbackUri)
             {
                 this.Execute(eId, parameters, callbackUri);
             }
 
-            public RemoteExecutorServiceResult TryJoin(Guid eId)
+            public new RemoteExecutorServiceResult TryJoin(Guid eId)
             {
                 var baseResult = base.TryJoin(eId);
                 var result = new RemoteExecutorServiceResult();
@@ -109,6 +113,8 @@
                 return result;
             }
 
+            // This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+            // ReSharper disable once CSharpWarnings::CS1998
             public async Task<RemoteExecutorServiceResult> TryJoinAsync(Guid eId)
             {
                 return this.TryJoin(eId);
@@ -119,6 +125,8 @@
                 base.ExecuteCallback(eId, executeResult.Convert());
             }
 
+            // This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+            // ReSharper disable once CSharpWarnings::CS1998
             public async Task ExecuteCallbackAsync(Guid eId, RemoteExecutorServiceResult executeResult)
             {
                 this.ExecuteCallback(eId, executeResult);

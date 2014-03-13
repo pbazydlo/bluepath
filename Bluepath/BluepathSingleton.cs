@@ -8,7 +8,7 @@
 
     public class BluepathSingleton
     {
-        private static readonly object instanceLock = new object();
+        private static readonly object InstanceLock = new object();
         private static BluepathSingleton instance;
 
         private BluepathSingleton()
@@ -19,7 +19,7 @@
         {
             get
             {
-                lock (instanceLock)
+                lock (InstanceLock)
                 {
                     if (instance == null)
                     {
@@ -31,6 +31,8 @@
             }
         }
 
+        public ServiceUri CallbackUri { get; set; }
+
         public void Initialize(string ip)
         {
             var random = new Random();
@@ -39,10 +41,10 @@
             var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port);
             var callbackUri = listenUri;
 
-            // if (callbackUri.Contains("0.0.0.0"))
-            // {
-            //    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
-            // }
+            //// if (callbackUri.Contains("0.0.0.0"))
+            //// {
+            ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
+            //// }
 
             this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri));
 
@@ -72,7 +74,5 @@
                 host.Close();
             }
         }
-
-        public ServiceUri CallbackUri { get; set; }
     }
 }

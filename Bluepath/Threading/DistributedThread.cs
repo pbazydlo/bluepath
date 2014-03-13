@@ -70,7 +70,7 @@
                 case ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
                     var service = DistributedThread.RemoteServices.FirstOrDefault();
-                    if(service == null)
+                    if (service == null)
                     {
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
                     }

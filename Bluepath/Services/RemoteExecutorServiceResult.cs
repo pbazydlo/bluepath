@@ -30,6 +30,7 @@
             {
                 return this.error;
             }
+
             set
             {
                 this.error = value;

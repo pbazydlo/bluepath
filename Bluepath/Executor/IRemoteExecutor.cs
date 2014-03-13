@@ -1,7 +1,8 @@
 ﻿namespace Bluepath.Executor
 {
-    using Bluepath.ServiceReferences;
     using System;
+
+    using Bluepath.ServiceReferences;
 
     public interface IRemoteExecutor : IExecutor
     {

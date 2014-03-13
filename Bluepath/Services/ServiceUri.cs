@@ -1,5 +1,6 @@
 ﻿namespace Bluepath.Services
 {
+    using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
     using System.ServiceModel;
     using System.ServiceModel.Channels;
@@ -7,7 +8,17 @@
     [DataContract]
     public class ServiceUri
     {
-        public static Binding ServiceBinding;
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
+        // ReSharper disable once InconsistentNaming
+        private static Binding serviceBinding;
+
+        public static Binding ServiceBinding
+        {
+            get
+            {
+                return ServiceUri.serviceBinding;
+            }
+        }
 
         [DataMember]
         public string Address { get; set; }

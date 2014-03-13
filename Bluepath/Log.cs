@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using System.Runtime.CompilerServices;
 
     public class Log
@@ -32,9 +33,10 @@
             IDictionary<string, string> keywords = null,
             [CallerMemberName] string memberName = "")
         {
-
+            // TODO: Implement logging
         }
 
+        [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         [Conditional("DEBUG")]
         public static void TraceMessage(
             string message,
@@ -47,12 +49,18 @@
 #endif
             )
         {
-
+            // TODO: Implement logging
         }
     }
 
+    [SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1204:StaticElementsMustAppearBeforeInstanceElements", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "Reviewed. Suppression is OK here.")]
     public static class LogExtensions
     {
+        public static Dictionary<string, string> EidAsLogKeywords(this Guid guid)
+        {
+            return guid.AsLogKeywords("eid");
+        }
+
         public static Dictionary<string, string> AsLogKeywords(this Guid guid, string label)
         {
             var d = new Dictionary<string, string>();

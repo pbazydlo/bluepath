@@ -81,7 +81,8 @@
                 {
                     throw new ArgumentException("executor", "Given remote executor already exists.");
                 }
-            } while (!RemoteExecutors.TryAdd(executor.Eid, executor));
+            }
+            while (!RemoteExecutors.TryAdd(executor.Eid, executor));
         }
 
         /// <summary>
@@ -123,12 +124,13 @@
         {
             var executor = GetExecutor(eid);
 
-            Log.TraceMessage(string.Format(
-                "Starting local executor. Upon completion callback will{0} be sent{1}{2}.",
-                callbackUri != null ? string.Empty : " not",
-                callbackUri != null ? " to " : string.Empty,
-                callbackUri != null ? callbackUri.Address : string.Empty),
-                keywords: executor.Eid.AsLogKeywords("eid"));
+            Log.TraceMessage(
+                string.Format(
+                        "Starting local executor. Upon completion callback will{0} be sent{1}{2}.",
+                        callbackUri != null ? string.Empty : " not",
+                        callbackUri != null ? " to " : string.Empty,
+                        callbackUri != null ? callbackUri.Address : string.Empty),
+                        keywords: executor.Eid.EidAsLogKeywords());
 
             executor.Execute(parameters);
 
@@ -138,14 +140,14 @@
                 {
                     using (var client =
                         new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
-                            ServiceUri.ServiceBinding,
+                            ServiceUri.ServiceBinding, /* TODO: This value is never assigned! */
                             callbackUri.ToEndpointAddress()))
                     {
                         // Join on local executor doesn't throw exceptions by design
                         // Exception caused by user code (if any) can be accessed using Exception property
                         executor.Join();
 
-                        Log.TraceMessage("Sending callback with result.", keywords: executor.Eid.AsLogKeywords("eid"));
+                        Log.TraceMessage("Sending callback with result.", keywords: executor.Eid.EidAsLogKeywords());
 
                         var result = new ServiceReferences.RemoteExecutorServiceResult
                         {

@@ -67,7 +67,7 @@
         /// Call Join on remote executor and get result if available. This method is blocking.
         /// TODO: async, return Task?, callback with result instead of calling TryJoin?
         /// </summary>
-        /// <exception cref="RemoteException">Rethrows exception that occured on the remote executor.</exception>
+        /// <exception cref="RemoteException">Rethrows exception that occurred on the remote executor.</exception>
         /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
         public void Join()
         {
@@ -123,12 +123,12 @@
                                 }
                                 catch (TimeoutException)
                                 {
-                                    Log.TraceMessage(string.Format("Remote TryJoinAsync timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.AsLogKeywords("eid"));
+                                    Log.TraceMessage(string.Format("Remote TryJoinAsync timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
                                 }
                                 catch (Exception ex)
                                 {
                                     joinThreadException = ex;
-                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoinAsync with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.AsLogKeywords("eid"));
+                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoinAsync with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
                                     
                                     break;
                                 }
@@ -273,6 +273,9 @@
         /// <summary>
         /// This method is invoked before calling Initialize on remote executor.
         /// </summary>
+        /// <param name="remoteExecutorService">
+        /// Client for remote executor service.
+        /// </param>
         protected virtual void Initialize(IRemoteExecutorService remoteExecutorService)
         {
             this.Client = remoteExecutorService;
@@ -286,7 +289,7 @@
             }
 
             this.Initialize(remoteExecutorService);
-            if(callbackUri != null)
+            if (callbackUri != null)
             {
                 this.callbackUri = callbackUri;
                 this.callbacksEnabled = true;

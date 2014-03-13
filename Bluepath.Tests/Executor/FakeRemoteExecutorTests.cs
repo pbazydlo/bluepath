@@ -85,15 +85,8 @@
 
                 if (ex is RemoteException)
                 {
-                    if (ex.InnerException is TargetInvocationException)
-                    {
-                        // RemoteException -> TargetInvocationException -> Exception("test")
-                        ex.InnerException.InnerException.Message.ShouldBe("test");
-                    }
-                    else
-                    {
-                        Assert.Fail(string.Format("TargetInvocationException was expected but another ('{0}') was thrown on remote site.", ex.InnerException.GetType()));
-                    }
+                    ex.InnerException.Message.Contains("System.Reflection.TargetInvocationException").ShouldBe(true);
+                    ex.InnerException.Message.Contains("System.Exception: test").ShouldBe(true);
                 }
                 else
                 {

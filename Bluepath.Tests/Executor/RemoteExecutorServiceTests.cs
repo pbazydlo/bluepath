@@ -59,7 +59,7 @@
             var result = service.TryJoin(eid);
 
             result.ExecutorState.ShouldBe(ExecutorState.Faulted);
-            result.Error.InnerException.Message.ShouldBe("test");
+            result.Error.Message.Contains("System.Exception: test").ShouldBe(true);
             result.ElapsedTime.HasValue.ShouldBe(true);
         }
     }

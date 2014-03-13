@@ -202,7 +202,6 @@
                     DisposeExecutor(executor);
                     break;
                 case ExecutorState.Faulted:
-                    // TODO: Serialize exception to string
                     result.Error = executor.Exception;
 
                     DisposeExecutor(executor);

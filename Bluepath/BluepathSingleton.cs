@@ -65,6 +65,7 @@
                 // one endpoint per base address for each service contract implemented
                 // by the service.
                 host.Open();
+                ServiceUri.ServiceBinding = host.Description.Endpoints[0].Binding;
 
                 Console.WriteLine("The service is ready at {0}", listenUri);
                 Console.WriteLine("Binding {0}", host.Description.Endpoints[0].Binding.GetType().FullName);

@@ -18,6 +18,10 @@
             {
                 return ServiceUri.serviceBinding;
             }
+            set
+            {
+                ServiceUri.serviceBinding = value;
+            }
         }
 
         [DataMember]

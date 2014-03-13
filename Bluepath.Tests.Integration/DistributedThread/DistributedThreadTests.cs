@@ -17,6 +17,30 @@ namespace Bluepath.Tests.Integration.DistributedThread
         }
 
         [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodWithCallback()
+        {
+            var myThread = InitializeWithSubtractFunc(externalRunner: true);
+            string ip = "127.0.0.1";
+            int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
+            var serviceThread = new System.Threading.Thread(() =>
+            {
+                BluepathSingleton.Instance.Initialize(ip, port);
+            });
+            serviceThread.Start();
+            Thread.Sleep(1000);
+
+            myThread.Start(new object[] { new object[] { 5, 3 } });
+            var joinThread = new System.Threading.Thread(() =>
+            {
+                myThread.Join();
+            });
+            joinThread.Start();
+            joinThread.Join();//.ShouldBe(true);
+
+            ((int)myThread.Result).ShouldBe(2);
+        }
+
+        [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoin()
         {
             var myThread = InitializeWithSubtractFunc();

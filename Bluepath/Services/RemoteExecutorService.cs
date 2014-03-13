@@ -201,6 +201,7 @@
                                  ExecutorState = executor.ExecutorState
                              };
 
+            // TODO: Should dispose on request?
             switch (executor.ExecutorState)
             {
                 case ExecutorState.Finished:

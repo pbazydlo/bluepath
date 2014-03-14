@@ -9,11 +9,26 @@ namespace Bluepath.Tests.Integration.DistributedThread
     public class DistributedThreadTests
     {
         private static readonly int joinWaitTime = 2000;
+        private static object testLock = new object();
+        private static Thread serviceThread = null;
+
+        [TestInitialize]
+        public void TestSetup()
+        {
+            Monitor.Enter(DistributedThreadTests.testLock);
+        }
 
         [TestCleanup]
         public void CleanUp()
         {
+            if(DistributedThreadTests.serviceThread != null)
+            {
+                DistributedThreadTests.serviceThread.Abort();
+                DistributedThreadTests.serviceThread = null;
+            }
+
             TestHelpers.KillAllServices();
+            Monitor.Exit(DistributedThreadTests.testLock);
         }
 
         [TestMethod]
@@ -22,7 +37,7 @@ namespace Bluepath.Tests.Integration.DistributedThread
             var myThread = InitializeWithSubtractFunc(externalRunner: true);
             string ip = "127.0.0.1";
             int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
-            var serviceThread = new System.Threading.Thread(() =>
+            serviceThread = new System.Threading.Thread(() =>
             {
                 BluepathSingleton.Instance.Initialize(ip, port);
             });

@@ -46,7 +46,7 @@
             ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
             //// }
 
-            this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri));
+            
 
             // Create the ServiceHost.
             using (ServiceHost host = new ServiceHost(typeof(RemoteExecutorService), new Uri(listenUri)))
@@ -65,7 +65,7 @@
                 // one endpoint per base address for each service contract implemented
                 // by the service.
                 host.Open();
-                ServiceUri.ServiceBinding = host.Description.Endpoints[0].Binding;
+                this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), host.Description.Endpoints[0].Binding);
 
                 Console.WriteLine("The service is ready at {0}", listenUri);
                 Console.WriteLine("Binding {0}", host.Description.Endpoints[0].Binding.GetType().FullName);

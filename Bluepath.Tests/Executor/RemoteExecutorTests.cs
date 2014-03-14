@@ -23,7 +23,6 @@
         [TestMethod]
         public void RemoteExecutorJoinWaitsForPulse()
         {
-            
             var remoteServiceMock = new Mock<IRemoteExecutorService>(MockBehavior.Strict);
             
             const string MethodResult = "whatever";
@@ -56,7 +55,6 @@
         [TestMethod]
         public void RemoteExecutorJoinsAfterPulse()
         {
-
             var remoteServiceMock = new Mock<IRemoteExecutorService>(MockBehavior.Strict);
 
             const string MethodResult = "whatever";
@@ -81,6 +79,5 @@
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Finished);
             executor.Result.ShouldBe(MethodResult);
         }
-
     }
 }

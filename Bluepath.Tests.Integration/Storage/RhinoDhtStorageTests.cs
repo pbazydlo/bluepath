@@ -1,12 +1,17 @@
-﻿using System;
-using Shouldly;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Bluepath.Storage;
-using Assert = NUnit.Framework.Assert;
-using NUnit.Framework;
-
-namespace Bluepath.Tests.Integration.Storage
+﻿namespace Bluepath.Tests.Integration.Storage
 {
+    using System;
+
+    using Bluepath.Storage;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using NUnit.Framework;
+
+    using Shouldly;
+
+    using Assert = NUnit.Framework.Assert;
+
     [TestClass]
     public class RhinoDhtStorageTests
     {

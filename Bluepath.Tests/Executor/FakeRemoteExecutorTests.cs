@@ -1,7 +1,6 @@
 ﻿namespace Bluepath.Tests.Executor
 {
     using System;
-    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -23,7 +22,7 @@
         [TestMethod]
         public void FakeRemoteExecutorJoinTest()
         {
-            const int delayMilliseconds = 50;
+            const int DelayMilliseconds = 50;
             var testMethod = new Func<int, int, int, int>((a, b, delay) => { Thread.Sleep(delay); return a + b; });
 
             testMethod.Method.IsStatic.ShouldBe(true);
@@ -32,7 +31,7 @@
             executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
             executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
-            executor.Execute(new object[] { 1, 2, delayMilliseconds });
+            executor.Execute(new object[] { 1, 2, DelayMilliseconds });
             executor.ExecutorState.ShouldBe(ExecutorState.Running);
 
             executor.Join();
@@ -40,7 +39,7 @@
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
-            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMilliseconds));
+            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
         }
 
         [TestMethod]

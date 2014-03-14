@@ -1,8 +1,8 @@
 ﻿namespace Bluepath.SampleRunner
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             int port = -1;
             string ip = "127.0.0.1";

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Tests.Integration
+﻿namespace Bluepath.Tests.Integration
 {
+    using System.Collections.Generic;
+    using System.Diagnostics;
+
     public static class TestHelpers
     {
         private static readonly string RemoteServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";

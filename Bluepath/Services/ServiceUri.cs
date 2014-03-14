@@ -18,7 +18,7 @@
         {
             get
             {
-                switch(this.BindingType)
+                switch (this.BindingType)
                 {
                     case Services.BindingType.BasicHttpBinding:
                         return new BasicHttpBinding();
@@ -30,19 +30,20 @@
 
                 return null;
             }
+
             set
             {
-                if(value is BasicHttpBinding)
+                if (value is BasicHttpBinding)
                 {
                     this.BindingType = Services.BindingType.BasicHttpBinding;
                 }
 
-                if(value is BasicHttpContextBinding)
+                if (value is BasicHttpContextBinding)
                 {
                     this.BindingType = Services.BindingType.BasicHttpContextBinding;
                 }
 
-                if(value is BasicHttpsBinding)
+                if (value is BasicHttpsBinding)
                 {
                     this.BindingType = Services.BindingType.BasicHttpsBinding;
                 }

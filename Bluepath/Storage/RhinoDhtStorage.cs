@@ -1,16 +1,15 @@
-﻿using Rhino.DistributedHashTable.Client;
-using Rhino.DistributedHashTable.Client.Pooling;
-using Rhino.DistributedHashTable.Hosting;
-using Rhino.PersistentHashTable;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bluepath.Extensions;
-
-namespace Bluepath.Storage
+﻿namespace Bluepath.Storage
 {
+    using System;
+    using System.Linq;
+
+    using Bluepath.Extensions;
+
+    using Rhino.DistributedHashTable.Client;
+    using Rhino.DistributedHashTable.Client.Pooling;
+    using Rhino.DistributedHashTable.Hosting;
+    using Rhino.PersistentHashTable;
+
     public class RhinoDhtStorage : IStorage
     {
         private Uri masterUri;
@@ -79,7 +78,7 @@ namespace Bluepath.Storage
                 throw new ArgumentOutOfRangeException("key", string.Format("Value with given key ({0}) doesn't exist in the storage!", key));
             }
 
-            var maxVersionNo = values[0].Max(v=>v.Version.Number);
+            var maxVersionNo = values[0].Max(v => v.Version.Number);
             var mostRecentValue = values[0].First(v => v.Version.Number == maxVersionNo);
             return mostRecentValue.Data.Deserialize<T>();
         }

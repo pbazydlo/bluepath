@@ -108,22 +108,12 @@
                 this.finishedRunning = false;
             }
 
-            if (this.communicationObjectParameterIndex.HasValue && this.expectedNumberOfParameters.HasValue)
+            if (parameters == null)
             {
-                var bluepathCommunicationFrameworkObject = new BluepathCommunicationFramework();
-
-                if (parameters.Length == this.expectedNumberOfParameters.Value)
-                {
-                    parameters[this.communicationObjectParameterIndex.Value] = bluepathCommunicationFrameworkObject;
-                }
-                else if (parameters.Length == this.expectedNumberOfParameters.Value - 1)
-                {
-                    var parametersBeforeCommunicationObject = parameters.Take(this.communicationObjectParameterIndex.Value);
-                    var parametersAfterCommunicationObject = parameters.Skip(this.communicationObjectParameterIndex.Value).Take(this.expectedNumberOfParameters.Value - this.communicationObjectParameterIndex.Value - 1);
-
-                    parameters = parametersBeforeCommunicationObject.Union(new object[] { bluepathCommunicationFrameworkObject }).Union(parametersAfterCommunicationObject).ToArray();
-                }
+                parameters = new object[0];
             }
+
+            parameters = this.InjectCommunicationFrameworkObject(parameters);
 
             this.thread = new Thread(() =>
             {
@@ -195,6 +185,30 @@
         {
             // TODO: Add executor dispose logic here
             Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
+        }
+
+        private object[] InjectCommunicationFrameworkObject(object[] parameters)
+        {
+            if (!this.communicationObjectParameterIndex.HasValue || !this.expectedNumberOfParameters.HasValue)
+            {
+                return parameters;
+            }
+
+            var bluepathCommunicationFrameworkObject = new BluepathCommunicationFramework();
+
+            if (parameters.Length == this.expectedNumberOfParameters.Value)
+            {
+                parameters[this.communicationObjectParameterIndex.Value] = bluepathCommunicationFrameworkObject;
+            }
+            else if (parameters.Length == this.expectedNumberOfParameters.Value - 1)
+            {
+                var parametersBeforeCommunicationObject = parameters.Take(this.communicationObjectParameterIndex.Value);
+                var parametersAfterCommunicationObject = parameters.Skip(this.communicationObjectParameterIndex.Value).Take(this.expectedNumberOfParameters.Value - this.communicationObjectParameterIndex.Value - 1);
+
+                parameters = parametersBeforeCommunicationObject.Union(new object[] { bluepathCommunicationFrameworkObject }).Union(parametersAfterCommunicationObject).ToArray();
+            }
+
+            return parameters;
         }
     }
 }

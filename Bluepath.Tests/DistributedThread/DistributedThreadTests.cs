@@ -1,13 +1,15 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
-using Shouldly;
-using Bluepath.Threading;
-using Moq;
-using System.Threading.Tasks;
-
-namespace Bluepath.Tests.DistributedThread
+﻿namespace Bluepath.Tests.DistributedThread
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using Moq;
+
+    using Shouldly;
+
     [TestClass]
     public class DistributedThreadTests
     {
@@ -66,7 +68,7 @@ namespace Bluepath.Tests.DistributedThread
                 {
                     Services.RemoteExecutorService.GetRemoteExecutor(remoteExecutorId).Pulse(new ServiceReferences.RemoteExecutorServiceResult()
                         {
-                            ExecutorState=ServiceReferences.ExecutorState.Finished,
+                            ExecutorState = ServiceReferences.ExecutorState.Finished,
                             Result = 6
                         });
                 }));

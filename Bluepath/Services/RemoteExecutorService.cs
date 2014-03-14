@@ -2,7 +2,11 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Linq;
+    using System.Reflection;
     using System.Threading;
+
+    using Bluepath.Framework;
 
     using global::Bluepath.Executor;
 
@@ -108,16 +112,37 @@
                 }
                 while (!Executors.TryAdd(executor.Eid, executor));
 
-                executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters));
+                this.InitializeLocalExecutor(executor, methodFromHandle);
 
                 return executor.Eid;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
                 Log.ExceptionMessage(ex);
                 throw ex;
             }
+        }
+
+        private void InitializeLocalExecutor(ILocalExecutor executor, MethodBase methodFromHandle)
+        {
+            // Check if method expects IBluepathCommunicationFramework object
+            var methodParameters = methodFromHandle.GetParameters();
+            var communicationFrameworkObjectType = typeof(IBluepathCommunicationFramework);
+            int? parameterIndex = -1;
+            var parameterFound = false;
+
+            foreach (var parameter in methodParameters)
+            {
+                parameterIndex++;
+                if (parameter.ParameterType == communicationFrameworkObjectType)
+                {
+                    parameterFound = true;
+                    break;
+                }
+            }
+
+            executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters), methodParameters.Length, parameterFound ? parameterIndex : null);
         }
 
         /// <summary>

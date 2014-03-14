@@ -1,7 +1,10 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
+    using System.Linq;
     using System.Threading;
+
+    using Bluepath.Framework;
 
     public class LocalExecutor : ILocalExecutor
     {
@@ -12,6 +15,8 @@
         private bool finishedRunning;
         private DateTime? timeStarted;
         private DateTime? timeStopped;
+        private int? expectedNumberOfParameters;
+        private int? communicationObjectParameterIndex;
 
         public LocalExecutor()
         {
@@ -103,6 +108,23 @@
                 this.finishedRunning = false;
             }
 
+            if (this.communicationObjectParameterIndex.HasValue && this.expectedNumberOfParameters.HasValue)
+            {
+                var bluepathCommunicationFrameworkObject = new BluepathCommunicationFramework();
+
+                if (parameters.Length == this.expectedNumberOfParameters.Value)
+                {
+                    parameters[this.communicationObjectParameterIndex.Value] = bluepathCommunicationFrameworkObject;
+                }
+                else if (parameters.Length == this.expectedNumberOfParameters.Value - 1)
+                {
+                    var parametersBeforeCommunicationObject = parameters.Take(this.communicationObjectParameterIndex.Value);
+                    var parametersAfterCommunicationObject = parameters.Skip(this.communicationObjectParameterIndex.Value).Take(this.expectedNumberOfParameters.Value - this.communicationObjectParameterIndex.Value - 1);
+
+                    parameters = parametersBeforeCommunicationObject.Union(new object[] { bluepathCommunicationFrameworkObject }).Union(parametersAfterCommunicationObject).ToArray();
+                }
+            }
+
             this.thread = new Thread(() =>
             {
                 Log.TraceMessage("Local executor has started thread running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.EidAsLogKeywords());
@@ -143,12 +165,12 @@
         {
             var timer = new Timer(
                 _ =>
+                {
+                    if (!this.finishedRunning)
                     {
-                        if (!this.finishedRunning)
-                        {
-                            this.thread.Abort();
-                        }
-                    },
+                        this.thread.Abort();
+                    }
+                },
                 null,
                 timeout.Milliseconds,
                 Timeout.Infinite);
@@ -161,9 +183,11 @@
             return this.Result;
         }
 
-        public void Initialize(Func<object[], object> function)
+        public void Initialize(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)
         {
             this.function = function;
+            this.expectedNumberOfParameters = expectedNumberOfParameters;
+            this.communicationObjectParameterIndex = communicationObjectParameterIndex;
             Log.TraceMessage("Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
         }
 

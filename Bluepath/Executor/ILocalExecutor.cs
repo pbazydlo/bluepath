@@ -8,6 +8,6 @@
 
         bool IsResultAvailable { get; }
 
-        void Initialize(Func<object[], object> function);
+        void Initialize(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null);
     }
 }

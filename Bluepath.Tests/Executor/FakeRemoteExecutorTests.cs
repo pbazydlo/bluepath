@@ -8,6 +8,7 @@
     using Bluepath.Exceptions;
     using Bluepath.Executor;
     using Bluepath.Extensions;
+    using Bluepath.Framework;
     using Bluepath.ServiceReferences;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -40,6 +41,38 @@
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
             executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMilliseconds));
+        }
+
+        [TestMethod]
+        public void FakeRemoteExecutorCanUseCommunicationFrameworkWithOneMissingParameterTest()
+        {
+            var testMethod = new Func<IBluepathCommunicationFramework, int, int>((framework, a) => framework.TestIncrementMethod(a));
+
+            testMethod.Method.IsStatic.ShouldBe(true);
+
+            var executor = new RemoteExecutor();
+            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Execute(new object[] { 1 });
+            executor.Join();
+
+            var result = executor.GetResult();
+            result.ShouldBe(2); // inc(1)
+        }
+
+        [TestMethod]
+        public void FakeRemoteExecutorCanUseCommunicationFrameworkSubsitutingParameterTest()
+        {
+            var testMethod = new Func<IBluepathCommunicationFramework, int, int>((framework, a) => framework.TestIncrementMethod(a));
+
+            testMethod.Method.IsStatic.ShouldBe(true);
+
+            var executor = new RemoteExecutor();
+            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Execute(new object[] { null, 1 });
+            executor.Join();
+
+            var result = executor.GetResult();
+            result.ShouldBe(2); // inc(1)
         }
 
         [TestMethod]

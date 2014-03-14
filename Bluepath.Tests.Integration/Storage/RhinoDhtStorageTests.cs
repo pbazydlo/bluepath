@@ -11,21 +11,51 @@
     using Shouldly;
 
     using Assert = NUnit.Framework.Assert;
+    using System.Collections.Generic;
 
     [TestClass]
     public class RhinoDhtStorageTests
     {
+        private static object singleTestLock = new object();
+        
+        [TestInitialize]
+        public void Init()
+        {
+            System.Threading.Monitor.Enter(singleTestLock);
+            List<string> directories = new List<string>()
+            {
+                "master.esent",
+                "node.data.esent",
+                "node.queue.esent"
+            };
+
+            foreach (var directory in directories)
+            {
+                if (System.IO.Directory.Exists(directory))
+                {
+                    System.IO.Directory.Delete(directory, true);
+                }
+            }
+        }
+
+        [TestCleanup]
+        public void CleanUp()
+        {
+            System.Threading.Monitor.Exit(singleTestLock);
+        }
+
         [TestMethod]
         public void RhinoDhtStorageStoresAndRetrievesObjects()
         {
             var objectToStore = "my object";
             var objectName = "name";
-            var storage = new RhinoDhtStorage();
-            
-            storage.Store(objectName, objectToStore);
-            string retrievedObject = storage.Retrieve<string>(objectName);
+            using (var storage = new RhinoDhtStorage())
+            {
+                storage.Store(objectName, objectToStore);
+                string retrievedObject = storage.Retrieve<string>(objectName);
 
-            retrievedObject.ShouldBe(objectToStore);
+                retrievedObject.ShouldBe(objectToStore);
+            }
         }
 
         [TestMethod]
@@ -33,10 +63,11 @@
         {
             var objectToStore = "my object";
             var objectName = "name";
-            var storage = new RhinoDhtStorage();
-
-            storage.Store(objectName, objectToStore);
-            Assert.That(() => storage.Store(objectName, objectToStore), Throws.Exception);
+            using (var storage = new RhinoDhtStorage())
+            {
+                storage.Store(objectName, objectToStore);
+                Assert.That(() => storage.Store(objectName, objectToStore), Throws.Exception);
+            }
         }
 
         [TestMethod]
@@ -44,18 +75,20 @@
         {
             var objectToStore = "my object";
             var objectName = "name";
-            var storage = new RhinoDhtStorage();
-
-            Assert.That(() => storage.Update(objectName, objectToStore), Throws.Exception);
+            using (var storage = new RhinoDhtStorage())
+            {
+                Assert.That(() => storage.Update(objectName, objectToStore), Throws.Exception);
+            }
         }
 
         [TestMethod]
         public void RhinoDhtStorageThrowsArgumentOutOfRangeExceptionWhenTryingToGetNotExistingObject()
         {
             var objectName = "name2";
-            var storage = new RhinoDhtStorage();
-
-            Assert.That(() => storage.Retrieve<string>(objectName), Throws.InstanceOf<ArgumentOutOfRangeException>());
+            using (var storage = new RhinoDhtStorage())
+            {
+                Assert.That(() => storage.Retrieve<string>(objectName), Throws.InstanceOf<ArgumentOutOfRangeException>());
+            }
         }
     }
 }

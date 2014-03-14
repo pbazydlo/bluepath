@@ -10,7 +10,7 @@
     using Rhino.DistributedHashTable.Hosting;
     using Rhino.PersistentHashTable;
 
-    public class RhinoDhtStorage : IStorage
+    public class RhinoDhtStorage : IStorage, IDisposable
     {
         private Uri masterUri;
         private bool isMaster;
@@ -24,7 +24,7 @@
         {
             this.masterUri = new Uri(string.Format("rhino.dht://{0}:{1}", masterIp, masterPort));
             this.isMaster = isMaster;
-            if(this.isMaster)
+            if (this.isMaster)
             {
                 this.masterHost = new DistributedHashTableMasterHost();
                 this.masterHost.Start();
@@ -36,6 +36,55 @@
             }
         }
 
+        public void Store<T>(string key, T value)
+        {
+            try
+            {
+                this.Retrieve<object>(key);
+                throw new ArgumentException(string.Format("Given key ({0}) already exists!", key), "key");
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                this.InternalStore(key, value.Serialize());
+            }
+        }
+
+        public void StoreOrUpdate<T>(string key, T value)
+        {
+            this.InternalStore(key, value.Serialize());
+        }
+
+        public void Update<T>(string key, T newValue)
+        {
+            var values = this.InternalRetrieve(key);
+            var parentVersions = values.Select(v => v.Version)
+                .OrderBy(v => v.Number).ToArray();
+            this.InternalStore(key, newValue.Serialize(), parentVersions);
+        }
+
+        public T Retrieve<T>(string key)
+        {
+            var values = InternalRetrieve(key);
+            var maxVersionNo = values.Max(v => v.Version.Number);
+            var mostRecentValue = values.First(v => v.Version.Number == maxVersionNo);
+            return mostRecentValue.Data.Deserialize<T>();
+        }
+
+        private Value[] InternalRetrieve(string key)
+        {
+            var values = this.dht.Get(new GetRequest()
+            {
+                Key = key
+            });
+
+            if (values.Length == 0 || values[0].Length == 0)
+            {
+                throw new ArgumentOutOfRangeException("key", string.Format("Value with given key ({0}) doesn't exist in the storage!", key));
+            }
+
+            return values[0];
+        }
+
         private void InitializeStorageHost()
         {
             this.storageHost = new DistributedHashTableStorageHost(this.masterUri);
@@ -44,43 +93,27 @@
             this.dht = new DistributedHashTable(this.masterClient, new DefaultConnectionPool());
         }
 
-        public void Store<T>(string key, T value)
+        private void InternalStore(string key, byte[] value, ValueVersion[] parentVersions = null)
         {
-            // TODO: Should throw exception if object exists
-            this.StoreOrUpdate(key, value);
-        }
-
-        public void StoreOrUpdate<T>(string key, T value)
-        {
-            
             this.dht.Put(new PutRequest()
             {
                 Key = key,
-                Bytes = value.Serialize(),
-                ParentVersions = new ValueVersion[0]
+                Bytes = value,
+                ParentVersions = parentVersions ?? new ValueVersion[0]
             });
         }
 
-        public void Update<T>(string key, T newValue)
+        public void Dispose()
         {
-            // TODO: Should throw exception if object doesn't exist
-            this.StoreOrUpdate(key, newValue);
-        }
-
-        public T Retrieve<T>(string key)
-        {
-            var values = this.dht.Get(new GetRequest()
-                {
-                    Key = key
-                });
-            if(values.Length==0)
+            if (this.masterHost != null)
             {
-                throw new ArgumentOutOfRangeException("key", string.Format("Value with given key ({0}) doesn't exist in the storage!", key));
+                this.masterHost.Dispose();
             }
 
-            var maxVersionNo = values[0].Max(v => v.Version.Number);
-            var mostRecentValue = values[0].First(v => v.Version.Number == maxVersionNo);
-            return mostRecentValue.Data.Deserialize<T>();
+            if (this.storageHost != null)
+            {
+                this.storageHost.Dispose();
+            }
         }
     }
 }

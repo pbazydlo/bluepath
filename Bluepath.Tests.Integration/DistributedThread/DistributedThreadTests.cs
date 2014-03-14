@@ -36,9 +36,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithCallback()
         {
-            var myThread = InitializeWithSubtractFunc(externalRunner: true);
+            var myThread = InitializeWithSubtractFunc(23004, externalRunner: true);
             string ip = "127.0.0.1";
-            int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
+            int port = 24000;
             serviceThread = new System.Threading.Thread(() =>
             {
                 BluepathSingleton.Instance.Initialize(ip, port);
@@ -57,7 +57,7 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoin()
         {
-            var myThread = InitializeWithSubtractFunc();
+            var myThread = InitializeWithSubtractFunc(23003);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -73,7 +73,7 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoinOnExternalRunner()
         {
-            var myThread = InitializeWithSubtractFunc(externalRunner: true);
+            var myThread = InitializeWithSubtractFunc(23002, externalRunner: true);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -89,7 +89,7 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfIncorrectInvokation()
         {
-            var myThread = InitializeWithSubtractFunc();
+            var myThread = InitializeWithSubtractFunc(23001);
 
             myThread.Start(new object[] { 5, 3 });
             var joinThread = new System.Threading.Thread(() =>
@@ -105,7 +105,7 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfFunctionError()
         {
-            var myThread = InitializeWithExceptionThrowingFunc();
+            var myThread = InitializeWithExceptionThrowingFunc(23000);
 
             myThread.Start(new object[0]);
             var joinThread = new System.Threading.Thread(() =>
@@ -118,7 +118,7 @@
             myThread.State.ShouldBe(Executor.ExecutorState.Faulted);
         }
 
-        private static Threading.DistributedThread InitializeWithSubtractFunc(bool externalRunner = false)
+        private static Threading.DistributedThread InitializeWithSubtractFunc(int port, bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -127,15 +127,15 @@
 
             if (!externalRunner)
             {
-                return Initialize(testFunc);
+                return Initialize(testFunc, port);
             }
             else
             {
-                return InitializeWithExternalRunner(testFunc);
+                return InitializeWithExternalRunner(testFunc, port);
             }
         }
 
-        private static Threading.DistributedThread InitializeWithExceptionThrowingFunc(bool externalRunner = false)
+        private static Threading.DistributedThread InitializeWithExceptionThrowingFunc(int port, bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -144,18 +144,17 @@
 
             if (!externalRunner)
             {
-                return Initialize(testFunc);
+                return Initialize(testFunc, port);
             }
             else
             {
-                return InitializeWithExternalRunner(testFunc);
+                return InitializeWithExternalRunner(testFunc, port);
             }
         }
 
-        private static Threading.DistributedThread Initialize(Func<object[], object> testFunc)
+        private static Threading.DistributedThread Initialize(Func<object[], object> testFunc, int port)
         {
             string ip = "127.0.0.1";
-            int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
             var serviceThread = new System.Threading.Thread(() =>
             {
                 BluepathSingleton.Instance.Initialize(ip, port);
@@ -175,10 +174,9 @@
             return myThread;
         }
 
-        private static Threading.DistributedThread InitializeWithExternalRunner(Func<object[], object> testFunc)
+        private static Threading.DistributedThread InitializeWithExternalRunner(Func<object[], object> testFunc, int port)
         {
             string ip = "127.0.0.1";
-            int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
             TestHelpers.SpawnRemoteService(port);
             Thread.Sleep(3000);
             BluepathSingleton.Instance.CallbackUri = null;

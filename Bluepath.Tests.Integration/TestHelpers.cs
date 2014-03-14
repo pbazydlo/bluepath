@@ -2,6 +2,8 @@
 {
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
+    using System.Threading;
 
     public static class TestHelpers
     {
@@ -14,6 +16,24 @@
             processStartInfo.RedirectStandardOutput = true;
             processStartInfo.UseShellExecute = false;
             var process = Process.Start(processStartInfo);
+            
+            var t = new Thread(
+                () =>
+                    {
+                        var stream = process.StandardOutput.BaseStream;
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var line = default(string);
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                Debug.WriteLine(string.Format("CONSOLE[{1}]> {0}", line, process.Id));
+                            }
+
+                            Debug.WriteLine(string.Format("CONSOLE[{0}]> (EOF)", process.Id));
+                        }
+                    });
+            t.Start();
+
             SpawnedServices.Add(process);
             System.Threading.Thread.Sleep(1000);
             return true;

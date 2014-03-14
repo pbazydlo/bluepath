@@ -19,6 +19,8 @@
 
         public abstract void Join();
 
+        public abstract void Dispose();
+
         public object GetResult()
         {
             return this.Result;
@@ -85,7 +87,5 @@
         }
 
         protected abstract void InitializeFromMethod(MethodBase method);
-
-        public abstract void Dispose();
     }
 }

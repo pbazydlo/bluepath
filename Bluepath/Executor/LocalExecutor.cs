@@ -194,7 +194,7 @@
                 return parameters;
             }
 
-            var bluepathCommunicationFrameworkObject = new BluepathCommunicationFramework();
+            var bluepathCommunicationFrameworkObject = new BluepathCommunicationFramework(this);
 
             if (parameters.Length == this.expectedNumberOfParameters.Value)
             {

@@ -1,7 +1,13 @@
 ﻿namespace Bluepath.Framework
 {
+    using System;
+
+    using Bluepath.Storage;
+
     public interface IBluepathCommunicationFramework
     {
-        int TestIncrementMethod(int a);
+        Guid ProcessEid { get; }
+
+        IStorage Storage { get; }
     }
 }

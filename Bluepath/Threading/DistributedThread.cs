@@ -8,18 +8,11 @@
     using Bluepath.Executor;
     using Bluepath.Extensions;
 
-    /// <summary>
-    /// TODO: Description, Remote Execution, Choosing executing node
-    /// </summary>
-    public class DistributedThread<TFunc>
+    public class DistributedThread
     {
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
         // ReSharper disable once InconsistentNaming
         private static readonly List<ServiceReferences.IRemoteExecutorService> remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
-
-        private IExecutor executor;
-
-        private TFunc function;
 
         private DistributedThread()
         {
@@ -39,7 +32,26 @@
             }
         }
 
-        public ExecutorSelectionMode Mode { get; private set; }
+        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        {
+            return DistributedThread<TFunc>.Create(function, mode);
+        }
+    }
+
+    /// <summary>
+    /// TODO: Description, Remote Execution, Choosing executing node
+    /// </summary>
+    public class DistributedThread<TFunc>
+    {
+        private IExecutor executor;
+
+        private TFunc function;
+
+        private DistributedThread()
+        {
+        }
+
+        public DistributedThread.ExecutorSelectionMode Mode { get; private set; }
 
         public ExecutorState State
         {
@@ -57,7 +69,7 @@
             }
         }
 
-        public static DistributedThread<TFunc> Create(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create(TFunc function, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
         {
             return new DistributedThread<TFunc>()
             {
@@ -70,14 +82,14 @@
         {
             switch (this.Mode)
             {
-                case ExecutorSelectionMode.LocalOnly:
+                case DistributedThread.ExecutorSelectionMode.LocalOnly:
                     var localExecutor = new LocalExecutor();
                     localExecutor.Initialize<TFunc>(this.function);
                     this.executor = localExecutor;
                     break;
-                case ExecutorSelectionMode.RemoteOnly:
+                case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
-                    var service = RemoteServices.FirstOrDefault();
+                    var service = DistributedThread.RemoteServices.FirstOrDefault();
                     if (service == null)
                     {
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");

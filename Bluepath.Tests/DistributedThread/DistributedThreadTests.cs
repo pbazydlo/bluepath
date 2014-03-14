@@ -36,7 +36,7 @@
 
             // TODO: Extract executor selection mode enum out of DistributedThread class
             var dt1 = Bluepath.Threading.DistributedThread<Func<List<int>, int, int, int, int?>>.Create(t1Action,
-                Threading.DistributedThread<Func<List<int>, int, int, int, int?>>.ExecutorSelectionMode.LocalOnly
+                Threading.DistributedThread.ExecutorSelectionMode.LocalOnly
                 );
             dt1.Start(new object[] { listToProcess, 0, listToProcess.Count, 5 });
             dt1.Join();
@@ -72,11 +72,11 @@
                             Result = 6
                         });
                 }));
-            Bluepath.Threading.DistributedThread<Func<object[], object>>.RemoteServices.Add(serviceMock.Object);
+            Bluepath.Threading.DistributedThread.RemoteServices.Add(serviceMock.Object);
             BluepathSingleton.Instance.CallbackUri = new Services.ServiceUri();
             var dt1 = Bluepath.Threading.DistributedThread < Func<object[], object>>.Create(
                 t1Action,
-                Threading.DistributedThread < Func<object[], object>>.ExecutorSelectionMode.RemoteOnly
+                Threading.DistributedThread.ExecutorSelectionMode.RemoteOnly
                 );
             dt1.Start(new object[] { 4, 2 });
             dt1.Join();

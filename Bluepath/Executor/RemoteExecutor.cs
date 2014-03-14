@@ -13,7 +13,7 @@
 
     using global::Bluepath.ServiceReferences;
 
-    public class RemoteExecutor : IRemoteExecutor
+    public class RemoteExecutor : Executor, IRemoteExecutor
     {
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
@@ -30,13 +30,9 @@
             this.ExecutorState = ExecutorState.NotStarted;
         }
 
-        public Guid Eid { get; private set; }
+        public override TimeSpan? ElapsedTime { get; protected set; }
 
-        public ExecutorState ExecutorState { get; private set; }
-
-        public TimeSpan? ElapsedTime { get; private set; }
-
-        public object Result
+        public override object Result
         {
             get
             {
@@ -54,7 +50,7 @@
 
         protected Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
 
-        public async void Execute(object[] parameters)
+        public override async void Execute(object[] parameters)
         {
             lock (this.executorStateLock)
             {
@@ -69,7 +65,7 @@
         /// </summary>
         /// <exception cref="RemoteException">Rethrows exception that occurred on the remote executor.</exception>
         /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
-        public void Join()
+        public override void Join()
         {
             lock (this.executorStateLock)
             {
@@ -153,7 +149,7 @@
 
             if (joinResult == null)
             {
-                this.ExecutorState = Executor.ExecutorState.Faulted;
+                this.ExecutorState = ExecutorState.Faulted;
                 throw new RemoteJoinAbortedException(
                     "Remote thread awaiter has joined but the result is not available. See inner exception for details.",
                     joinThreadException);
@@ -230,12 +226,7 @@
             }
         }
 
-        public object GetResult()
-        {
-            return this.Result;
-        }
-
-        public void Dispose()
+        public override void Dispose()
         {
             if (this.Client is System.ServiceModel.ClientBase<IRemoteExecutorService>)
             {
@@ -247,69 +238,6 @@
                 (this.Client as IDisposable).Dispose();
             }
         }
-
-        public void Initialize<TFunc>(TFunc function)
-        {
-            var @delegate = function as Delegate;
-
-            if (@delegate != null)
-            {
-                // function is Delegate
-                this.InitializeFromMethod(@delegate.Method);
-            }
-            else
-            {
-                throw new DelegateExpectedException(function != null ? function.GetType() : null);
-            }
-        }
-
-        #region Generic Initialize overloads
-        public void Initialize<TResult>(Func<TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, TResult>(Func<T1, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        #endregion
 
         public void Setup(IRemoteExecutorService remoteExecutorService, ServiceUri callbackUri)
         {
@@ -336,7 +264,7 @@
             this.Client = remoteExecutorService;
         }
 
-        protected void InitializeFromMethod(MethodInfo method)
+        protected override void InitializeFromMethod(MethodBase method)
         {
             if (!method.IsStatic)
             {

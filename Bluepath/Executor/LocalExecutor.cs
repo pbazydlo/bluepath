@@ -8,7 +8,7 @@
     using Bluepath.Exceptions;
     using Bluepath.Framework;
 
-    public class LocalExecutor : ILocalExecutor
+    public class LocalExecutor : Executor, ILocalExecutor
     {
         private readonly object finishedRunningLock = new object();
         private object result;
@@ -26,7 +26,7 @@
             Log.TraceMessage("Local executor created.", keywords: this.Eid.EidAsLogKeywords());
         }
 
-        public TimeSpan? ElapsedTime
+        public override TimeSpan? ElapsedTime
         {
             get
             {
@@ -42,9 +42,12 @@
 
                 return this.timeStopped - this.timeStarted;
             }
-        }
 
-        public Guid Eid { get; private set; }
+            protected set
+            {
+                throw new NotSupportedException("Elapsed time on local executor is computed and cannot be set.");
+            }
+        }
 
         public ExecutorState ExecutorState
         {
@@ -73,7 +76,7 @@
             }
         }
 
-        public object Result
+        public override object Result
         {
             get
             {
@@ -90,6 +93,8 @@
             }
         }
 
+        public Exception Exception { get; private set; }
+        
         public bool IsResultAvailable
         {
             get
@@ -101,9 +106,7 @@
             }
         }
 
-        public Exception Exception { get; private set; }
-
-        public void Execute(object[] parameters)
+        public override void Execute(object[] parameters)
         {
             lock (this.finishedRunningLock)
             {
@@ -147,7 +150,7 @@
             this.thread.Start();
         }
 
-        public void Join()
+        public override void Join()
         {
             Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.EidAsLogKeywords());
             this.thread.Join();
@@ -170,66 +173,6 @@
             this.Join();
         }
 
-        public object GetResult()
-        {
-            return this.Result;
-        }
-
-        public void Initialize<TFunc>(TFunc function)
-        {
-            var @delegate = function as Delegate;
-
-            if (@delegate != null) 
-            {
-                // function is Delegate
-                this.InitializeFromMethod(@delegate.Method);
-            }
-            else
-            {
-                throw new DelegateExpectedException(function != null ? function.GetType() : null);
-            }
-        }
-
-        public void Initialize<TResult>(Func<TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, TResult>(Func<T1, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
-        {
-            this.InitializeFromMethod(function.Method);
-        }
-
         public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)
         {
             this.function = function;
@@ -238,13 +181,13 @@
             Log.TraceMessage("Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             // TODO: Add executor dispose logic here
             Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
         }
 
-        protected void InitializeFromMethod(MethodBase method)
+        protected override void InitializeFromMethod(MethodBase method)
         {
             this.InitializeNonGeneric((parameters) => method.Invoke(null, parameters));
         }

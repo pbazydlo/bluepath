@@ -161,16 +161,7 @@
             });
             serviceThread.Start();
             Thread.Sleep(1000);
-            BluepathSingleton.Instance.CallbackUri = null;
-            var endpointAddress = new System.ServiceModel.EndpointAddress(
-                string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
-            Bluepath.Threading.DistributedThread.RemoteServices.Add(
-                new ServiceReferences.RemoteExecutorServiceClient(
-                    new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
-                    endpointAddress));
-
-            var myThread = Bluepath.Threading.DistributedThread.Create(testFunc);
-            return myThread;
+            return Initialize<TFunc>(testFunc, port, ip);
         }
 
         private static Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port)
@@ -178,6 +169,11 @@
             string ip = "127.0.0.1";
             TestHelpers.SpawnRemoteService(port);
             Thread.Sleep(3000);
+            return Initialize<TFunc>(testFunc, port, ip);
+        }
+
+        private static Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip)
+        {
             BluepathSingleton.Instance.CallbackUri = null;
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));

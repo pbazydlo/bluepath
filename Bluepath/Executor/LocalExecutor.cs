@@ -5,6 +5,7 @@
     using System.Reflection;
     using System.Threading;
 
+    using Bluepath.Exceptions;
     using Bluepath.Framework;
 
     public class LocalExecutor : ILocalExecutor
@@ -176,8 +177,17 @@
 
         public void Initialize<TFunc>(TFunc function)
         {
-            var @delegate = (Delegate)(object)function;
-            this.InitializeFromMethod(@delegate.Method);
+            var @delegate = function as Delegate;
+
+            if (@delegate != null) 
+            {
+                // function is Delegate
+                this.InitializeFromMethod(@delegate.Method);
+            }
+            else
+            {
+                throw new DelegateExpectedException(function != null ? function.GetType() : null);
+            }
         }
 
         public void Initialize<TResult>(Func<TResult> function)

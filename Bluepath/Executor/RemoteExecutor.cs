@@ -250,54 +250,63 @@
 
         public void Initialize<TFunc>(TFunc function)
         {
-            var @delegate = (Delegate)(object)function;
-            this.Initialize(@delegate.Method);
+            var @delegate = function as Delegate;
+
+            if (@delegate != null)
+            {
+                // function is Delegate
+                this.InitializeFromMethod(@delegate.Method);
+            }
+            else
+            {
+                throw new DelegateExpectedException(function != null ? function.GetType() : null);
+            }
         }
 
         #region Generic Initialize overloads
         public void Initialize<TResult>(Func<TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, TResult>(Func<T1, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
         {
-            this.Initialize(function.Method);
+            this.InitializeFromMethod(function.Method);
         }
 
         #endregion
@@ -327,7 +336,7 @@
             this.Client = remoteExecutorService;
         }
 
-        protected void Initialize(MethodInfo method)
+        protected void InitializeFromMethod(MethodInfo method)
         {
             if (!method.IsStatic)
             {

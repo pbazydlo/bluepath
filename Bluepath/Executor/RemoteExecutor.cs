@@ -248,53 +248,73 @@
             }
         }
 
+        public void Initialize<TFunc>(TFunc function)
+        {
+            var @delegate = (Delegate)(object)function;
+            this.Initialize(@delegate.Method);
+        }
+
         #region Generic Initialize overloads
-        public void Initialize<TResult>(IRemoteExecutorService remoteExecutorService, Func<TResult> function, ServiceUri callbackUri)
+        public void Initialize<TResult>(Func<TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, TResult>(Func<T1, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, T4, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
-        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(IRemoteExecutorService remoteExecutorService, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function, ServiceUri callbackUri)
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
         {
-            this.Initialize(remoteExecutorService, function.Method, callbackUri);
+            this.Initialize(function.Method);
         }
 
         #endregion
+
+        public void Setup(IRemoteExecutorService remoteExecutorService, ServiceUri callbackUri)
+        {
+            this.Initialize(remoteExecutorService);
+            if (callbackUri != null)
+            {
+                this.callbackUri = callbackUri;
+                this.callbacksEnabled = true;
+            }
+            else
+            {
+                this.callbacksEnabled = false;
+            }
+        }
 
         /// <summary>
         /// This method is invoked before calling Initialize on remote executor.
@@ -307,22 +327,11 @@
             this.Client = remoteExecutorService;
         }
 
-        protected void Initialize(IRemoteExecutorService remoteExecutorService, MethodInfo method, ServiceUri callbackUri)
+        protected void Initialize(MethodInfo method)
         {
             if (!method.IsStatic)
             {
                 throw new ArgumentException("Remote executor supports only static methods.", "method");
-            }
-
-            this.Initialize(remoteExecutorService);
-            if (callbackUri != null)
-            {
-                this.callbackUri = callbackUri;
-                this.callbacksEnabled = true;
-            }
-            else
-            {
-                this.callbacksEnabled = false;
             }
 
             this.Eid = this.Client.Initialize(method.SerializeMethodHandle());

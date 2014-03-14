@@ -2,6 +2,7 @@
 {
     using System;
     using System.Linq;
+    using System.Reflection;
     using System.Threading;
 
     using Bluepath.Framework;
@@ -173,7 +174,53 @@
             return this.Result;
         }
 
-        public void Initialize(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)
+        public void Initialize<TFunc>(TFunc function)
+        {
+            var @delegate = (Delegate)(object)function;
+            this.InitializeFromMethod(@delegate.Method);
+        }
+
+        public void Initialize<TResult>(Func<TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, TResult>(Func<T1, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, TResult>(Func<T1, T2, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void Initialize<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
+        {
+            this.InitializeFromMethod(function.Method);
+        }
+
+        public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)
         {
             this.function = function;
             this.expectedNumberOfParameters = expectedNumberOfParameters;
@@ -185,6 +232,11 @@
         {
             // TODO: Add executor dispose logic here
             Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
+        }
+
+        protected void InitializeFromMethod(MethodBase method)
+        {
+            this.InitializeNonGeneric((parameters) => method.Invoke(null, parameters));
         }
 
         private object[] InjectCommunicationFrameworkObject(object[] parameters)

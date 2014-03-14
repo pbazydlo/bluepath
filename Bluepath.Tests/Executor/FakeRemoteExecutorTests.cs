@@ -28,7 +28,8 @@
             testMethod.Method.IsStatic.ShouldBe(true);
 
             var executor = new RemoteExecutor();
-            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Setup(new FakeRemoteExecutorService(), null);
+            executor.Initialize(testMethod);
             executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
             executor.Execute(new object[] { 1, 2, DelayMilliseconds });
@@ -50,7 +51,8 @@
             testMethod.Method.IsStatic.ShouldBe(true);
 
             var executor = new RemoteExecutor();
-            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Setup(new FakeRemoteExecutorService(), null);
+            executor.Initialize(testMethod);
             var eid = executor.Eid;
             executor.Execute(new object[] { 1 });
             executor.Join();
@@ -68,7 +70,8 @@
             testMethod.Method.IsStatic.ShouldBe(true);
 
             var executor = new RemoteExecutor();
-            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Setup(new FakeRemoteExecutorService(), null);
+            executor.Initialize(testMethod);
             var eid = executor.Eid;
             executor.Execute(new object[] { null, 1 });
             executor.Join();
@@ -87,7 +90,8 @@
             testMethod.Method.IsStatic.ShouldBe(true);
 
             var executor = new RemoteExecutor();
-            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Setup(new FakeRemoteExecutorService(), null);
+            executor.Initialize(testMethod);
             executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
             executor.Execute(new object[] { 1, 2, delayMilliseconds });
@@ -107,7 +111,8 @@
             var testMethod = new Func<int, int, int>((a, b) => { throw new Exception("test"); });
 
             var executor = new RemoteExecutor();
-            executor.Initialize(new FakeRemoteExecutorService(), testMethod, null);
+            executor.Setup(new FakeRemoteExecutorService(), null);
+            executor.Initialize(testMethod);
             executor.Execute(new object[] { 1, 2 });
 
             try

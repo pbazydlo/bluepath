@@ -118,7 +118,7 @@
             myThread.State.ShouldBe(Executor.ExecutorState.Faulted);
         }
 
-        private static Threading.DistributedThread InitializeWithSubtractFunc(bool externalRunner = false)
+        private static Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -135,7 +135,7 @@
             }
         }
 
-        private static Threading.DistributedThread InitializeWithExceptionThrowingFunc(bool externalRunner = false)
+        private static Threading.DistributedThread<Func<object[], object>> InitializeWithExceptionThrowingFunc(bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -152,7 +152,7 @@
             }
         }
 
-        private static Threading.DistributedThread Initialize(Func<object[], object> testFunc)
+        private static Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc)
         {
             string ip = "127.0.0.1";
             int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
@@ -165,17 +165,17 @@
             BluepathSingleton.Instance.CallbackUri = null;
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
-            Bluepath.Threading.DistributedThread.RemoteServices.Add(
+            Bluepath.Threading.DistributedThread<TFunc>.RemoteServices.Add(
                 new ServiceReferences.RemoteExecutorServiceClient(
                     new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
                     endpointAddress));
 
-            var myThread = Bluepath.Threading.DistributedThread.Create(
+            var myThread = Bluepath.Threading.DistributedThread<TFunc>.Create(
                 testFunc);
             return myThread;
         }
 
-        private static Threading.DistributedThread InitializeWithExternalRunner(Func<object[], object> testFunc)
+        private static Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc)
         {
             string ip = "127.0.0.1";
             int port = new Random(DateTime.Now.Millisecond).Next(23654, 23999);
@@ -184,12 +184,12 @@
             BluepathSingleton.Instance.CallbackUri = null;
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
-            Bluepath.Threading.DistributedThread.RemoteServices.Add(
+            Bluepath.Threading.DistributedThread<TFunc>.RemoteServices.Add(
                 new ServiceReferences.RemoteExecutorServiceClient(
                     new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
                     endpointAddress));
 
-            var myThread = Bluepath.Threading.DistributedThread.Create(
+            var myThread = Bluepath.Threading.DistributedThread<TFunc>.Create(
                 testFunc);
             return myThread;
         }

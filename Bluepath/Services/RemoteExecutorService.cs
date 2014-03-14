@@ -263,7 +263,7 @@
                 }
             }
 
-            executor.Initialize((parameters) => methodFromHandle.Invoke(null, parameters), methodParameters.Length, parameterFound ? parameterIndex : null);
+            executor.InitializeNonGeneric((parameters) => methodFromHandle.Invoke(null, parameters), methodParameters.Length, parameterFound ? parameterIndex : null);
         }
     }
 }

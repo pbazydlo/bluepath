@@ -8,6 +8,6 @@
 
         bool IsResultAvailable { get; }
 
-        void Initialize(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null);
+        void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null);
     }
 }

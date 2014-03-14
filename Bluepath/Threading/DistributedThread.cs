@@ -11,7 +11,7 @@
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
     /// </summary>
-    public class DistributedThread
+    public class DistributedThread<TFunc>
     {
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
         // ReSharper disable once InconsistentNaming
@@ -19,7 +19,7 @@
 
         private IExecutor executor;
 
-        private Func<object[], object> function;
+        private TFunc function;
 
         private DistributedThread()
         {
@@ -35,7 +35,7 @@
         {
             get
             {
-                return DistributedThread.remoteServices;
+                return remoteServices;
             }
         }
 
@@ -57,9 +57,9 @@
             }
         }
 
-        public static DistributedThread Create(Func<object[], object> function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
-            return new DistributedThread()
+            return new DistributedThread<TFunc>()
             {
                 function = function,
                 Mode = mode
@@ -72,18 +72,19 @@
             {
                 case ExecutorSelectionMode.LocalOnly:
                     var localExecutor = new LocalExecutor();
-                    localExecutor.Initialize(this.function);
+                    localExecutor.Initialize<TFunc>(this.function);
                     this.executor = localExecutor;
                     break;
                 case ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
-                    var service = DistributedThread.RemoteServices.FirstOrDefault();
+                    var service = RemoteServices.FirstOrDefault();
                     if (service == null)
                     {
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
                     }
 
-                    remoteExecutor.Initialize(service, this.function, BluepathSingleton.Instance.CallbackUri.Convert());
+                    remoteExecutor.Setup(service, BluepathSingleton.Instance.CallbackUri.Convert());
+                    remoteExecutor.Initialize<TFunc>(this.function);
                     Bluepath.Services.RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
                     this.executor = remoteExecutor;
                     break;

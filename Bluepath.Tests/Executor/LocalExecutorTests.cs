@@ -25,7 +25,7 @@
                     });
 
             var executor = new LocalExecutor();
-            executor.Initialize(testMethod);
+            executor.InitializeNonGeneric(testMethod);
             executor.Execute(null);
             executor.Join(timeout: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 30));
 

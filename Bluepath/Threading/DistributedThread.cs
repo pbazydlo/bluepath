@@ -8,15 +8,11 @@
     using Bluepath.Executor;
     using Bluepath.Extensions;
 
-    public class DistributedThread
+    public static class DistributedThread
     {
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
         // ReSharper disable once InconsistentNaming
         private static readonly List<ServiceReferences.IRemoteExecutorService> remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
-
-        private DistributedThread()
-        {
-        }
 
         public enum ExecutorSelectionMode : int
         {

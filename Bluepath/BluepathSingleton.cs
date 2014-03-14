@@ -46,8 +46,6 @@
             ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
             //// }
 
-            
-
             // Create the ServiceHost.
             using (ServiceHost host = new ServiceHost(typeof(RemoteExecutorService), new Uri(listenUri)))
             {

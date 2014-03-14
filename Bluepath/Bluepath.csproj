@@ -59,6 +59,8 @@
     <Compile Include="Service References\RemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorServiceResult.cs" />
     <Compile Include="Services\ServiceUri.cs" />
+    <Compile Include="Storage\IStorage.cs" />
+    <Compile Include="Storage\RhinoDhtStorage.cs" />
     <Compile Include="Threading\DistributedThread.cs" />
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />
@@ -69,6 +71,20 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\rhino-dht\Rhino.DistributedHashTable.Client\Rhino.DistributedHashTable.Client.csproj">
+      <Project>{d910183f-1578-43ae-bcd2-f5a9e19079fc}</Project>
+      <Name>Rhino.DistributedHashTable.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\rhino-dht\Rhino.DistributedHashTable\Rhino.DistributedHashTable.csproj">
+      <Project>{4e8d44d2-505d-488c-b92c-51147748b104}</Project>
+      <Name>Rhino.DistributedHashTable</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\rhino-pht\Rhino.PersistentHashTable\Rhino.PersistentHashTable.csproj">
+      <Project>{f30b2d63-ced5-4c8a-908f-0b5503d984a9}</Project>
+      <Name>Rhino.PersistentHashTable</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

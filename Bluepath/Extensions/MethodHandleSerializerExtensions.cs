@@ -61,29 +61,48 @@ namespace Bluepath.Extensions
 
         public static MethodBase DeserializeMethodHandle(this byte[] methodHandle)
         {
-            var methodFromHandle = default(MethodBase);
-            var formatter = new BinaryFormatter();
-            using (var stream = new MemoryStream())
-            {
-                stream.Write(methodHandle, 0, methodHandle.Length);
-                stream.Seek(0, SeekOrigin.Begin);
-                var runtimeMethodHandle = (RuntimeMethodHandle)formatter.Deserialize(stream);
-                methodFromHandle = MethodBase.GetMethodFromHandle(runtimeMethodHandle);
-            }
-
+            var runtimeMethodHandle = methodHandle.Deserialize<RuntimeMethodHandle>();
+            var methodFromHandle = MethodBase.GetMethodFromHandle(runtimeMethodHandle);
             return methodFromHandle;
         }
 
-        private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
+        public static byte[] Serialize<T>(this T obj)
         {
             var formatter = new BinaryFormatter();
             using (var stream = new MemoryStream())
             {
-                formatter.Serialize(stream, methodHandle);
+                formatter.Serialize(stream, obj);
                 stream.Seek(0, SeekOrigin.Begin);
-                var serializedMethodHandle = stream.GetBuffer();
-                return serializedMethodHandle;
+                var serializedObject = stream.GetBuffer();
+                return serializedObject;
             }
+        }
+
+        public static T Deserialize<T>(this byte[] serializedObject)
+        {
+            var result = default(T);
+            var formatter = new BinaryFormatter();
+            using (var stream = new MemoryStream())
+            {
+                stream.Write(serializedObject, 0, serializedObject.Length);
+                stream.Seek(0, SeekOrigin.Begin);
+                result = (T)formatter.Deserialize(stream);
+            }
+
+            return result;
+        }
+
+        private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
+        {
+            return methodHandle.Serialize();
+            //var formatter = new BinaryFormatter();
+            //using (var stream = new MemoryStream())
+            //{
+            //    formatter.Serialize(stream, methodHandle);
+            //    stream.Seek(0, SeekOrigin.Begin);
+            //    var serializedMethodHandle = stream.GetBuffer();
+            //    return serializedMethodHandle;
+            //}
         }
     }
 }

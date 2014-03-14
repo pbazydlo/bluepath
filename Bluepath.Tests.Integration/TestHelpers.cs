@@ -9,7 +9,11 @@
         private static readonly List<Process> SpawnedServices = new List<Process>();
         public static bool SpawnRemoteService(int port)
         {
-            var process = Process.Start(new ProcessStartInfo(TestHelpers.RemoteServicePath, port.ToString()));
+            var processStartInfo = new ProcessStartInfo(TestHelpers.RemoteServicePath, port.ToString());
+            processStartInfo.CreateNoWindow = true;
+            processStartInfo.RedirectStandardOutput = true;
+            processStartInfo.UseShellExecute = false;
+            var process = Process.Start(processStartInfo);
             SpawnedServices.Add(process);
             System.Threading.Thread.Sleep(1000);
             return true;

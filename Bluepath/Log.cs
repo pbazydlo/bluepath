@@ -35,7 +35,9 @@
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
-            Debug.WriteLine("[LOG]{2} {0} ({1})", message, exception.Message, keywords.ToLogString());
+            var formattedMessage = string.Format("[LOG][{1}]{2} {0}", message, exception.Message, keywords.ToLogString());
+            Debug.WriteLine(formattedMessage);
+            Console.WriteLine(formattedMessage);
         }
 
         [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
@@ -52,7 +54,9 @@
             )
         {
             // TODO: Implement logging
-            Debug.WriteLine("[LOG]{2} {0} ({1})", message, type, keywords.ToLogString());
+            var formattedMessage = string.Format("[LOG][{1}]{2} {0}", message, type, keywords.ToLogString());
+            Debug.WriteLine(formattedMessage);
+            Console.WriteLine(formattedMessage);
         }
     }
 

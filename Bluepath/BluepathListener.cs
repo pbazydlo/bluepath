@@ -67,6 +67,7 @@
                         Console.WriteLine("Press <Enter> to stop the service.");
                         Console.ReadLine();
                         System.Threading.Monitor.PulseAll(this.consoleThreadLock);
+                        this.host.Close();
                     }
                 });
 
@@ -79,6 +80,7 @@
             }
         }
 
+        // TODO: mutual exclusion using lock on set
         public static BluepathListener Default { get; private set; }
 
         public ServiceUri CallbackUri { get; private set; }
@@ -93,15 +95,21 @@
 
         public void Stop()
         {
-            if (this.consoleThread == null)
-            {
-                return;
-            }
-
-            this.consoleThread.Abort();
-            this.consoleThread = null;
             lock (this.consoleThreadLock)
             {
+                if (this.consoleThread == null)
+                {
+                    return;
+                }
+
+                this.consoleThread.Abort();
+                this.consoleThread = null;
+
+                if (BluepathListener.Default == this)
+                {
+                    BluepathListener.Default = null;
+                }
+
                 System.Threading.Monitor.PulseAll(this.consoleThreadLock);
             }
 

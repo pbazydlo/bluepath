@@ -1,12 +1,6 @@
-﻿namespace Bluepath
+﻿namespace Bluepath.SampleRunner
 {
-    using System;
-    using System.ServiceModel;
-    using System.ServiceModel.Description;
-
-    using global::Bluepath.Services;
-
-    public class BluepathSingleton
+    internal class BluepathSingleton
     {
         private static readonly object InstanceLock = new object();
         private static BluepathSingleton instance;
@@ -35,7 +29,7 @@
 
         public void Initialize(string ip, int? port = null)
         {
-            this.Listener = new BluepathListener(ip, port);
+            this.Listener = new BluepathListener(ip, port, makeDefault: true);
         }
     }
 }

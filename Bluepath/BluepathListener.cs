@@ -12,7 +12,7 @@
         private readonly object consoleThreadLock = new object();
         private System.Threading.Thread consoleThread;
 
-        public BluepathListener(string ip, int? port = null)
+        public BluepathListener(string ip, int? port = null, bool makeDefault = false)
         {
             lock (this.consoleThreadLock)
             {
@@ -20,6 +20,11 @@
                 if (this.consoleThread != null)
                 {
                     return;
+                }
+
+                if (makeDefault && BluepathListener.Default != null)
+                {
+                    throw new Exception("Cannot initialize more than one default listener.");
                 }
 
                 var random = new Random();
@@ -66,10 +71,17 @@
                 });
 
                 this.consoleThread.Start();
+
+                if (makeDefault)
+                {
+                    BluepathListener.Default = this;
+                }
             }
         }
 
-        public ServiceUri CallbackUri { get; set; }
+        public static BluepathListener Default { get; private set; }
+
+        public ServiceUri CallbackUri { get; private set; }
 
         public void Wait()
         {

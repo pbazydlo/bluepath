@@ -39,12 +39,12 @@
                 {
                     if (ConnectionManager.defualt == null)
                     {
-                        if (BluepathSingleton.Instance.Listener == null)
+                        if (BluepathListener.Default == null)
                         {
-                            throw new Exception("Can't create default connection manager. Initialize BluepathSingleton.Instance.Listener first.");
+                            throw new Exception("Can't create default connection manager. Initialize BluepathListener.Default first.");
                         }
 
-                        ConnectionManager.defualt = new ConnectionManager(BluepathSingleton.Instance.Listener);
+                        ConnectionManager.defualt = new ConnectionManager(BluepathListener.Default);
                     }
                 }
 

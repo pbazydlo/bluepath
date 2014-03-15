@@ -5,5 +5,7 @@
     public interface IConnectionManager
     {
         List<ServiceReferences.IRemoteExecutorService> RemoteServices { get; }
+
+        BluepathListener Listener { get; }
     }
 }

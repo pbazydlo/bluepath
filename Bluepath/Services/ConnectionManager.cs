@@ -1,5 +1,6 @@
 ﻿namespace Bluepath.Services
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
 
@@ -13,20 +14,21 @@
 
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
-        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService)
-            : this(new List<ServiceReferences.IRemoteExecutorService>() { remoteService })
+        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, BluepathListener listener)
+            : this(new List<ServiceReferences.IRemoteExecutorService>() { remoteService }, listener)
         {
         }
 
-        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices)
-            : this()
+        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, BluepathListener listener)
+            : this(listener)
         {
             this.remoteServices.AddRange(remoteServices);
         }
 
-        private ConnectionManager()
+        private ConnectionManager(BluepathListener listener)
         {
             this.remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
+            this.Listener = listener;
         }
 
         public static ConnectionManager Default
@@ -37,7 +39,12 @@
                 {
                     if (ConnectionManager.defualt == null)
                     {
-                        ConnectionManager.defualt = new ConnectionManager();
+                        if (BluepathSingleton.Instance.Listener == null)
+                        {
+                            throw new Exception("Can't create default connection manager. Initialize BluepathSingleton.Instance.Listener first.");
+                        }
+
+                        ConnectionManager.defualt = new ConnectionManager(BluepathSingleton.Instance.Listener);
                     }
                 }
 
@@ -52,5 +59,7 @@
                 return this.remoteServices;
             }
         }
+
+        public BluepathListener Listener { get; private set; }
     }
 }

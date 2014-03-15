@@ -11,11 +11,11 @@
 
     public abstract class DistributedThread
     {
-        private readonly IConnectionManager connectionManager;
+        protected readonly IConnectionManager ConnectionManager;
 
         protected DistributedThread(IConnectionManager connectionManager)
         {
-            this.connectionManager = connectionManager;
+            this.ConnectionManager = connectionManager;
         }
 
         public enum ExecutorSelectionMode : int
@@ -28,7 +28,7 @@
         {
             get
             {
-                return this.connectionManager.RemoteServices;
+                return this.ConnectionManager.RemoteServices;
             }
         }
 
@@ -82,7 +82,7 @@
         private TFunc function;
 
         protected DistributedThread()
-            : base(ConnectionManager.Default)
+            : base(Services.ConnectionManager.Default)
         {
         }
 
@@ -126,7 +126,9 @@
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
                     }
 
-                    remoteExecutor.Setup(service, BluepathSingleton.Instance.CallbackUri.Convert());
+                    var callbackUri = this.ConnectionManager.Listener != null ? this.ConnectionManager.Listener.CallbackUri.Convert() : null;
+
+                    remoteExecutor.Setup(service, callbackUri);
                     remoteExecutor.Initialize(this.function);
                     RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
                     this.Executor = remoteExecutor;

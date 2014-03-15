@@ -53,6 +53,7 @@
             executor.ExecutorState.ShouldBe(Bluepath.Executor.ExecutorState.Finished);
             executor.Result.ShouldBe(MethodResult);
         }
+
         [TestMethod]
         public void RemoteExecutorJoinsAfterPulse()
         {

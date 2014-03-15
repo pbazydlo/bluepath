@@ -84,7 +84,7 @@
         [TestMethod]
         public async Task FakeRemoteExecutorAsyncJoinTest()
         {
-            const int delayMilliseconds = 50;
+            const int DelayMilliseconds = 50;
             var testMethod = new Func<int, int, int, int>((a, b, delay) => { Thread.Sleep(delay); return a + b; });
 
             testMethod.Method.IsStatic.ShouldBe(true);
@@ -94,7 +94,7 @@
             executor.Initialize(testMethod);
             executor.ExecutorState.ShouldBe(ExecutorState.NotStarted);
 
-            executor.Execute(new object[] { 1, 2, delayMilliseconds });
+            executor.Execute(new object[] { 1, 2, DelayMilliseconds });
             executor.ExecutorState.ShouldBe(ExecutorState.Running);
 
             await executor.JoinAsync();
@@ -102,7 +102,7 @@
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
-            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(delayMilliseconds));
+            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
         }
 
         [TestMethod]

@@ -15,10 +15,13 @@
     [TestClass]
     public class DistributedThreadTests
     {
-        private static readonly int joinWaitTime = 2000;
+        private const int JoinWaitTime = 2000;
+
         private static Thread serviceThread = null;
 
         private Process executorHostProcess;
+
+        private BluepathListener listener;
 
         [TestInitialize]
         public void TestSetup()
@@ -47,25 +50,28 @@
             }
         }
 
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            // TestHelpers.KillAllServices();
-        }
-
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithCallback()
         {
-            const int executorPort = 23004;
+            const int ExecutorPort = 23004;
 
-            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
-            string ip = "127.0.0.1";
-            int port = 24000;
+            const string Ip = "127.0.0.1";
+            const int Port = 24000;
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            this.listener = new BluepathListener(Ip, Port);
             serviceThread = new System.Threading.Thread(() =>
             {
-                BluepathSingleton.Instance.Initialize(ip, port);
+                this.listener.Wait();
             });
             serviceThread.Start();
+
+            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
+            
             Thread.Sleep(1000);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
@@ -79,8 +85,8 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoin()
         {
-            const int executorPort = 23003;
-            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
+            const int ExecutorPort = 23003;
+            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -88,7 +94,7 @@
                 myThread.Join();
             });
             joinThread.Start();
-            joinThread.Join(joinWaitTime).ShouldBe(true);
+            joinThread.Join(JoinWaitTime).ShouldBe(true);
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -101,9 +107,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoinOnExternalRunner()
         {
-            const int executorPort = 23002;
+            const int ExecutorPort = 23002;
 
-            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -111,8 +117,7 @@
                 myThread.Join();
             });
             joinThread.Start();
-            joinThread.Join(joinWaitTime).ShouldBe(true);
-
+            joinThread.Join(JoinWaitTime).ShouldBe(true);
 
             if (myThread.State != ExecutorState.Finished)
             {
@@ -125,9 +130,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfIncorrectInvokation()
         {
-            const int executorPort = 23001;
+            const int ExecutorPort = 23001;
 
-            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
             myThread.Start(new object[] { 5, 3 });
             var exception = default(Exception);
@@ -143,7 +148,7 @@
                 }
             });
             joinThread.Start();
-            joinThread.Join(joinWaitTime).ShouldBe(true);
+            joinThread.Join(JoinWaitTime).ShouldBe(true);
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -158,9 +163,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfFunctionError()
         {
-            const int executorPort = 23000;
+            const int ExecutorPort = 23000;
 
-            var myThread = this.InitializeWithExceptionThrowingFunc(executorPort, externalRunner: true);
+            var myThread = this.InitializeWithExceptionThrowingFunc(ExecutorPort, externalRunner: true);
             var exception = default(Exception);
             myThread.Start(new object[0]);
             var joinThread = new System.Threading.Thread(() =>
@@ -169,13 +174,13 @@
                 {
                     myThread.Join();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     exception = ex;
                 }
             });
             joinThread.Start();
-            joinThread.Join(joinWaitTime * 2).ShouldBe(true);
+            joinThread.Join(JoinWaitTime * 2).ShouldBe(true);
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -221,16 +226,21 @@
             }
         }
 
-        private static Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port)
+        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port)
         {
             string ip = "127.0.0.1";
-            var serviceThread = new System.Threading.Thread(() =>
+            if (this.listener != null)
             {
-                BluepathSingleton.Instance.Initialize(ip, port);
+                throw new Exception("Test can have only one listener.");
+            }
+
+            serviceThread = new System.Threading.Thread(() =>
+            {
+                this.listener = new BluepathListener(ip, port);
             });
             serviceThread.Start();
             Thread.Sleep(1000);
-            return Initialize<TFunc>(testFunc, port, ip);
+            return this.Initialize<TFunc>(testFunc, port, ip);
         }
 
         private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port)
@@ -242,24 +252,19 @@
 
             string ip = "127.0.0.1";
             this.executorHostProcess = TestHelpers.SpawnRemoteService(port);
-            Thread.Sleep(3000);
-            return Initialize<TFunc>(testFunc, port, ip);
+            return this.Initialize<TFunc>(testFunc, port, ip);
         }
 
-        private static Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip)
+        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip)
         {
-            BluepathSingleton.Instance.CallbackUri = null;
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
-            //Bluepath.Threading.DistributedThread.RemoteServices.Add(
-            //    new ServiceReferences.RemoteExecutorServiceClient(
-            //        new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
-            //        endpointAddress));
-            var connectionManager =
-                new ConnectionManager(
+
+            var connectionManager = new ConnectionManager(
                     new ServiceReferences.RemoteExecutorServiceClient(
                         new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
-                        endpointAddress));
+                        endpointAddress),
+                    listener: null);
             var myThread = Bluepath.Threading.DistributedThread.Create(testFunc, connectionManager);
             return myThread;
         }

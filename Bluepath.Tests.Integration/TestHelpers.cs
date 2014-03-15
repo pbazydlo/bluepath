@@ -8,8 +8,10 @@
 
     public static class TestHelpers
     {
-        private static readonly string RemoteServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";
+        private const string RemoteServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";
+
         private static readonly ConcurrentDictionary<int, Process> SpawnedServices = new ConcurrentDictionary<int, Process>();
+
         public static Process SpawnRemoteService(int port)
         {
             if (SpawnedServices.ContainsKey(port))
@@ -42,7 +44,7 @@
                 });
             t.Start();
             
-            System.Threading.Thread.Sleep(1000);
+            Thread.Sleep(1000);
             return process;
         }
     }

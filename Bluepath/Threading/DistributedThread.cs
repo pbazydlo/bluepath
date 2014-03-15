@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
 
     using Bluepath.Executor;
@@ -10,17 +11,17 @@
 
     public abstract class DistributedThread
     {
-        public enum ExecutorSelectionMode : int
-        {
-            LocalOnly = 0,
-            RemoteOnly = 1
-        }
-
         private readonly IConnectionManager connectionManager;
 
         protected DistributedThread(IConnectionManager connectionManager)
         {
             this.connectionManager = connectionManager;
+        }
+
+        public enum ExecutorSelectionMode : int
+        {
+            LocalOnly = 0,
+            RemoteOnly = 1
         }
 
         public List<ServiceReferences.IRemoteExecutorService> RemoteServices
@@ -31,6 +32,26 @@
             }
         }
 
+        public ExecutorSelectionMode Mode { get; protected set; }
+
+        public ExecutorState State
+        {
+            get
+            {
+                return this.Executor.ExecutorState;
+            }
+        }
+
+        public object Result
+        {
+            get
+            {
+                return this.Executor.Result;
+            }
+        }
+
+        protected IExecutor Executor { get; set; }
+
         public static DistributedThread<TFunc> Create<TFunc>(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
             return DistributedThread<TFunc>.Create(function, mode);
@@ -40,15 +61,24 @@
         {
             return DistributedThread<TFunc>.Create(function, connectionManager, mode);
         }
+
+        public abstract void Start(object[] parameters);
+
+        public void Join()
+        {
+            this.Executor.Join();
+        }
     }
 
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
     /// </summary>
+    /// <typeparam name="TFunc">
+    /// Delegate type of method to be run.
+    /// </typeparam>
+    [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "Reviewed. Suppression is OK here.")]
     public class DistributedThread<TFunc> : DistributedThread
     {
-        private IExecutor executor;
-
         private TFunc function;
 
         protected DistributedThread()
@@ -59,24 +89,6 @@
         protected DistributedThread(IConnectionManager connectionManager)
             : base(connectionManager)
         {
-        }
-
-        public DistributedThread.ExecutorSelectionMode Mode { get; private set; }
-
-        public ExecutorState State
-        {
-            get
-            {
-                return this.executor.ExecutorState;
-            }
-        }
-
-        public object Result
-        {
-            get
-            {
-                return this.executor.Result;
-            }
         }
 
         public static DistributedThread<TFunc> Create(TFunc function, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
@@ -97,14 +109,14 @@
             };
         }
 
-        public void Start(object[] parameters)
+        public override void Start(object[] parameters)
         {
             switch (this.Mode)
             {
                 case DistributedThread.ExecutorSelectionMode.LocalOnly:
                     var localExecutor = new LocalExecutor();
-                    localExecutor.Initialize<TFunc>(this.function);
-                    this.executor = localExecutor;
+                    localExecutor.Initialize(this.function);
+                    this.Executor = localExecutor;
                     break;
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
@@ -115,18 +127,13 @@
                     }
 
                     remoteExecutor.Setup(service, BluepathSingleton.Instance.CallbackUri.Convert());
-                    remoteExecutor.Initialize<TFunc>(this.function);
-                    Bluepath.Services.RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
-                    this.executor = remoteExecutor;
+                    remoteExecutor.Initialize(this.function);
+                    RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
+                    this.Executor = remoteExecutor;
                     break;
             }
 
-            this.executor.Execute(parameters);
-        }
-
-        public void Join()
-        {
-            this.executor.Join();
+            this.Executor.Execute(parameters);
         }
     }
 }

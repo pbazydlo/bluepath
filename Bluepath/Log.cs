@@ -36,7 +36,6 @@
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
-
             if ((type & MessageType.Exception) != MessageType.Exception)
             {
                 type |= MessageType.Exception;
@@ -61,7 +60,7 @@
             )
         {
             // TODO: Implement logging
-            var traceInfo = default (string);
+            var traceInfo = default(string);
 #if TRACE
             traceInfo = string.Format("[caller: {2} in {0}, line {1}]", Path.GetFileName(sourceFilePath), sourceLineNumber, memberName);
 #endif

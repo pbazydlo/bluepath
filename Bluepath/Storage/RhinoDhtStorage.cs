@@ -64,10 +64,23 @@
 
         public T Retrieve<T>(string key)
         {
-            var values = InternalRetrieve(key);
+            var values = this.InternalRetrieve(key);
             var maxVersionNo = values.Max(v => v.Version.Number);
             var mostRecentValue = values.First(v => v.Version.Number == maxVersionNo);
             return mostRecentValue.Data.Deserialize<T>();
+        }
+
+        public void Dispose()
+        {
+            if (this.masterHost != null)
+            {
+                this.masterHost.Dispose();
+            }
+
+            if (this.storageHost != null)
+            {
+                this.storageHost.Dispose();
+            }
         }
 
         private Value[] InternalRetrieve(string key)
@@ -101,19 +114,6 @@
                 Bytes = value,
                 ParentVersions = parentVersions ?? new ValueVersion[0]
             });
-        }
-
-        public void Dispose()
-        {
-            if (this.masterHost != null)
-            {
-                this.masterHost.Dispose();
-            }
-
-            if (this.storageHost != null)
-            {
-                this.storageHost.Dispose();
-            }
         }
     }
 }

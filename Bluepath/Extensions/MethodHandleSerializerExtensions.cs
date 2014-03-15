@@ -95,14 +95,6 @@ namespace Bluepath.Extensions
         private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
         {
             return methodHandle.Serialize();
-            //var formatter = new BinaryFormatter();
-            //using (var stream = new MemoryStream())
-            //{
-            //    formatter.Serialize(stream, methodHandle);
-            //    stream.Seek(0, SeekOrigin.Begin);
-            //    var serializedMethodHandle = stream.GetBuffer();
-            //    return serializedMethodHandle;
-            //}
         }
     }
 }

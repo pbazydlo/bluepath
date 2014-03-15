@@ -10,6 +10,8 @@
     {
         private static readonly object InstanceLock = new object();
         private static BluepathSingleton instance;
+        private readonly object stopLock = new object();
+        private System.Threading.Thread stopThread;
 
         private BluepathSingleton()
         {
@@ -31,10 +33,6 @@
             }
         }
 
-        private object stopLock = new object();
-
-        private System.Threading.Thread stopThread;
-
         public ServiceUri CallbackUri { get; set; }
 
         public void Initialize(string ip, int? port = null)
@@ -42,7 +40,7 @@
             lock (this.stopLock)
             {
                 // do not allow multiple initialize
-                if (stopThread != null)
+                if (this.stopThread != null)
                 {
                     return;
                 }
@@ -100,14 +98,16 @@
 
         public void Stop()
         {
-            if(this.stopThread!=null)
+            if (this.stopThread == null)
             {
-                this.stopThread.Abort();
-                this.stopThread = null;
-                lock(this.stopLock)
-                {
-                    System.Threading.Monitor.PulseAll(this.stopLock);
-                }
+                return;
+            }
+
+            this.stopThread.Abort();
+            this.stopThread = null;
+            lock (this.stopLock)
+            {
+                System.Threading.Monitor.PulseAll(this.stopLock);
             }
         }
     }

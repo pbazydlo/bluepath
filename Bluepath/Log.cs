@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
 
@@ -35,7 +36,13 @@
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
-            var formattedMessage = string.Format("[LOG][{1}]{2} {0}", message, exception.Message, keywords.ToLogString());
+
+            if ((type & MessageType.Exception) != MessageType.Exception)
+            {
+                type |= MessageType.Exception;
+            }
+
+            var formattedMessage = string.Format("[LOG][{1}] {0} ({3}) {2}[caller: {4}]", message, type, keywords.ToLogString(), exception.Message, memberName);
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
         }
@@ -54,7 +61,11 @@
             )
         {
             // TODO: Implement logging
-            var formattedMessage = string.Format("[LOG][{1}]{2} {0}", message, type, keywords.ToLogString());
+            var traceInfo = default (string);
+#if TRACE
+            traceInfo = string.Format("[caller: {2} in {0}, line {1}]", Path.GetFileName(sourceFilePath), sourceLineNumber, memberName);
+#endif
+            var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
         }

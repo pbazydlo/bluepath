@@ -38,7 +38,7 @@
             {
                 lock (this.executorStateLock)
                 {
-                    if (this.ExecutorState == ExecutorState.Finished)
+                    if (this.ExecutorState == ExecutorState.Finished || this.result != null)
                     {
                         return this.result;
                     }

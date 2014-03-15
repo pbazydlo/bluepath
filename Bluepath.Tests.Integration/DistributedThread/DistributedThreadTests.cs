@@ -113,7 +113,7 @@
                 myThread.Join();
             });
             joinThread.Start();
-            joinThread.Join(joinWaitTime).ShouldBe(true);
+            joinThread.Join(joinWaitTime * 2).ShouldBe(true);
 
             myThread.State.ShouldBe(Executor.ExecutorState.Faulted);
         }

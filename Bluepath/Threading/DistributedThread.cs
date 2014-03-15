@@ -2,29 +2,32 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
 
     using Bluepath.Executor;
     using Bluepath.Extensions;
+    using Bluepath.Services;
 
-    public static class DistributedThread
+    public abstract class DistributedThread
     {
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
-        // ReSharper disable once InconsistentNaming
-        private static readonly List<ServiceReferences.IRemoteExecutorService> remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
-
         public enum ExecutorSelectionMode : int
         {
             LocalOnly = 0,
             RemoteOnly = 1
         }
 
-        public static List<ServiceReferences.IRemoteExecutorService> RemoteServices
+        private readonly IConnectionManager connectionManager;
+
+        protected DistributedThread(IConnectionManager connectionManager)
+        {
+            this.connectionManager = connectionManager;
+        }
+
+        public List<ServiceReferences.IRemoteExecutorService> RemoteServices
         {
             get
             {
-                return remoteServices;
+                return this.connectionManager.RemoteServices;
             }
         }
 
@@ -32,18 +35,29 @@
         {
             return DistributedThread<TFunc>.Create(function, mode);
         }
+
+        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, IConnectionManager connectionManager, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        {
+            return DistributedThread<TFunc>.Create(function, connectionManager, mode);
+        }
     }
 
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
     /// </summary>
-    public class DistributedThread<TFunc>
+    public class DistributedThread<TFunc> : DistributedThread
     {
         private IExecutor executor;
 
         private TFunc function;
 
-        private DistributedThread()
+        protected DistributedThread()
+            : base (new ConnectionManager())
+        {
+        }
+
+        protected DistributedThread(IConnectionManager connectionManager)
+            : base (connectionManager)
         {
         }
 
@@ -74,6 +88,15 @@
             };
         }
 
+        public static DistributedThread<TFunc> Create(TFunc function, IConnectionManager connectionManager, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
+        {
+            return new DistributedThread<TFunc>(connectionManager)
+            {
+                function = function,
+                Mode = mode
+            };
+        }
+
         public void Start(object[] parameters)
         {
             switch (this.Mode)
@@ -85,7 +108,7 @@
                     break;
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
-                    var service = DistributedThread.RemoteServices.FirstOrDefault();
+                    var service = this.RemoteServices.FirstOrDefault();
                     if (service == null)
                     {
                         throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");

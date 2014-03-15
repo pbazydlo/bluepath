@@ -58,6 +58,8 @@
     <Compile Include="Framework\IBluepathCommunicationFramework.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Services\BindingType.cs" />
+    <Compile Include="Services\ConnectionManager.cs" />
+    <Compile Include="Services\IConnectionManager.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />
     <Compile Include="Service References\RemoteExecutorService.cs" />

@@ -4,6 +4,8 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using Bluepath.Services;
+
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using Moq;
@@ -72,10 +74,10 @@
                             Result = 6
                         });
                 }));
-            Bluepath.Threading.DistributedThread.RemoteServices.Add(serviceMock.Object);
+            // Bluepath.Threading.DistributedThread.RemoteServices.Add(serviceMock.Object);
             BluepathSingleton.Instance.CallbackUri = new Services.ServiceUri();
             var dt1 = Bluepath.Threading.DistributedThread < Func<object[], object>>.Create(
-                t1Action,
+                t1Action, new ConnectionManager(serviceMock.Object),
                 Threading.DistributedThread.ExecutorSelectionMode.RemoteOnly
                 );
             dt1.Start(new object[] { 4, 2 });

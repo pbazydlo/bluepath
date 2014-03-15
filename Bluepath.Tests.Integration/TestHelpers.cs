@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Threading;
@@ -11,7 +10,7 @@
     {
         private static readonly string RemoteServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";
         private static readonly ConcurrentDictionary<int, Process> SpawnedServices = new ConcurrentDictionary<int, Process>();
-        public static bool SpawnRemoteService(int port)
+        public static Process SpawnRemoteService(int port)
         {
             if (SpawnedServices.ContainsKey(port))
             {
@@ -44,26 +43,7 @@
             t.Start();
             
             System.Threading.Thread.Sleep(1000);
-            return true;
-        }
-
-        public static void KillAllServices()
-        {
-            foreach (var service in TestHelpers.SpawnedServices)
-            {
-                service.Value.Kill();
-            }
-
-            TestHelpers.SpawnedServices.Clear();
-        }
-
-        public static void KillService(int port)
-        {
-            Process process;
-            if (TestHelpers.SpawnedServices.TryRemove(port, out process))
-            {
-                process.Kill();
-            }
+            return process;
         }
     }
 }

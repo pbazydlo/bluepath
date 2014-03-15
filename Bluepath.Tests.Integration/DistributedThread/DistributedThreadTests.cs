@@ -4,6 +4,7 @@
     using System.Diagnostics;
     using System.Threading;
 
+    using Bluepath.Exceptions;
     using Bluepath.Executor;
     using Bluepath.Services;
 
@@ -15,31 +16,41 @@
     public class DistributedThreadTests
     {
         private static readonly int joinWaitTime = 2000;
-        private static object testLock = new object();
         private static Thread serviceThread = null;
+
+        private Process executorHostProcess;
 
         [TestInitialize]
         public void TestSetup()
         {
-            Monitor.Enter(DistributedThreadTests.testLock);
         }
 
         [TestCleanup]
         public void CleanUp()
         {
+            try
+            {
+                if (this.executorHostProcess != null)
+                {
+                    this.executorHostProcess.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Couldn't kill process ({0}).", ex.Message);
+            }
+
             if (DistributedThreadTests.serviceThread != null)
             {
                 DistributedThreadTests.serviceThread.Abort();
                 DistributedThreadTests.serviceThread = null;
             }
-
-            Monitor.Exit(DistributedThreadTests.testLock);
         }
 
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            TestHelpers.KillAllServices();
+            // TestHelpers.KillAllServices();
         }
 
         [TestMethod]
@@ -47,7 +58,7 @@
         {
             const int executorPort = 23004;
 
-            var myThread = InitializeWithSubtractFunc(executorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
             string ip = "127.0.0.1";
             int port = 24000;
             serviceThread = new System.Threading.Thread(() =>
@@ -63,15 +74,13 @@
             joinThread.Join(); // .ShouldBe(true);
 
             ((int)myThread.Result).ShouldBe(2);
-
-            TestHelpers.KillService(executorPort);
         }
 
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoin()
         {
             const int executorPort = 23003;
-            var myThread = InitializeWithSubtractFunc(executorPort);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -81,9 +90,12 @@
             joinThread.Start();
             joinThread.Join(joinWaitTime).ShouldBe(true);
 
-            ((int)myThread.Result).ShouldBe(2);
+            if (myThread.State == ExecutorState.Running)
+            {
+                Assert.Inconclusive("Result should be available right after successful join.");
+            }
 
-            TestHelpers.KillService(executorPort);
+            ((int)myThread.Result).ShouldBe(2);
         }
 
         [TestMethod]
@@ -91,7 +103,7 @@
         {
             const int executorPort = 23002;
 
-            var myThread = InitializeWithSubtractFunc(executorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             myThread.Start(new object[] { new object[] { 5, 3 } });
             var joinThread = new System.Threading.Thread(() =>
@@ -104,14 +116,10 @@
 
             if (myThread.State != ExecutorState.Finished)
             {
-                // Above condition is sometimes true.
-                // TODO: investigate why do we have to wait for the result after successful join?
                 Assert.Inconclusive("Result should be available right after successful join.");
             }
 
             ((int)myThread.Result).ShouldBe(2);
-
-            TestHelpers.KillService(executorPort);
         }
 
         [TestMethod]
@@ -119,19 +127,32 @@
         {
             const int executorPort = 23001;
 
-            var myThread = InitializeWithSubtractFunc(executorPort);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             myThread.Start(new object[] { 5, 3 });
+            var exception = default(Exception);
             var joinThread = new System.Threading.Thread(() =>
             {
-                myThread.Join();
+                try
+                {
+                    myThread.Join();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
             });
             joinThread.Start();
             joinThread.Join(joinWaitTime).ShouldBe(true);
 
-            myThread.State.ShouldBe(ExecutorState.Faulted);
+            if (myThread.State == ExecutorState.Running)
+            {
+                Assert.Inconclusive("Exception should be available right after successful join.");
+            }
 
-            TestHelpers.KillService(executorPort);
+            Assert.IsNotNull(exception);
+            exception.GetType().ShouldBe(typeof(RemoteException));
+            myThread.State.ShouldBe(ExecutorState.Faulted);
         }
 
         [TestMethod]
@@ -139,22 +160,34 @@
         {
             const int executorPort = 23000;
 
-            var myThread = InitializeWithExceptionThrowingFunc(executorPort);
-
+            var myThread = this.InitializeWithExceptionThrowingFunc(executorPort, externalRunner: true);
+            var exception = default(Exception);
             myThread.Start(new object[0]);
             var joinThread = new System.Threading.Thread(() =>
             {
-                myThread.Join();
+                try
+                {
+                    myThread.Join();
+                }
+                catch(Exception ex)
+                {
+                    exception = ex;
+                }
             });
             joinThread.Start();
             joinThread.Join(joinWaitTime * 2).ShouldBe(true);
 
-            myThread.State.ShouldBe(ExecutorState.Faulted);
+            if (myThread.State == ExecutorState.Running)
+            {
+                Assert.Inconclusive("Exception should be available right after successful join.");
+            }
 
-            TestHelpers.KillService(executorPort);
+            Assert.IsNotNull(exception);
+            exception.GetType().ShouldBe(typeof(RemoteException));
+            myThread.State.ShouldBe(ExecutorState.Faulted);
         }
 
-        private static Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(int port, bool externalRunner = false)
+        private Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(int port, bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -163,15 +196,15 @@
 
             if (!externalRunner)
             {
-                return Initialize(testFunc, port);
+                throw new NotSupportedException("Test must be performed using external runner.");
             }
             else
             {
-                return InitializeWithExternalRunner(testFunc, port);
+                return this.InitializeWithExternalRunner(testFunc, port);
             }
         }
 
-        private static Threading.DistributedThread<Func<object[], object>> InitializeWithExceptionThrowingFunc(int port, bool externalRunner = false)
+        private Threading.DistributedThread<Func<object[], object>> InitializeWithExceptionThrowingFunc(int port, bool externalRunner = false)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -180,11 +213,11 @@
 
             if (!externalRunner)
             {
-                return Initialize(testFunc, port);
+                throw new NotSupportedException("Test must be performed using external runner.");
             }
             else
             {
-                return InitializeWithExternalRunner(testFunc, port);
+                return this.InitializeWithExternalRunner(testFunc, port);
             }
         }
 
@@ -200,10 +233,15 @@
             return Initialize<TFunc>(testFunc, port, ip);
         }
 
-        private static Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port)
+        private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port)
         {
+            if (this.executorHostProcess != null)
+            {
+                throw new Exception("Test can have only one executor host process.");
+            }
+
             string ip = "127.0.0.1";
-            TestHelpers.SpawnRemoteService(port);
+            this.executorHostProcess = TestHelpers.SpawnRemoteService(port);
             Thread.Sleep(3000);
             return Initialize<TFunc>(testFunc, port, ip);
         }

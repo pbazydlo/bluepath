@@ -135,7 +135,7 @@
                                     Thread.Sleep(this.repeatedTryJoinDelayTime);
                                 }
                             }
-                            while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running);
+                            while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running || joinResult.ExecutorState == ServiceReferences.ExecutorState.NotStarted);
 
                             this.CleanUpJoinThread();
                         });

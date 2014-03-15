@@ -52,12 +52,12 @@
         private TFunc function;
 
         protected DistributedThread()
-            : base (new ConnectionManager())
+            : base(ConnectionManager.Default)
         {
         }
 
         protected DistributedThread(IConnectionManager connectionManager)
-            : base (connectionManager)
+            : base(connectionManager)
         {
         }
 

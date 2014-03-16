@@ -1,19 +1,15 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
-    using System.Diagnostics;
     using System.Reflection;
-    using System.Runtime.Remoting;
     using System.Threading;
     using System.Threading.Tasks;
 
     using Bluepath.Exceptions;
+    using Bluepath.Extensions;
+    using Bluepath.ServiceReferences;
 
-    using global::Bluepath.Extensions;
-
-    using global::Bluepath.ServiceReferences;
-
-    public class RemoteExecutor : Executor, IRemoteExecutor
+    public sealed class RemoteExecutor : Executor, IRemoteExecutor
     {
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
@@ -29,8 +25,6 @@
         {
             this.ExecutorState = ExecutorState.NotStarted;
         }
-
-        public override TimeSpan? ElapsedTime { get; protected set; }
 
         public override object Result
         {
@@ -48,7 +42,7 @@
             }
         }
 
-        protected Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
+        private Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
 
         public override async void Execute(object[] parameters)
         {
@@ -259,7 +253,7 @@
         /// <param name="remoteExecutorService">
         /// Client for remote executor service.
         /// </param>
-        protected virtual void Initialize(IRemoteExecutorService remoteExecutorService)
+        private void Initialize(IRemoteExecutorService remoteExecutorService)
         {
             this.Client = remoteExecutorService;
         }

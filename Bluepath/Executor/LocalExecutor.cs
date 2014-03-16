@@ -49,7 +49,7 @@
             }
         }
 
-        public ExecutorState ExecutorState
+        public override ExecutorState ExecutorState
         {
             get
             {

@@ -1,8 +1,6 @@
 ﻿namespace Bluepath.Services
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
 
     using Bluepath.Exceptions;
 
@@ -10,24 +8,22 @@
     {
         private static readonly object DefaultLock = new object();
 
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
-        // ReSharper disable once InconsistentNaming
         private static ConnectionManager defaultConnectionManager;
 
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
-        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, BluepathListener listener)
+        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener)
             : this(new List<ServiceReferences.IRemoteExecutorService>() { remoteService }, listener)
         {
         }
 
-        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, BluepathListener listener)
+        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, IListener listener)
             : this(listener)
         {
             this.remoteServices.AddRange(remoteServices);
         }
 
-        private ConnectionManager(BluepathListener listener)
+        private ConnectionManager(IListener listener)
         {
             this.remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
             this.Listener = listener;

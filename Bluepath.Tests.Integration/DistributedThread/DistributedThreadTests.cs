@@ -70,7 +70,7 @@
             });
             serviceThread.Start();
 
-            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true, callbackListener: this.listener);
             
             Thread.Sleep(1000);
 
@@ -80,6 +80,8 @@
             joinThread.Join(); // .ShouldBe(true);
 
             ((int)myThread.Result).ShouldBe(2);
+
+            this.listener.Stop();
         }
 
         [TestMethod]
@@ -192,7 +194,7 @@
             myThread.State.ShouldBe(ExecutorState.Faulted);
         }
 
-        private Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(int port, bool externalRunner = false)
+        private Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(int port, bool externalRunner = false, IListener callbackListener = null)
         {
             Func<object[], object> testFunc = (parameters) =>
             {
@@ -205,7 +207,7 @@
             }
             else
             {
-                return this.InitializeWithExternalRunner(testFunc, port);
+                return this.InitializeWithExternalRunner(testFunc, port, callbackListener);
             }
         }
 
@@ -243,7 +245,7 @@
             return this.Initialize<TFunc>(testFunc, port, ip);
         }
 
-        private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port)
+        private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port, IListener callbackListener = null)
         {
             if (this.executorHostProcess != null)
             {
@@ -252,10 +254,10 @@
 
             string ip = "127.0.0.1";
             this.executorHostProcess = TestHelpers.SpawnRemoteService(port);
-            return this.Initialize<TFunc>(testFunc, port, ip);
+            return this.Initialize<TFunc>(testFunc, port, ip, callbackListener);
         }
 
-        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip)
+        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip, IListener callbackListener = null)
         {
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
@@ -264,7 +266,7 @@
                     new ServiceReferences.RemoteExecutorServiceClient(
                         new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
                         endpointAddress),
-                    listener: null);
+                    listener: callbackListener);
             var myThread = Bluepath.Threading.DistributedThread.Create(testFunc, connectionManager);
             return myThread;
         }

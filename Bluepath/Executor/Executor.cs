@@ -9,9 +9,9 @@
     {
         public Guid Eid { get; protected set; }
 
-        public ExecutorState ExecutorState { get; protected set; }
+        public virtual ExecutorState ExecutorState { get; protected set; }
 
-        public abstract TimeSpan? ElapsedTime { get; protected set; }
+        public virtual TimeSpan? ElapsedTime { get; protected set; }
 
         public abstract object Result { get; }
 

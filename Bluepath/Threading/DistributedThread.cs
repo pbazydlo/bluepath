@@ -44,7 +44,7 @@
         }
 
         /// <summary>
-        /// Gets executor selection mode.
+        /// Gets or sets executor selection mode.
         /// </summary>
         public ExecutorSelectionMode Mode { get; protected set; }
 
@@ -111,10 +111,16 @@
         /// </summary>
         /// <exception cref="RemoteException">Rethrows exception that occurred on the remote executor.</exception>
         /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
-        /// <exception cref="ThreadInterruptedException">Thrown if the thread is interrupted while waiting.</exception>
+        /// <exception cref="ThreadInterruptedException">Thrown if the local thread is interrupted while waiting.</exception>
         /// <exception cref="ThreadStateException">Thrown if the thread has not been started yet.</exception>
         public void Join()
         {
+            if (this.Executor == null || this.Executor.ExecutorState == ExecutorState.NotStarted)
+            {
+                throw new ThreadStateException("Distributed thread has not been started yet.");
+            }
+
+            Log.TraceMessage("Distributed thread is calling Join on underlying executor...", keywords: this.Executor.Eid.EidAsLogKeywords());
             this.Executor.Join();
         }
     }

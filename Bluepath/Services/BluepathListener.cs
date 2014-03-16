@@ -12,6 +12,7 @@
         private readonly object consoleThreadLock = new object();
         private System.Threading.Thread consoleThread;
 
+        // TODO: split console listening routine from connection listener
         public BluepathListener(string ip, int? port = null)
         {
             lock (this.consoleThreadLock)
@@ -115,14 +116,18 @@
 
         public void Stop()
         {
+
+            if (this.consoleThread == null)
+            {
+                return;
+            }
+
+            this.consoleThread.Abort();
             lock (this.consoleThreadLock)
             {
-                if (this.consoleThread == null)
-                {
-                    return;
-                }
+                // Close the ServiceHost.
+                this.host.Close();
 
-                this.consoleThread.Abort();
                 this.consoleThread = null;
 
                 if (BluepathListener.Default == this)
@@ -132,9 +137,6 @@
 
                 System.Threading.Monitor.PulseAll(this.consoleThreadLock);
             }
-
-            // Close the ServiceHost.
-            this.host.Close();
         }
     }
 }

@@ -42,7 +42,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BluepathListener.cs" />
     <Compile Include="Exceptions\CannotInitializeDefaultConnectionManagerException.cs" />
     <Compile Include="Exceptions\DelegateExpectedException.cs" />
     <Compile Include="Exceptions\MissingRemoteServiceReferenceException.cs" />
@@ -61,6 +60,7 @@
     <Compile Include="Framework\IBluepathCommunicationFramework.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Services\BindingType.cs" />
+    <Compile Include="Services\BluepathListener.cs" />
     <Compile Include="Services\ConnectionManager.cs" />
     <Compile Include="Services\IConnectionManager.cs" />
     <Compile Include="Services\IListener.cs" />
@@ -75,6 +75,7 @@
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Threading\DistributedThread[TFunc].cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

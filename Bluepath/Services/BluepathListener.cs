@@ -1,10 +1,8 @@
-﻿namespace Bluepath
+﻿namespace Bluepath.Services
 {
     using System;
     using System.ServiceModel;
     using System.ServiceModel.Description;
-
-    using Bluepath.Services;
 
     public class BluepathListener : IListener
     {
@@ -44,8 +42,8 @@
                 var smb = new ServiceMetadataBehavior();
                 smb.HttpGetEnabled = true;
                 smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
-                host.Description.Behaviors.Add(smb);
-                host.Description.Behaviors.Find<ServiceDebugBehavior>().IncludeExceptionDetailInFaults = true;
+                this.host.Description.Behaviors.Add(smb);
+                this.host.Description.Behaviors.Find<ServiceDebugBehavior>().IncludeExceptionDetailInFaults = true;
 
                 // Open the ServiceHost to start listening for messages. Since
                 // no endpoints are explicitly configured, the runtime will create
@@ -60,7 +58,7 @@
                     lock (this.consoleThreadLock)
                     {
                         Console.WriteLine("The service is ready at {0}", listenUri);
-                        Console.WriteLine("Binding {0}", host.Description.Endpoints[0].Binding.GetType().FullName);
+                        Console.WriteLine("Binding {0}", this.host.Description.Endpoints[0].Binding.GetType().FullName);
                         Console.WriteLine("Press <Enter> to stop the service.");
                         Console.ReadLine();
                         System.Threading.Monitor.PulseAll(this.consoleThreadLock);

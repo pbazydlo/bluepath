@@ -1,5 +1,7 @@
 ﻿namespace Bluepath.SampleRunner
 {
+    using Bluepath.Services;
+
     internal class BluepathSingleton
     {
         private static readonly object InstanceLock = new object();
@@ -25,11 +27,11 @@
             }
         }
 
-        public BluepathListener Listener { get; private set; }
+        public IListener Listener { get; private set; }
 
         public void Initialize(string ip, int? port = null)
         {
-            this.Listener = new BluepathListener(ip, port, makeDefault: true);
+            this.Listener = BluepathListener.InitializeDefaultListener(ip, port);
         }
     }
 }

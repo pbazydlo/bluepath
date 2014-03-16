@@ -43,7 +43,7 @@
                 function,
                 connectionManager,
                 Threading.DistributedThread.ExecutorSelectionMode.LocalOnly);
-            dt1.Start(new object[] { listToProcess, 0, listToProcess.Count, 5 });
+            dt1.Start(listToProcess, 0, listToProcess.Count, 5);
             dt1.Join();
 
             Convert.ToInt32(dt1.Result).ShouldBe(6);
@@ -83,7 +83,7 @@
                 function,
                 new ConnectionManager(serviceMock.Object, listener: null),
                 Threading.DistributedThread.ExecutorSelectionMode.RemoteOnly);
-            dt1.Start(new object[] { 4, 2 });
+            dt1.Start(4, 2);
             dt1.Join();
 
             Convert.ToInt32(dt1.Result).ShouldBe(6);
@@ -91,9 +91,9 @@
 
         public class FakeConnectionManager : IConnectionManager
         {
-            public List<IRemoteExecutorService> RemoteServices { get; private set; }
+            public IEnumerable<IRemoteExecutorService> RemoteServices { get; private set; }
 
-            public BluepathListener Listener { get; private set; }
+            public IListener Listener { get; private set; }
         }
     }
 }

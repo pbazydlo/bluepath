@@ -43,7 +43,7 @@
                         return this.result;
                     }
 
-                    throw new NullReferenceException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
+                    throw new ResultNotAvailableException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
                 }
             }
         }

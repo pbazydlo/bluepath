@@ -43,9 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BluepathListener.cs" />
+    <Compile Include="Exceptions\CannotInitializeDefaultConnectionManagerException.cs" />
     <Compile Include="Exceptions\DelegateExpectedException.cs" />
+    <Compile Include="Exceptions\MissingRemoteServiceReferenceException.cs" />
     <Compile Include="Exceptions\RemoteException.cs" />
     <Compile Include="Exceptions\RemoteJoinAbortedException.cs" />
+    <Compile Include="Exceptions\ResultNotAvailableException.cs" />
     <Compile Include="Executor\Executor.cs" />
     <Compile Include="Executor\ExecutorState.cs" />
     <Compile Include="Executor\ILocalExecutor.cs" />
@@ -60,6 +63,7 @@
     <Compile Include="Services\BindingType.cs" />
     <Compile Include="Services\ConnectionManager.cs" />
     <Compile Include="Services\IConnectionManager.cs" />
+    <Compile Include="Services\IListener.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />
     <Compile Include="Service References\RemoteExecutorService.cs" />

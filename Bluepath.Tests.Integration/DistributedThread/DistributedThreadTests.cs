@@ -134,7 +134,7 @@
 
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
-            myThread.Start(new object[] { 5, 3 });
+            myThread.Start(5, 3);
             var exception = default(Exception);
             var joinThread = new System.Threading.Thread(() =>
             {
@@ -167,7 +167,7 @@
 
             var myThread = this.InitializeWithExceptionThrowingFunc(ExecutorPort, externalRunner: true);
             var exception = default(Exception);
-            myThread.Start(new object[0]);
+            myThread.Start();
             var joinThread = new System.Threading.Thread(() =>
             {
                 try

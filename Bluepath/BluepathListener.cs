@@ -6,13 +6,15 @@
 
     using Bluepath.Services;
 
-    public class BluepathListener
+    public class BluepathListener : IListener
     {
+        private static readonly object DefaultPropertyLock = new object();
+        private static BluepathListener defaultListener;
         private readonly ServiceHost host;
         private readonly object consoleThreadLock = new object();
         private System.Threading.Thread consoleThread;
 
-        public BluepathListener(string ip, int? port = null, bool makeDefault = false)
+        public BluepathListener(string ip, int? port = null)
         {
             lock (this.consoleThreadLock)
             {
@@ -20,11 +22,6 @@
                 if (this.consoleThread != null)
                 {
                     return;
-                }
-
-                if (makeDefault && BluepathListener.Default != null)
-                {
-                    throw new Exception("Cannot initialize more than one default listener.");
                 }
 
                 var random = new Random();
@@ -72,18 +69,43 @@
                 });
 
                 this.consoleThread.Start();
+            }
+        }
 
-                if (makeDefault)
+        public static BluepathListener Default
+        {
+            get
+            {
+                return BluepathListener.defaultListener;
+            }
+
+            private set
+            {
+                lock (BluepathListener.DefaultPropertyLock)
                 {
-                    BluepathListener.Default = this;
+                    if (BluepathListener.defaultListener != null && value != null)
+                    {
+                        throw new Exception("There is already one default listener defined.");
+                    }
+
+                    BluepathListener.defaultListener = value;
                 }
             }
         }
 
-        // TODO: mutual exclusion using lock on set
-        public static BluepathListener Default { get; private set; }
-
         public ServiceUri CallbackUri { get; private set; }
+
+        public static BluepathListener InitializeDefaultListener(string ip, int? port = null)
+        {
+            if (BluepathListener.defaultListener != null)
+            {
+                throw new Exception("There is already one default listener defined. Stop the current one before initializing new instance.");
+            }
+
+            var listener = new BluepathListener(ip, port);
+            BluepathListener.Default = listener;
+            return listener;
+        }
 
         public void Wait()
         {

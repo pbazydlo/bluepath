@@ -82,13 +82,13 @@
             {
                 lock (this.finishedRunningLock)
                 {
-                    if (this.finishedRunning)
+                    if (!this.finishedRunning)
                     {
-                        Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
-                        return this.result;
+                        throw new ResultNotAvailableException("Cannot fetch results before starting and finishing Execute.");
                     }
 
-                    throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
+                    Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
+                    return this.result;
                 }
             }
         }

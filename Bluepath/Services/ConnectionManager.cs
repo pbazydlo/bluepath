@@ -4,13 +4,15 @@
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
 
+    using Bluepath.Exceptions;
+
     public class ConnectionManager : IConnectionManager
     {
         private static readonly object DefaultLock = new object();
 
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
         // ReSharper disable once InconsistentNaming
-        private static ConnectionManager defualt;
+        private static ConnectionManager defaultConnectionManager;
 
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
@@ -37,22 +39,22 @@
             {
                 lock (ConnectionManager.DefaultLock)
                 {
-                    if (ConnectionManager.defualt == null)
+                    if (ConnectionManager.defaultConnectionManager == null)
                     {
                         if (BluepathListener.Default == null)
                         {
-                            throw new Exception("Can't create default connection manager. Initialize BluepathListener.Default first.");
+                            throw new CannotInitializeDefaultConnectionManagerException("Can't create default connection manager. Initialize default listener (using BluepathListener.InitializeDefaultListener) first.");
                         }
 
-                        ConnectionManager.defualt = new ConnectionManager(BluepathListener.Default);
+                        ConnectionManager.defaultConnectionManager = new ConnectionManager(BluepathListener.Default);
                     }
                 }
 
-                return ConnectionManager.defualt;
+                return ConnectionManager.defaultConnectionManager;
             }
         }
 
-        public List<ServiceReferences.IRemoteExecutorService> RemoteServices
+        public IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices
         {
             get
             {
@@ -60,6 +62,6 @@
             }
         }
 
-        public BluepathListener Listener { get; private set; }
+        public IListener Listener { get; private set; }
     }
 }

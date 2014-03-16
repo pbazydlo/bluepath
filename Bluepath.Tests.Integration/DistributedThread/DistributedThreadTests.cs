@@ -69,11 +69,12 @@
             
             Thread.Sleep(1000);
 
-            myThread.Start(new object[] { new object[] { 5, 3 } });
+            myThread.Start(5, 3);
             var joinThread = new System.Threading.Thread(myThread.Join);
             joinThread.Start();
-            joinThread.Join(); // .ShouldBe(true);
+            joinThread.Join();
 
+            // Result should be 5 - 3 = 2
             ((int)myThread.Result).ShouldBe(2);
 
             this.listener.Stop();
@@ -85,19 +86,22 @@
             const int ExecutorPort = 23003;
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
-            myThread.Start(new object[] { new object[] { 5, 3 } });
-            var joinThread = new System.Threading.Thread(() =>
-            {
-                myThread.Join();
-            });
+            myThread.Start(5, 3);
+            var joinThread = new System.Threading.Thread(myThread.Join);
             joinThread.Start();
-            joinThread.Join(JoinWaitTime).ShouldBe(true);
+            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime);
+
+            if (!joinCompletedBeforeTimeout)
+            {
+                Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime);
+            }
 
             if (myThread.State == ExecutorState.Running)
             {
                 Assert.Inconclusive("Result should be available right after successful join.");
             }
 
+            // Result should be 5 - 3 = 2
             ((int)myThread.Result).ShouldBe(2);
         }
 
@@ -108,19 +112,22 @@
 
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
-            myThread.Start(new object[] { new object[] { 5, 3 } });
-            var joinThread = new System.Threading.Thread(() =>
-            {
-                myThread.Join();
-            });
+            myThread.Start(5, 3);
+            var joinThread = new System.Threading.Thread(myThread.Join);
             joinThread.Start();
-            joinThread.Join(JoinWaitTime).ShouldBe(true);
+            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime);
+
+            if (!joinCompletedBeforeTimeout)
+            {
+                Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime);
+            }
 
             if (myThread.State != ExecutorState.Finished)
             {
                 Assert.Inconclusive("Result should be available right after successful join.");
             }
 
+            // Result should be 5 - 3 = 2
             ((int)myThread.Result).ShouldBe(2);
         }
 
@@ -131,7 +138,8 @@
 
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
-            myThread.Start(5, 3);
+            // Function expects two parameters, but we are passing only one to test exception handling
+            myThread.Start(5); 
             var exception = default(Exception);
             var joinThread = new System.Threading.Thread(() =>
             {
@@ -145,7 +153,12 @@
                 }
             });
             joinThread.Start();
-            joinThread.Join(JoinWaitTime).ShouldBe(true);
+            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime);
+
+            if (!joinCompletedBeforeTimeout)
+            {
+                Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime);
+            }
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -155,6 +168,7 @@
             Assert.IsNotNull(exception);
             exception.GetType().ShouldBe(typeof(RemoteException));
             myThread.State.ShouldBe(ExecutorState.Faulted);
+            Assert.IsTrue(exception.InnerException.Message.Contains("System.Reflection.TargetParameterCountException"), "TargetParameterCountException was expected but another '{0}' was thrown", exception.InnerException.Message);
         }
 
         [TestMethod]
@@ -177,7 +191,11 @@
                 }
             });
             joinThread.Start();
-            joinThread.Join(JoinWaitTime * 2).ShouldBe(true);
+            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime * 2);
+            if (!joinCompletedBeforeTimeout)
+            {
+                Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime * 2);
+            }
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -189,12 +207,12 @@
             myThread.State.ShouldBe(ExecutorState.Faulted);
         }
 
-        private Threading.DistributedThread<Func<object[], object>> InitializeWithSubtractFunc(int port, bool externalRunner = false, IListener callbackListener = null)
+        private Threading.DistributedThread<Func<int, int, int>> InitializeWithSubtractFunc(int port, bool externalRunner = false, IListener callbackListener = null)
         {
-            Func<object[], object> testFunc = (parameters) =>
+            Func<int, int, int> testFunc = (a, b) =>
             {
                 Thread.Sleep(50);
-                return ((int)parameters[0]) - ((int)parameters[1]);
+                return a - b;
             };
 
             if (!externalRunner)
@@ -226,7 +244,7 @@
 
         private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port)
         {
-            string ip = "127.0.0.1";
+            const string Ip = "127.0.0.1";
             if (this.listener != null)
             {
                 throw new Exception("Test can have only one listener.");
@@ -234,11 +252,11 @@
 
             serviceThread = new System.Threading.Thread(() =>
             {
-                this.listener = new BluepathListener(ip, port);
+                this.listener = new BluepathListener(Ip, port);
             });
             serviceThread.Start();
-            Thread.Sleep(1000);
-            return this.Initialize<TFunc>(testFunc, port, ip);
+
+            return this.Initialize<TFunc>(testFunc, Ip, port);
         }
 
         private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port, IListener callbackListener = null)
@@ -248,12 +266,12 @@
                 throw new Exception("Test can have only one executor host process.");
             }
 
-            string ip = "127.0.0.1";
+            const string Ip = "127.0.0.1";
             this.executorHostProcess = TestHelpers.SpawnRemoteService(port);
-            return this.Initialize<TFunc>(testFunc, port, ip, callbackListener);
+            return this.Initialize<TFunc>(testFunc, Ip, port, callbackListener);
         }
 
-        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port, string ip, IListener callbackListener = null)
+        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, string ip, int port, IListener callbackListener = null)
         {
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));

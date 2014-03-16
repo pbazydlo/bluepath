@@ -4,8 +4,6 @@
     {
         ServiceUri CallbackUri { get; }
 
-        void Wait();
-
         void Stop();
     }
 }

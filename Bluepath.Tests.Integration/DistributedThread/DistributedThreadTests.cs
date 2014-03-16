@@ -64,12 +64,7 @@
             }
 
             this.listener = new BluepathListener(Ip, Port);
-            serviceThread = new System.Threading.Thread(() =>
-            {
-                this.listener.Wait();
-            });
-            serviceThread.Start();
-
+            
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true, callbackListener: this.listener);
             
             Thread.Sleep(1000);
@@ -198,6 +193,7 @@
         {
             Func<object[], object> testFunc = (parameters) =>
             {
+                Thread.Sleep(50);
                 return ((int)parameters[0]) - ((int)parameters[1]);
             };
 

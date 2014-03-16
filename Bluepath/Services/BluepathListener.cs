@@ -9,66 +9,43 @@
         private static readonly object DefaultPropertyLock = new object();
         private static BluepathListener defaultListener;
         private readonly ServiceHost host;
-        private readonly object consoleThreadLock = new object();
-        private System.Threading.Thread consoleThread;
 
-        // TODO: split console listening routine from connection listener
         public BluepathListener(string ip, int? port = null)
         {
-            lock (this.consoleThreadLock)
-            {
-                // do not allow multiple initialize
-                if (this.consoleThread != null)
-                {
-                    return;
-                }
+            var random = new Random();
+            var randomPort = random.Next(49152, 65535);
 
-                var random = new Random();
-                var randomPort = random.Next(49152, 65535);
+            var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port ?? randomPort);
+            var callbackUri = listenUri;
 
-                var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port ?? randomPort);
-                var callbackUri = listenUri;
+            ////if (callbackUri.Contains("0.0.0.0"))
+            ////{
+            ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
+            ////}
 
-                ////if (callbackUri.Contains("0.0.0.0"))
-                ////{
-                ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
-                ////}
+            // Create the ServiceHost.
+            this.host = new ServiceHost(typeof(RemoteExecutorService), new Uri(listenUri));
 
-                // Create the ServiceHost.
-                this.host = new ServiceHost(typeof(RemoteExecutorService), new Uri(listenUri));
+            Console.WriteLine("Worker URI is {0}", callbackUri);
 
-                Console.WriteLine("Worker URI is {0}", callbackUri);
+            // Enable metadata publishing.
+            var smb = new ServiceMetadataBehavior();
+            smb.HttpGetEnabled = true;
+            smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
+            this.host.Description.Behaviors.Add(smb);
+            this.host.Description.Behaviors.Find<ServiceDebugBehavior>().IncludeExceptionDetailInFaults = true;
 
-                // Enable metadata publishing.
-                var smb = new ServiceMetadataBehavior();
-                smb.HttpGetEnabled = true;
-                smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
-                this.host.Description.Behaviors.Add(smb);
-                this.host.Description.Behaviors.Find<ServiceDebugBehavior>().IncludeExceptionDetailInFaults = true;
+            // Open the ServiceHost to start listening for messages. Since
+            // no endpoints are explicitly configured, the runtime will create
+            // one endpoint per base address for each service contract implemented
+            // by the service.
+            this.host.Open();
 
-                // Open the ServiceHost to start listening for messages. Since
-                // no endpoints are explicitly configured, the runtime will create
-                // one endpoint per base address for each service contract implemented
-                // by the service.
-                this.host.Open();
+            this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), this.host.Description.Endpoints[0].Binding);
 
-                this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), this.host.Description.Endpoints[0].Binding);
-
-                this.consoleThread = new System.Threading.Thread(() =>
-                {
-                    lock (this.consoleThreadLock)
-                    {
-                        Console.WriteLine("The service is ready at {0}", listenUri);
-                        Console.WriteLine("Binding {0}", this.host.Description.Endpoints[0].Binding.GetType().FullName);
-                        Console.WriteLine("Press <Enter> to stop the service.");
-                        Console.ReadLine();
-                        System.Threading.Monitor.PulseAll(this.consoleThreadLock);
-                        this.host.Close();
-                    }
-                });
-
-                this.consoleThread.Start();
-            }
+            Log.TraceMessage(string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
+            Log.TraceMessage(string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
+            Log.TraceMessage(string.Format("Callback URI seems to be {0}.", this.CallbackUri.Address), Log.MessageType.Info);
         }
 
         public static BluepathListener Default
@@ -106,36 +83,14 @@
             return listener;
         }
 
-        public void Wait()
-        {
-            lock (this.consoleThreadLock)
-            {
-                System.Threading.Monitor.Wait(this.consoleThreadLock);
-            }
-        }
-
         public void Stop()
         {
+            // Close the ServiceHost.
+            this.host.Close();
 
-            if (this.consoleThread == null)
+            if (BluepathListener.Default == this)
             {
-                return;
-            }
-
-            this.consoleThread.Abort();
-            lock (this.consoleThreadLock)
-            {
-                // Close the ServiceHost.
-                this.host.Close();
-
-                this.consoleThread = null;
-
-                if (BluepathListener.Default == this)
-                {
-                    BluepathListener.Default = null;
-                }
-
-                System.Threading.Monitor.PulseAll(this.consoleThreadLock);
+                BluepathListener.Default = null;
             }
         }
     }

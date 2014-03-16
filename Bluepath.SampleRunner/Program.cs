@@ -1,5 +1,7 @@
 ﻿namespace Bluepath.SampleRunner
 {
+    using System;
+
     public class Program
     {
         public static void Main(string[] args)
@@ -12,6 +14,11 @@
             }
 
             BluepathSingleton.Instance.Initialize(ip, port);
+
+            Console.WriteLine("Press <Enter> to stop the service.");
+            Console.ReadLine();
+
+            BluepathSingleton.Instance.Listener.Stop();
         }
     }
 }

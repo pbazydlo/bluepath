@@ -18,14 +18,18 @@
         public enum MessageType
         {
             // General
-            Unspecified             = 0x00,
-            Exception               = 0x01,
-            Trace                   = 0x02,
-            
+            Unspecified             = 0,
+            Exception               = 1,
+            Trace                   = 1 << 1,
+            Info                    = 1 << 2,
+
+            ServiceStarted          = 1 << 8,
+            ServiceStopped          = 1 << 9,
+
             // User code execution
             UserCodeExecution       = 0x100,
-            UserCodeException       = UserCodeExecution | 0x01,
-            UserTaskStateChanged    = UserCodeExecution | 0x02,
+            UserCodeException       = UserCodeExecution | (1),
+            UserTaskStateChanged    = UserCodeExecution | (1 << 1),
         }
 
         public static void ExceptionMessage(

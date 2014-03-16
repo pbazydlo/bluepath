@@ -65,6 +65,7 @@
     <Compile Include="Services\IConnectionManager.cs" />
     <Compile Include="Services\IListener.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
+    <Compile Include="Services\NetworkInfo.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />
     <Compile Include="Service References\RemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorServiceResult.cs" />

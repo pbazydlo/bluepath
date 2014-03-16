@@ -20,16 +20,17 @@
             // General
             Unspecified             = 0,
             Exception               = 1,
-            Trace                   = 1 << 1,
-            Info                    = 1 << 2,
+            Fatal                   = 1 << 1,
+            Trace                   = 1 << 2,
+            Info                    = 1 << 3,
 
             ServiceStarted          = 1 << 8,
             ServiceStopped          = 1 << 9,
 
             // User code execution
             UserCodeExecution       = 0x100,
-            UserCodeException       = UserCodeExecution | (1),
-            UserTaskStateChanged    = UserCodeExecution | (1 << 1),
+            UserCodeException       = UserCodeExecution << 1,
+            UserTaskStateChanged    = UserCodeExecution << 2,
         }
 
         public static void ExceptionMessage(

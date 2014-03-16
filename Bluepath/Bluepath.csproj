@@ -59,6 +59,7 @@
     <Compile Include="Framework\BluepathCommunicationFramework.cs" />
     <Compile Include="Framework\IBluepathCommunicationFramework.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Security\UserAccountControlHelper.cs" />
     <Compile Include="Services\BindingType.cs" />
     <Compile Include="Services\BluepathListener.cs" />
     <Compile Include="Services\ConnectionManager.cs" />

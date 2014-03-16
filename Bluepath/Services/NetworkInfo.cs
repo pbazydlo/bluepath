@@ -1,4 +1,4 @@
-﻿namespace NetReduce.Core
+﻿namespace Bluepath.Services
 {
     using System.Collections.Generic;
     using System.Linq;

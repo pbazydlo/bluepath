@@ -1,8 +1,11 @@
 ﻿namespace Bluepath.Services
 {
     using System;
+    using System.Linq;
     using System.ServiceModel;
     using System.ServiceModel.Description;
+
+    using Bluepath.Security;
 
     public class BluepathListener : IListener
     {
@@ -12,16 +15,21 @@
 
         public BluepathListener(string ip, int? port = null)
         {
-            var random = new Random();
-            var randomPort = random.Next(49152, 65535);
+            if (!UserAccountControlHelper.IsUserAdministrator)
+            {
+                Log.TraceMessage("This service requires administrative privileges. Exiting.", Log.MessageType.Fatal);
+            }
 
-            var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port ?? randomPort);
+            var random = new Random();
+            port = port ?? random.Next(49152, 65535);
+
+            var listenUri = string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port);
             var callbackUri = listenUri;
 
-            ////if (callbackUri.Contains("0.0.0.0"))
-            ////{
-            ////    callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
-            ////}
+            if (callbackUri.Contains("0.0.0.0"))
+            {
+                callbackUri = callbackUri.Replace("0.0.0.0", NetworkInfo.GetIpAddresses().First().Address.ToString());
+            }
 
             // Create the ServiceHost.
             this.host = new ServiceHost(typeof(RemoteExecutorService), new Uri(listenUri));

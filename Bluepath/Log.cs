@@ -24,11 +24,11 @@
             Trace                   = 1 << 2,
             Info                    = 1 << 3,
 
-            ServiceStarted          = 1 << 8,
-            ServiceStopped          = 1 << 9,
+            ServiceStarted          = 1 << 6,
+            ServiceStopped          = 1 << 7,
 
             // User code execution
-            UserCodeExecution       = 0x100,
+            UserCodeExecution       = 1 << 8,
             UserCodeException       = UserCodeExecution << 1,
             UserTaskStateChanged    = UserCodeExecution << 2,
         }

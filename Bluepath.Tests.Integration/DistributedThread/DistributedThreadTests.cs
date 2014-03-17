@@ -87,10 +87,10 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesFSharpMethodWithCallback()
         {
-            const int ExecutorPort = 23004;
+            const int ExecutorPort = 23005;
 
             const string Ip = "127.0.0.1";
-            const int Port = 24000;
+            const int Port = 24001;
 
             if (this.listener != null)
             {
@@ -102,7 +102,7 @@
             // Computes the sum of the squares of the numbers divisible by 3
             var testFunc = new Func<int, int>(Bluepath.Tests.Methods.DefaultModule.sumOfSquaresDivisibleBy3UpTo);
 
-            var myThread = this.InitializeWithExternalRunner(testFunc, Port, this.listener);
+            var myThread = this.InitializeWithExternalRunner(testFunc, ExecutorPort, this.listener);
 
             // n = 7 => generates [ 1 .. 7 ]
             myThread.Start(7);

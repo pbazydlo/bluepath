@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Tests.Integration.DistributedThread
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
 
@@ -8,9 +9,14 @@
     using Bluepath.Executor;
     using Bluepath.Services;
 
+    using Microsoft.FSharp.Collections;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+    using NUnit.Framework;
+
     using Shouldly;
+
+    using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
     [TestClass]
     public class DistributedThreadTests
@@ -64,10 +70,8 @@
             }
 
             this.listener = new BluepathListener(Ip, Port);
-            
+
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true, callbackListener: this.listener);
-            
-            Thread.Sleep(1000);
 
             myThread.Start(5, 3);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -76,6 +80,38 @@
 
             // Result should be 5 - 3 = 2
             ((int)myThread.Result).ShouldBe(2);
+
+            this.listener.Stop();
+        }
+
+        [TestMethod]
+        public void DistributedThreadRemotelyExecutesFSharpMethodWithCallback()
+        {
+            const int ExecutorPort = 23004;
+
+            const string Ip = "127.0.0.1";
+            const int Port = 24000;
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            this.listener = new BluepathListener(Ip, Port);
+
+            // Computes the sum of the squares of the numbers divisible by 3
+            var testFunc = new Func<int, int>(Bluepath.Tests.Methods.DefaultModule.sumOfSquaresDivisibleBy3UpTo);
+
+            var myThread = this.InitializeWithExternalRunner(testFunc, Port, this.listener);
+
+            // n = 7 => generates [ 1 .. 7 ]
+            myThread.Start(7);
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            // Result should be 3*3 + 6*6 = 45
+            ((int)myThread.Result).ShouldBe(45);
 
             this.listener.Stop();
         }
@@ -139,7 +175,7 @@
             var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
 
             // Function expects two parameters, but we are passing only one to test exception handling
-            myThread.Start(5); 
+            myThread.Start(5);
             var exception = default(Exception);
             var joinThread = new System.Threading.Thread(() =>
             {

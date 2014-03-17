@@ -2,6 +2,7 @@
 {
     using System;
     using System.Reflection;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -258,7 +259,11 @@
                 throw new ArgumentException("Remote executor supports only static methods.", "method");
             }
 
-            this.Eid = this.Client.Initialize(method.SerializeMethodHandle());
+            var methodHandle = method.SerializeMethodHandle();
+
+            Log.TraceMessage(string.Format("Calling initialize on remote executor. Method handle: '{0}'.", methodHandle.ToReadableString()));
+
+            this.Eid = this.Client.Initialize(methodHandle);
         }
 
         /// <summary>

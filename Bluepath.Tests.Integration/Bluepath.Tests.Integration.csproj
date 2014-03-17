@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Core, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -59,11 +60,16 @@
   </Choose>
   <ItemGroup>
     <Compile Include="DistributedThread\DistributedThreadTests.cs" />
+    <Compile Include="FSharpInterop.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Storage\RhinoDhtStorageTests.cs" />
     <Compile Include="TestHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Bluepath.Tests.Methods\Bluepath.Tests.Methods.fsproj">
+      <Project>{a650217c-6cd2-4ff2-9bd0-16af6352d655}</Project>
+      <Name>Bluepath.Tests.Methods</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Bluepath\Bluepath.csproj">
       <Project>{d75600c0-febc-4654-923a-e6544bd0810f}</Project>
       <Name>Bluepath</Name>

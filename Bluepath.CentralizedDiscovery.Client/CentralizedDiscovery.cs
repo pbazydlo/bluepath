@@ -32,8 +32,8 @@ namespace Bluepath.CentralizedDiscovery.Client
                 var availableServices = this.client.GetAvailableServices()
                     .Select(s => this.ConvertToBluepathServiceUri(s))
                     .Where(s => !s.Equals(this.listenerUri)).ToArray();
-                var newServices = availableServices.Where(s => !this.services.ContainsKey(s));
-                var servicesToDelete = this.services.Keys.Where(k => !availableServices.Contains(k));
+                var newServices = availableServices.Where(s => !this.services.ContainsKey(s)).ToArray();
+                var servicesToDelete = this.services.Keys.Where(k => !availableServices.Contains(k)).ToArray();
                 foreach (var service in servicesToDelete)
                 {
                     // TODO: What if we close connection (to non existing node) when it is in use by DistributedThread?

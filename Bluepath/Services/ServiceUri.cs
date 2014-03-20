@@ -73,5 +73,10 @@
 
             return base.Equals(obj);
         }
+
+        public override int GetHashCode()
+        {
+            return string.Format("{0}{1}",this.Address, (int)this.BindingType).GetHashCode();
+        }
     }
 }

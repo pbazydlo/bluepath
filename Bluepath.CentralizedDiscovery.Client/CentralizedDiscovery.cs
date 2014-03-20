@@ -12,16 +12,16 @@ namespace Bluepath.CentralizedDiscovery.Client
         private readonly Dictionary<Bluepath.Services.ServiceUri, Bluepath.ServiceReferences.RemoteExecutorServiceClient> services;
         private object servicesLock = new object();
         private ServiceReferences.CentralizedDiscoveryServiceClient client;
-        private ServiceReferences.ServiceUri listenerUri;
+        private Bluepath.Services.ServiceUri listenerUri;
 
         public CentralizedDiscovery(Bluepath.Services.ServiceUri masterUri, Bluepath.Services.BluepathListener listener)
         {
             this.services = new Dictionary<Services.ServiceUri, Bluepath.ServiceReferences.RemoteExecutorServiceClient>();
             this.client = new ServiceReferences.CentralizedDiscoveryServiceClient(masterUri.Binding, masterUri.ToEndpointAddress());
-            this.listenerUri = this.ConvertToClientServiceUri(listener.CallbackUri);
+            this.listenerUri = listener.CallbackUri;
             ThreadPool.QueueUserWorkItem((threadContext) =>
                 {
-                    this.client.Register(this.listenerUri);
+                    this.client.Register(this.ConvertToClientServiceUri(this.listenerUri));
                 });
         }
 
@@ -29,7 +29,9 @@ namespace Bluepath.CentralizedDiscovery.Client
         {
             lock (this.servicesLock)
             {
-                var availableServices = this.client.GetAvailableServices().Select(s => this.ConvertToBluepathServiceUri(s)).ToArray();
+                var availableServices = this.client.GetAvailableServices()
+                    .Select(s => this.ConvertToBluepathServiceUri(s))
+                    .Where(s => !s.Equals(this.listenerUri)).ToArray();
                 var newServices = availableServices.Where(s => !this.services.ContainsKey(s));
                 var servicesToDelete = this.services.Keys.Where(k => !availableServices.Contains(k));
                 foreach (var service in servicesToDelete)
@@ -37,7 +39,7 @@ namespace Bluepath.CentralizedDiscovery.Client
                     // TODO: What if we close connection (to non existing node) when it is in use by DistributedThread?
                     var serviceClient = this.services[service];
                     serviceClient.Close();
-                    if(serviceClient is IDisposable)
+                    if (serviceClient is IDisposable)
                     {
                         (serviceClient as IDisposable).Dispose();
                     }
@@ -60,7 +62,7 @@ namespace Bluepath.CentralizedDiscovery.Client
 
         public void Dispose()
         {
-            this.client.Unregister(this.listenerUri);
+            this.client.Unregister(this.ConvertToClientServiceUri(this.listenerUri));
             this.client.Close();
             if (this.client is IDisposable)
             {

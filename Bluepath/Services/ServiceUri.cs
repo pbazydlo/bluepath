@@ -62,5 +62,16 @@
         {
             return new EndpointAddress(this.Address);
         }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is ServiceUri)
+            {
+                var uri = obj as ServiceUri;
+                return this.Address == uri.Address && this.BindingType == uri.BindingType;
+            }
+
+            return base.Equals(obj);
+        }
     }
 }

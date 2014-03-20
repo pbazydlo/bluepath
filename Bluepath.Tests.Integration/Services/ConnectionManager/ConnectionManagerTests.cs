@@ -25,7 +25,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                         var connectionManager = new Bluepath.Services.ConnectionManager(remoteService: null,
                             listener: bluepathListener1,
                             serviceDiscovery: serviceDiscoveryClient1);
-                        System.Threading.Thread.Sleep(1000);
+                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
 
                         connectionManager.RemoteServices.Count().ShouldBe(1);
                     }
@@ -36,6 +36,16 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                 serviceDiscoveryHost.Stop();
                 bluepathListener1.Stop();
                 bluepathListener2.Stop();
+            }
+        }
+
+        private void RepeatUntilTrue(Func<bool> function, int times = 5, TimeSpan? wait = null)
+        {
+            var waitTime = wait ?? new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 500);
+            int timesExecuted = 0;
+            while(timesExecuted< times && !function())
+            {
+                System.Threading.Thread.Sleep(waitTime);
             }
         }
     }

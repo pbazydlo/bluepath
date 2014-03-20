@@ -8,6 +8,6 @@ namespace Bluepath.Services.Discovery
 {
     public interface IServiceDiscovery
     {
-        ICollection<ServiceReferences.IRemoteExecutorService> AvailableServices { get; }
+        ICollection<ServiceReferences.IRemoteExecutorService> GetAvailableServices();
     }
 }

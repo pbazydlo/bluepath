@@ -1,8 +1,11 @@
 ﻿namespace Bluepath.Services
 {
+    using System;
     using System.Collections.Generic;
+    using System.Threading;
 
     using Bluepath.Exceptions;
+    using Bluepath.Services.Discovery;
 
     public class ConnectionManager : IConnectionManager
     {
@@ -12,16 +15,24 @@
 
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
-        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener)
+        private IServiceDiscovery serviceDiscovery;
+
+        private TimeSpan serviceDiscoveryPeriod;
+
+        private Thread serviceDiscoveryThread;
+
+        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener,
+            IServiceDiscovery serviceDiscovery = null, TimeSpan? serviceDiscoveryPeriod = null)
             : this(remoteService != null ?
                     new List<ServiceReferences.IRemoteExecutorService>() { remoteService }
                     : null,
-            listener)
+            listener, serviceDiscovery, serviceDiscoveryPeriod)
         {
         }
 
-        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, IListener listener)
-            : this(listener)
+        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, IListener listener,
+            IServiceDiscovery serviceDiscovery = null, TimeSpan? serviceDiscoveryPeriod = null)
+            : this(listener, serviceDiscovery, serviceDiscoveryPeriod)
         {
             if (remoteServices != null)
             {
@@ -29,10 +40,18 @@
             }
         }
 
-        private ConnectionManager(IListener listener)
+        private ConnectionManager(IListener listener, IServiceDiscovery serviceDiscovery, TimeSpan? serviceDiscoveryPeriod)
         {
             this.remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
             this.Listener = listener;
+            this.serviceDiscoveryThread = new Thread(() =>
+            {
+                while(true)
+                {
+                    // var availableServices = this.serviceDiscovery.AvailableServices;
+                    // new TimeSpan(hours: 0, minutes: 0, seconds: 5)
+                }
+            });
         }
 
         public static ConnectionManager Default
@@ -48,7 +67,7 @@
                             throw new CannotInitializeDefaultConnectionManagerException("Can't create default connection manager. Initialize default listener (using BluepathListener.InitializeDefaultListener) first.");
                         }
 
-                        ConnectionManager.defaultConnectionManager = new ConnectionManager(BluepathListener.Default);
+                        ConnectionManager.defaultConnectionManager = new ConnectionManager(BluepathListener.Default, null, null);
                     }
                 }
 

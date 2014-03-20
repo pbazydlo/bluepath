@@ -15,11 +15,13 @@
 
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
-        private IServiceDiscovery serviceDiscovery;
+        private readonly object remoteServicesLock = new object();
 
-        private TimeSpan serviceDiscoveryPeriod;
+        private readonly IServiceDiscovery serviceDiscovery;
 
-        private Thread serviceDiscoveryThread;
+        private readonly TimeSpan serviceDiscoveryPeriod;
+
+        private readonly Thread serviceDiscoveryThread;
 
         public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener,
             IServiceDiscovery serviceDiscovery = null, TimeSpan? serviceDiscoveryPeriod = null)
@@ -36,7 +38,10 @@
         {
             if (remoteServices != null)
             {
-                this.remoteServices.AddRange(remoteServices);
+                lock (this.remoteServicesLock)
+                {
+                    this.remoteServices.AddRange(remoteServices);
+                }
             }
         }
 
@@ -44,14 +49,28 @@
         {
             this.remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
             this.Listener = listener;
-            this.serviceDiscoveryThread = new Thread(() =>
+            if (serviceDiscovery != null)
             {
-                while(true)
+                this.serviceDiscovery = serviceDiscovery;
+                this.serviceDiscoveryPeriod = serviceDiscoveryPeriod ?? new TimeSpan(hours: 0, minutes: 0, seconds: 5);
+                this.serviceDiscoveryThread = new Thread(() =>
                 {
-                    // var availableServices = this.serviceDiscovery.AvailableServices;
-                    // new TimeSpan(hours: 0, minutes: 0, seconds: 5)
-                }
-            });
+                    while (true)
+                    {
+                        var availableServices = this.serviceDiscovery.GetAvailableServices();
+                        lock (this.remoteServicesLock)
+                        {
+                            // What about services parmanently removed, where should they be disposed?
+                            this.remoteServices.Clear();
+                            this.remoteServices.AddRange(availableServices);
+                        }
+
+                        Thread.Sleep(this.serviceDiscoveryPeriod);
+                    }
+                });
+
+                this.serviceDiscoveryThread.Start();
+            }
         }
 
         public static ConnectionManager Default
@@ -79,7 +98,10 @@
         {
             get
             {
-                return this.remoteServices;
+                lock (this.remoteServicesLock)
+                {
+                    return this.remoteServices;
+                }
             }
         }
 

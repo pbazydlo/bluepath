@@ -93,7 +93,6 @@ namespace Bluepath.Tests.Service
             var manualResetEvent = new System.Threading.ManualResetEvent(false);
             var serviceMock1 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
             var serviceMock2 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            var serviceMock3 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
             List<Bluepath.ServiceReferences.IRemoteExecutorService> services
                 = new List<ServiceReferences.IRemoteExecutorService>()
                 {
@@ -108,6 +107,7 @@ namespace Bluepath.Tests.Service
                 serviceDiscoveryPeriod: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 10));
 
             manualResetEvent.WaitOne();
+            System.Threading.Thread.Sleep(10);
             manager.RemoteServices.Count().ShouldBe(2);
             services.RemoveAt(1);
             manualResetEvent.Reset();

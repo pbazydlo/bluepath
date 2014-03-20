@@ -45,6 +45,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rhino.Queues.Tests", "..\rh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bluepath.Tests.Integration", "Bluepath.Tests.Integration\Bluepath.Tests.Integration.csproj", "{4098FE5C-2AED-411E-94DE-1743DFE55FFD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{0819F1BA-7904-4355-BC57-89578EE27F40}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MapReduce", "MapReduce", "{BBFCA804-D325-41D6-A700-D2C8E0871232}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bluepath.MapReduce", "Bluepath.MapReduce\Bluepath.MapReduce.csproj", "{54926892-8A43-4857-BDAF-3332512D47BE}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bluepath.Tests.Methods", "Bluepath.Tests.Methods\Bluepath.Tests.Methods.fsproj", "{A650217C-6CD2-4FF2-9BD0-16AF6352D655}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +115,14 @@ Global
 		{4098FE5C-2AED-411E-94DE-1743DFE55FFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4098FE5C-2AED-411E-94DE-1743DFE55FFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4098FE5C-2AED-411E-94DE-1743DFE55FFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54926892-8A43-4857-BDAF-3332512D47BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54926892-8A43-4857-BDAF-3332512D47BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54926892-8A43-4857-BDAF-3332512D47BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54926892-8A43-4857-BDAF-3332512D47BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A650217C-6CD2-4FF2-9BD0-16AF6352D655}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A650217C-6CD2-4FF2-9BD0-16AF6352D655}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A650217C-6CD2-4FF2-9BD0-16AF6352D655}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A650217C-6CD2-4FF2-9BD0-16AF6352D655}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,5 +141,7 @@ Global
 		{69004D28-466B-441F-9B03-A683BE7CB34A} = {87396724-EDF8-4099-8B03-0FCABD873BDD}
 		{398BF580-41F5-418E-A017-19D19B289A97} = {BCCD5EA0-F76E-4C72-A0EA-035E0CC7B4A5}
 		{98D394CA-9FEF-49AD-8DAB-FE039152E001} = {BCCD5EA0-F76E-4C72-A0EA-035E0CC7B4A5}
+		{BBFCA804-D325-41D6-A700-D2C8E0871232} = {0819F1BA-7904-4355-BC57-89578EE27F40}
+		{54926892-8A43-4857-BDAF-3332512D47BE} = {BBFCA804-D325-41D6-A700-D2C8E0871232}
 	EndGlobalSection
 EndGlobal

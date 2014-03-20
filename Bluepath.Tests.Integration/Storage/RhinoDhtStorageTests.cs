@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Tests.Integration.Storage
 {
     using System;
+    using System.Collections.Generic;
 
     using Bluepath.Storage;
 
@@ -11,7 +12,6 @@
     using Shouldly;
 
     using Assert = NUnit.Framework.Assert;
-    using System.Collections.Generic;
 
     [TestClass]
     public class RhinoDhtStorageTests

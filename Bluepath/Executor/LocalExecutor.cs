@@ -1,6 +1,7 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
+    using System.Data;
     using System.Linq;
     using System.Reflection;
     using System.Threading;
@@ -11,10 +12,10 @@
     public class LocalExecutor : Executor, ILocalExecutor
     {
         private readonly object finishedRunningLock = new object();
+        private readonly ManualResetEvent doneEvent = new ManualResetEvent(false);
         private object result;
-        private Thread thread;
         private Func<object[], object> function;
-        private bool finishedRunning;
+        private ExecutorState executorState;
         private DateTime? timeStarted;
         private DateTime? timeStopped;
         private int? expectedNumberOfParameters;
@@ -23,6 +24,7 @@
         public LocalExecutor()
         {
             this.Eid = Guid.NewGuid();
+            this.executorState = ExecutorState.NotStarted;
             Log.TraceMessage("Local executor created.", keywords: this.Eid.EidAsLogKeywords());
         }
 
@@ -49,30 +51,11 @@
             }
         }
 
-        public ExecutorState ExecutorState
+        public override ExecutorState ExecutorState
         {
             get
             {
-                if (this.Exception != null)
-                {
-                    return ExecutorState.Faulted;
-                }
-
-                if (this.thread == null)
-                {
-                    return ExecutorState.NotStarted;
-                }
-
-                switch (this.thread.ThreadState)
-                {
-                    case ThreadState.Unstarted:
-                        return ExecutorState.NotStarted;
-                    case ThreadState.Stopped:
-                    case ThreadState.Aborted:
-                        return ExecutorState.Finished;
-                    default:
-                        return ExecutorState.Running;
-                }
+                return this.executorState;
             }
         }
 
@@ -82,13 +65,13 @@
             {
                 lock (this.finishedRunningLock)
                 {
-                    if (this.finishedRunning)
+                    if (this.executorState != ExecutorState.Finished)
                     {
-                        Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
-                        return this.result;
+                        throw new ResultNotAvailableException("Cannot fetch results before starting and finishing Execute.");
                     }
 
-                    throw new NullReferenceException("Cannot fetch results before starting and finishing Execute.");
+                    Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
+                    return this.result;
                 }
             }
         }
@@ -101,17 +84,24 @@
             {
                 lock (this.finishedRunningLock)
                 {
-                    return this.finishedRunning;
+                    return this.executorState == ExecutorState.Finished;
                 }
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <exception cref="NotSupportedException">The common language runtime (CLR) is hosted, and the host does not support ThreadPool.QueueUserWorkItem action.</exception>
         public override void Execute(object[] parameters)
         {
             lock (this.finishedRunningLock)
             {
-                this.finishedRunning = false;
+                this.executorState = ExecutorState.Running;
             }
+
+            this.doneEvent.Reset();
 
             if (parameters == null)
             {
@@ -120,50 +110,74 @@
 
             parameters = this.InjectCommunicationFrameworkObject(parameters);
 
-            this.thread = new Thread(() =>
-            {
-                Log.TraceMessage("Local executor has started thread running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.EidAsLogKeywords());
+            var availableWorkerThreads = default(int);
+            var availableCompletionPortThreads = default(int);
+            var maxWorkerThreads = default(int);
+            var maxCompletionPortThreads = default(int);
+            ThreadPool.GetAvailableThreads(out availableWorkerThreads, out availableCompletionPortThreads);
+            ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
 
-                try
-                {
-                    // Run user code
-                    this.result = this.function(parameters);
-                }
-                catch (Exception ex)
-                {
-                    // Handle exceptions that are caused by user code
-                    this.Exception = ex;
-                    Log.ExceptionMessage(ex, "Local executor caught exception in user code.", Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged, this.Eid.EidAsLogKeywords());
-                }
+            Log.TraceMessage(string.Format("Queueing user task. Available worker threads: {0}/{1}, available completion port threads: {2}/{3}.", availableWorkerThreads, maxWorkerThreads, availableCompletionPortThreads, maxCompletionPortThreads), Log.MessageType.Trace, keywords: this.Eid.EidAsLogKeywords());
 
-                lock (this.finishedRunningLock)
-                {
-                    this.finishedRunning = true;
-                    this.timeStopped = DateTime.Now;
-                }
+            ThreadPool.QueueUserWorkItem(
+                (threadContext) =>
+                    {
+                        Log.TraceMessage(
+                            "Local executor has started thread running user code.",
+                            Log.MessageType.UserTaskStateChanged,
+                            keywords: this.Eid.EidAsLogKeywords());
 
-                Log.TraceMessage("Local executor finished running user code.", Log.MessageType.UserTaskStateChanged, keywords: this.Eid.EidAsLogKeywords());
-            });
+                        try
+                        {
+                            // Run user code
+                            this.result = this.function(parameters);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Handle exceptions that are caused by user code
+                            this.Exception = ex;
+                            Log.ExceptionMessage(
+                                ex,
+                                "Local executor caught exception in user code.",
+                                Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged,
+                                this.Eid.EidAsLogKeywords());
+                        }
+
+                        lock (this.finishedRunningLock)
+                        {
+                            this.executorState = this.Exception == null ? ExecutorState.Finished : ExecutorState.Faulted;
+                            this.timeStopped = DateTime.Now;
+                        }
+
+                        Log.TraceMessage(
+                            "Local executor finished running user code.",
+                            Log.MessageType.UserTaskStateChanged,
+                            keywords: this.Eid.EidAsLogKeywords());
+
+                        this.doneEvent.Set();
+                    });
 
             this.timeStarted = DateTime.Now;
-            this.thread.Name = string.Format("User code runner thread on executor '{0}'", this.Eid);
-            this.thread.Start();
+            // this.thread.Name = string.Format("User code runner thread on executor '{0}'", this.Eid);
+            // this.thread.Start();
         }
 
         public override void Join()
         {
             Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.EidAsLogKeywords());
-            this.thread.Join();
+            this.doneEvent.WaitOne();
         }
 
         public void Join(TimeSpan timeout)
         {
+            throw new NotSupportedException();
+
             var timer = new Timer(
                 _ =>
                 {
-                    if (!this.finishedRunning)
+                    if (this.executorState == ExecutorState.Running)
                     {
-                        this.thread.Abort();
+                        // this.thread.Abort();
                     }
                 },
                 null,

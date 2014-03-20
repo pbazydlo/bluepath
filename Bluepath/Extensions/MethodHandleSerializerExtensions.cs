@@ -2,8 +2,11 @@ namespace Bluepath.Extensions
 {
     using System;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.Serialization.Formatters.Binary;
+    using System.Text;
+    using System.Text.RegularExpressions;
 
     public static class MethodHandleSerializerExtensions
     {
@@ -92,17 +95,17 @@ namespace Bluepath.Extensions
             return result;
         }
 
+        public static string ToReadableString(this byte[] bytes)
+        {
+            bytes = bytes.Where(b => b > 0x00).ToArray();
+            var input = Encoding.UTF8.GetString(bytes);
+
+            return Regex.Replace(input, @"\p{Cc}", a => string.Format("[{0:X2}]", (byte)a.Value[0]));
+        }
+
         private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
         {
             return methodHandle.Serialize();
-            //var formatter = new BinaryFormatter();
-            //using (var stream = new MemoryStream())
-            //{
-            //    formatter.Serialize(stream, methodHandle);
-            //    stream.Seek(0, SeekOrigin.Begin);
-            //    var serializedMethodHandle = stream.GetBuffer();
-            //    return serializedMethodHandle;
-            //}
         }
     }
 }

@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
 
@@ -17,14 +18,19 @@
         public enum MessageType
         {
             // General
-            Unspecified             = 0x00,
-            Exception               = 0x01,
-            Trace                   = 0x02,
-            
+            Unspecified             = 0,
+            Exception               = 1,
+            Fatal                   = 1 << 1,
+            Trace                   = 1 << 2,
+            Info                    = 1 << 3,
+
+            ServiceStarted          = 1 << 6,
+            ServiceStopped          = 1 << 7,
+
             // User code execution
-            UserCodeExecution       = 0x100,
-            UserCodeException       = UserCodeExecution | 0x01,
-            UserTaskStateChanged    = UserCodeExecution | 0x02,
+            UserCodeExecution       = 1 << 8,
+            UserCodeException       = UserCodeExecution << 1,
+            UserTaskStateChanged    = UserCodeExecution << 2,
         }
 
         public static void ExceptionMessage(
@@ -35,7 +41,14 @@
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
-            Debug.WriteLine("[LOG]{2} {0} ({1})", message, exception.Message, keywords.ToLogString());
+            if ((type & MessageType.Exception) != MessageType.Exception)
+            {
+                type |= MessageType.Exception;
+            }
+
+            var formattedMessage = string.Format("[LOG][{1}] {0} ({3}) {2}[caller: {4}]", message, type, keywords.ToLogString(), exception.Message, memberName);
+            Debug.WriteLine(formattedMessage);
+            Console.WriteLine(formattedMessage);
         }
 
         [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
@@ -52,7 +65,13 @@
             )
         {
             // TODO: Implement logging
-            Debug.WriteLine("[LOG]{2} {0} ({1})", message, type, keywords.ToLogString());
+            var traceInfo = default(string);
+#if TRACE
+            traceInfo = string.Format("[caller: {2} in {0}, line {1}]", Path.GetFileName(sourceFilePath), sourceLineNumber, memberName);
+#endif
+            var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
+            Debug.WriteLine(formattedMessage);
+            Console.WriteLine(formattedMessage);
         }
     }
 

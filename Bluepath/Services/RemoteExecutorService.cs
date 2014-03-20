@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Concurrent;
     using System.Reflection;
+    using System.Runtime.Serialization;
     using System.Threading;
 
     using Bluepath.Executor;
@@ -157,7 +158,7 @@
                         // Exception caused by user code (if any) can be accessed using Exception property
                         executor.Join();
 
-                        Log.TraceMessage("Sending callback with result.", keywords: executor.Eid.EidAsLogKeywords());
+                        Log.TraceMessage(string.Format("Sending callback with result. State: {0}. Elapsed time: {1}.", executor.ExecutorState, executor.ElapsedTime), keywords: executor.Eid.EidAsLogKeywords());
 
                         var result = new ServiceReferences.RemoteExecutorServiceResult
                         {

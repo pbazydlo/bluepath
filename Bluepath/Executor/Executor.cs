@@ -9,15 +9,17 @@
     {
         public Guid Eid { get; protected set; }
 
-        public ExecutorState ExecutorState { get; protected set; }
+        public virtual ExecutorState ExecutorState { get; protected set; }
 
-        public abstract TimeSpan? ElapsedTime { get; protected set; }
+        public virtual TimeSpan? ElapsedTime { get; protected set; }
 
         public abstract object Result { get; }
 
         public abstract void Execute(object[] parameters);
 
         public abstract void Join();
+
+        public abstract void Dispose();
 
         public object GetResult()
         {
@@ -85,7 +87,5 @@
         }
 
         protected abstract void InitializeFromMethod(MethodBase method);
-
-        public abstract void Dispose();
     }
 }

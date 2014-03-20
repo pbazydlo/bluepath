@@ -1,19 +1,16 @@
 ﻿namespace Bluepath.Executor
 {
     using System;
-    using System.Diagnostics;
     using System.Reflection;
-    using System.Runtime.Remoting;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
     using Bluepath.Exceptions;
+    using Bluepath.Extensions;
+    using Bluepath.ServiceReferences;
 
-    using global::Bluepath.Extensions;
-
-    using global::Bluepath.ServiceReferences;
-
-    public class RemoteExecutor : Executor, IRemoteExecutor
+    public sealed class RemoteExecutor : Executor, IRemoteExecutor
     {
         private readonly object executorStateLock = new object();
         private readonly object joinThreadLock = new object();
@@ -30,25 +27,23 @@
             this.ExecutorState = ExecutorState.NotStarted;
         }
 
-        public override TimeSpan? ElapsedTime { get; protected set; }
-
         public override object Result
         {
             get
             {
                 lock (this.executorStateLock)
                 {
-                    if (this.ExecutorState == ExecutorState.Finished)
+                    if (this.ExecutorState == ExecutorState.Finished || this.result != null)
                     {
                         return this.result;
                     }
 
-                    throw new NullReferenceException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
+                    throw new ResultNotAvailableException(string.Format("Result is not available. The executor is in '{0}' state.", this.ExecutorState));
                 }
             }
         }
 
-        protected Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
+        private Bluepath.ServiceReferences.IRemoteExecutorService Client { get; set; }
 
         public override async void Execute(object[] parameters)
         {
@@ -107,6 +102,8 @@
 
                             var attemptsCounter = 0;
 
+                            Log.TraceMessage(string.Format("Calling remote TryJoin..."), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+
                             // Get the processing result
                             // I would leave this loop to allow testing without communication (callbacks)
                             do
@@ -119,23 +116,25 @@
                                 }
                                 catch (TimeoutException)
                                 {
-                                    Log.TraceMessage(string.Format("Remote TryJoinAsync timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                                    Log.TraceMessage(string.Format("Remote TryJoin timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
                                 }
                                 catch (Exception ex)
                                 {
                                     joinThreadException = ex;
-                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoinAsync with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoin with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
 
                                     break;
                                 }
 
                                 if (joinResult != null && joinResult.ExecutorState == ServiceReferences.ExecutorState.Running)
                                 {
+                                    Log.TraceMessage(string.Format("Remote TryJoin failed for {0} time, because remote thread is still running. Waiting {1} and trying again...", attemptsCounter, this.repeatedTryJoinDelayTime), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+
                                     // TryJoin is non-blocking, wait some time before checking again.
                                     Thread.Sleep(this.repeatedTryJoinDelayTime);
                                 }
                             }
-                            while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running);
+                            while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running || joinResult.ExecutorState == ServiceReferences.ExecutorState.NotStarted);
 
                             this.CleanUpJoinThread();
                         });
@@ -253,17 +252,6 @@
             }
         }
 
-        /// <summary>
-        /// This method is invoked before calling Initialize on remote executor.
-        /// </summary>
-        /// <param name="remoteExecutorService">
-        /// Client for remote executor service.
-        /// </param>
-        protected virtual void Initialize(IRemoteExecutorService remoteExecutorService)
-        {
-            this.Client = remoteExecutorService;
-        }
-
         protected override void InitializeFromMethod(MethodBase method)
         {
             if (!method.IsStatic)
@@ -271,7 +259,22 @@
                 throw new ArgumentException("Remote executor supports only static methods.", "method");
             }
 
-            this.Eid = this.Client.Initialize(method.SerializeMethodHandle());
+            var methodHandle = method.SerializeMethodHandle();
+
+            Log.TraceMessage(string.Format("Calling initialize on remote executor. Method handle: '{0}'.", methodHandle.ToReadableString()));
+
+            this.Eid = this.Client.Initialize(methodHandle);
+        }
+
+        /// <summary>
+        /// This method is invoked before calling Initialize on remote executor.
+        /// </summary>
+        /// <param name="remoteExecutorService">
+        /// Client for remote executor service.
+        /// </param>
+        private void Initialize(IRemoteExecutorService remoteExecutorService)
+        {
+            this.Client = remoteExecutorService;
         }
 
         private void CleanUpJoinThread()

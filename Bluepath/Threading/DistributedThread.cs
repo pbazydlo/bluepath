@@ -1,109 +1,127 @@
 ﻿namespace Bluepath.Threading
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Linq;
+    using System.Threading;
 
+    using Bluepath.Exceptions;
     using Bluepath.Executor;
-    using Bluepath.Extensions;
+    using Bluepath.Services;
 
-    public static class DistributedThread
+    public abstract class DistributedThread
     {
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1311:StaticReadonlyFieldsMustBeginWithUpperCaseLetter", Justification = "Public property starting with upper-case letter is exposed.")]
-        // ReSharper disable once InconsistentNaming
-        private static readonly List<ServiceReferences.IRemoteExecutorService> remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
+        protected readonly IConnectionManager ConnectionManager;
 
+        protected DistributedThread(IConnectionManager connectionManager)
+        {
+            this.ConnectionManager = connectionManager;
+        }
+
+        /// <summary>
+        /// Executor selection mode
+        /// </summary>
         public enum ExecutorSelectionMode : int
         {
+            /// <summary>
+            /// Run on local executor.
+            /// </summary>
             LocalOnly = 0,
+
+            /// <summary>
+            /// Run on remote executor.
+            /// </summary>
             RemoteOnly = 1
         }
 
-        public static List<ServiceReferences.IRemoteExecutorService> RemoteServices
+        /// <summary>
+        /// Gets list of known remote executor services.
+        /// </summary>
+        public IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices
         {
             get
             {
-                return remoteServices;
+                return this.ConnectionManager.RemoteServices;
             }
         }
 
-        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
-        {
-            return DistributedThread<TFunc>.Create(function, mode);
-        }
-    }
+        /// <summary>
+        /// Gets or sets executor selection mode.
+        /// </summary>
+        public ExecutorSelectionMode Mode { get; protected set; }
 
-    /// <summary>
-    /// TODO: Description, Remote Execution, Choosing executing node
-    /// </summary>
-    public class DistributedThread<TFunc>
-    {
-        private IExecutor executor;
-
-        private TFunc function;
-
-        private DistributedThread()
-        {
-        }
-
-        public DistributedThread.ExecutorSelectionMode Mode { get; private set; }
-
+        /// <summary>
+        /// Gets underlying executor's state.
+        /// </summary>
         public ExecutorState State
         {
             get
             {
-                return this.executor.ExecutorState;
+                return this.Executor.ExecutorState;
             }
         }
 
+        /// <summary>
+        /// Gets processing result from executor. 
+        /// Make sure to call Join first. If the result is not available exception will be thrown.
+        /// </summary>
+        /// <exception cref="ResultNotAvailableException">Thrown if executor is still running.</exception>
         public object Result
         {
             get
             {
-                return this.executor.Result;
+                return this.Executor.Result;
             }
         }
 
-        public static DistributedThread<TFunc> Create(TFunc function, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
+        protected IExecutor Executor { get; set; }
+
+        /// <summary>
+        /// Creates distributed thread using default connection manager.
+        /// </summary>
+        /// <typeparam name="TFunc">Delegate type of method to be run.</typeparam>
+        /// <param name="function">Method to be run.</param>
+        /// <param name="mode">Executor selection strategy.</param>
+        /// <returns>Instance of distributed thread.</returns>
+        /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
+        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
-            return new DistributedThread<TFunc>()
-            {
-                function = function,
-                Mode = mode
-            };
+            return DistributedThread<TFunc>.Create(function, mode);
         }
 
-        public void Start(object[] parameters)
+        /// <summary>
+        /// Creates distributed thread using supplied connection manager.
+        /// </summary>
+        /// <typeparam name="TFunc">Delegate type of method to be run.</typeparam>
+        /// <param name="function">Method to be run.</param>
+        /// <param name="connectionManager">Connection manager.</param>
+        /// <param name="mode">Executor selection strategy.</param>
+        /// <returns>Instance of distributed thread.</returns>
+        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, IConnectionManager connectionManager, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
         {
-            switch (this.Mode)
-            {
-                case DistributedThread.ExecutorSelectionMode.LocalOnly:
-                    var localExecutor = new LocalExecutor();
-                    localExecutor.Initialize<TFunc>(this.function);
-                    this.executor = localExecutor;
-                    break;
-                case DistributedThread.ExecutorSelectionMode.RemoteOnly:
-                    var remoteExecutor = new RemoteExecutor();
-                    var service = DistributedThread.RemoteServices.FirstOrDefault();
-                    if (service == null)
-                    {
-                        throw new NullReferenceException("No remote service was specified in DistributedThread.RemoteServices!");
-                    }
-
-                    remoteExecutor.Setup(service, BluepathSingleton.Instance.CallbackUri.Convert());
-                    remoteExecutor.Initialize<TFunc>(this.function);
-                    Bluepath.Services.RemoteExecutorService.RegisterRemoteExecutor(remoteExecutor);
-                    this.executor = remoteExecutor;
-                    break;
-            }
-
-            this.executor.Execute(parameters);
+            return DistributedThread<TFunc>.Create(function, connectionManager, mode);
         }
 
+        /// <summary>
+        /// Starts execution of distributed thread.
+        /// </summary>
+        /// <param name="parameters">Parameters for the method.</param>
+        public abstract void Start(params object[] parameters);
+
+        /// <summary>
+        /// Blocks calling thread while underlying local or remote thread is running.
+        /// </summary>
+        /// <exception cref="RemoteException">Rethrows exception that occurred on the remote executor.</exception>
+        /// <exception cref="RemoteJoinAbortedException">Thrown if join thread ends unexpectedly (eg. endpoint was not found).</exception>
+        /// <exception cref="ThreadInterruptedException">Thrown if the local thread is interrupted while waiting.</exception>
+        /// <exception cref="ThreadStateException">Thrown if the thread has not been started yet.</exception>
         public void Join()
         {
-            this.executor.Join();
+            if (this.Executor == null || this.Executor.ExecutorState == ExecutorState.NotStarted)
+            {
+                throw new ThreadStateException("Distributed thread has not been started yet.");
+            }
+
+            Log.TraceMessage("Distributed thread is calling Join on underlying executor...", keywords: this.Executor.Eid.EidAsLogKeywords());
+            this.Executor.Join();
         }
     }
 }

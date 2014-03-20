@@ -50,6 +50,8 @@ namespace Bluepath.CentralizedDiscovery
             // by the service.
             this.host.Open();
 
+            this.MasterUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), this.host.Description.Endpoints[0].Binding);
+
             Log.TraceMessage(string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
             Log.TraceMessage(string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
         }
@@ -59,5 +61,7 @@ namespace Bluepath.CentralizedDiscovery
             // Close the ServiceHost.
             this.host.Close();
         }
+
+        public ServiceUri MasterUri { get; private set; }
     }
 }

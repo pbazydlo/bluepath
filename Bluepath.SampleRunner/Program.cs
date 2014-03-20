@@ -12,8 +12,10 @@
             {
                 BluepathSingleton.Instance.Initialize(ip);
             }
-
-            BluepathSingleton.Instance.Initialize(ip, port);
+            else
+            {
+                BluepathSingleton.Instance.Initialize(ip, port);
+            }
 
             Console.WriteLine("Press <Enter> to stop the service.");
             Console.ReadLine();

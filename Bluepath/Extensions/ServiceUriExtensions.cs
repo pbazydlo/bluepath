@@ -11,7 +11,8 @@
 
             return new ServiceReferences.ServiceUri()
             {
-                Address = uri.Address
+                Address = uri.Address,
+                BindingType = (Bluepath.ServiceReferences.BindingType)((int)uri.BindingType)
             };
         }
     }

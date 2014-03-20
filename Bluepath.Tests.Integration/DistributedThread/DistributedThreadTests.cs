@@ -98,7 +98,6 @@
             }
 
             this.listener = new BluepathListener(Ip, Port);
-
             // Computes the sum of the squares of the numbers divisible by 3
             var testFunc = new Func<int, int>(Bluepath.Tests.Methods.DefaultModule.sumOfSquaresDivisibleBy3UpTo);
 

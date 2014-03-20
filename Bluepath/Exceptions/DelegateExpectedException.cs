@@ -2,6 +2,7 @@
 {
     using System;
 
+    [Serializable]
     public class DelegateExpectedException : Exception
     {
         public DelegateExpectedException(Type type)

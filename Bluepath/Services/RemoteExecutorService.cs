@@ -117,7 +117,7 @@
             {
                 Console.WriteLine(ex);
                 Log.ExceptionMessage(ex);
-                throw ex;
+                throw;
             }
         }
 

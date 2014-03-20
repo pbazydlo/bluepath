@@ -2,6 +2,7 @@
 {
     using System;
 
+    [Serializable]
     public class RemoteJoinAbortedException : Exception
     {
         public RemoteJoinAbortedException(string message)

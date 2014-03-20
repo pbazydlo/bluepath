@@ -13,6 +13,7 @@
     public class LocalExecutorTests
     {
         [TestMethod]
+        [Timeout(3000)]
         public void LocalExecutorTimedOutJoinTest()
         {
             var testMethod = new Func<object[], object>(
@@ -30,7 +31,9 @@
             executor.Join(timeout: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 30));
 
             executor.ElapsedTime.ShouldBeLessThan(new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 3, milliseconds: 0));
-            executor.Exception.GetType().ShouldBe(typeof(ThreadAbortException));
+            
+            // join with timeout shouldn't abort thread
+            // executor.Exception.GetType().ShouldBe(typeof(ThreadAbortException));
         }
     }
 }

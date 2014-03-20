@@ -168,23 +168,11 @@
             this.doneEvent.WaitOne();
         }
 
-        public void Join(TimeSpan timeout)
+        public bool Join(TimeSpan timeout)
         {
-            throw new NotSupportedException();
-
-            var timer = new Timer(
-                _ =>
-                {
-                    if (this.executorState == ExecutorState.Running)
-                    {
-                        // this.thread.Abort();
-                    }
-                },
-                null,
-                timeout.Milliseconds,
-                Timeout.Infinite);
-
-            this.Join();
+            // natural behaviour of join with timeout is to stop trying to join
+            // after timeout have passed and NOT to abort thread
+            return this.doneEvent.WaitOne(timeout);
         }
 
         public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)

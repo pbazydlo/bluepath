@@ -63,6 +63,7 @@
     <Compile Include="Services\BindingType.cs" />
     <Compile Include="Services\BluepathListener.cs" />
     <Compile Include="Services\ConnectionManager.cs" />
+    <Compile Include="Services\Discovery\IServiceDiscovery.cs" />
     <Compile Include="Services\IConnectionManager.cs" />
     <Compile Include="Services\IListener.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />

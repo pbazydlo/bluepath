@@ -13,14 +13,20 @@
         private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
 
         public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener)
-            : this(new List<ServiceReferences.IRemoteExecutorService>() { remoteService }, listener)
+            : this(remoteService != null ?
+                    new List<ServiceReferences.IRemoteExecutorService>() { remoteService }
+                    : null,
+            listener)
         {
         }
 
         public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, IListener listener)
             : this(listener)
         {
-            this.remoteServices.AddRange(remoteServices);
+            if (remoteServices != null)
+            {
+                this.remoteServices.AddRange(remoteServices);
+            }
         }
 
         private ConnectionManager(IListener listener)

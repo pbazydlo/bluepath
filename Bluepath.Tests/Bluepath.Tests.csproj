@@ -63,6 +63,7 @@
     <Compile Include="Executor\FakeRemoteExecutorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Executor\RemoteExecutorServiceTests.cs" />
+    <Compile Include="Service\ConnectionManagerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bluepath\Bluepath.csproj">

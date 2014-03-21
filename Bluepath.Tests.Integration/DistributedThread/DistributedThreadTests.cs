@@ -242,6 +242,63 @@
             myThread.State.ShouldBe(ExecutorState.Faulted);
         }
 
+        [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodTakingClassAsItsParameter()
+        {
+            const int ExecutorPort = 33004;
+            
+            Func<ComplexParameter, string> testFunc = (complexParameter) =>
+            {
+                return string.Format("{0}_{1}", complexParameter.SomeProperty, complexParameter.AnotherProperty);
+            };
+
+            var parameter = new ComplexParameter()
+            {
+                SomeProperty = "jack",
+                AnotherProperty = 56
+            };
+
+            var myThread = this.Initialize(testFunc, ExecutorPort);
+
+            myThread.Start(parameter);
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            myThread.Result.ToString().ShouldBe(string.Format("{0}_{1}", parameter.SomeProperty, parameter.AnotherProperty));
+
+            this.listener.Stop();
+        }
+
+        [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodReturningClass()
+        {
+            const int ExecutorPort = 33004;
+
+            Func<string, ComplexParameter> testFunc = (parameter) =>
+            {
+                return new ComplexParameter()
+                {
+                    SomeProperty = parameter,
+                    AnotherProperty = 44
+                };
+            };
+
+            var testValue = "jack";
+            var myThread = this.Initialize(testFunc, ExecutorPort);
+
+            myThread.Start(testValue);
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            var result = (ComplexParameter)myThread.Result;
+            result.SomeProperty.ShouldBe(testValue);
+            result.AnotherProperty.ShouldBe(44);
+
+            this.listener.Stop();
+        }
+
         private Threading.DistributedThread<Func<int, int, int>> InitializeWithSubtractFunc(int port, bool externalRunner = false, IListener callbackListener = null)
         {
             Func<int, int, int> testFunc = (a, b) =>

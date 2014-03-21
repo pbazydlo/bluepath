@@ -7,6 +7,7 @@
     using System.Threading;
 
     using Bluepath.Exceptions;
+    using Bluepath.Extensions;
     using Bluepath.Framework;
 
     public class LocalExecutor : Executor, ILocalExecutor
@@ -20,6 +21,8 @@
         private DateTime? timeStopped;
         private int? expectedNumberOfParameters;
         private int? communicationObjectParameterIndex;
+        private bool[] parameterInfos;
+        private bool serializeResult = false;
 
         public LocalExecutor()
         {
@@ -76,8 +79,22 @@
             }
         }
 
+        public object SerializedResult
+        {
+            get
+            {
+                var result = this.Result;
+                if(this.serializeResult)
+                {
+                    return result.Serialize();
+                }
+
+                return result;
+            }
+        }
+
         public Exception Exception { get; private set; }
-        
+
         public bool IsResultAvailable
         {
             get
@@ -109,6 +126,16 @@
             }
 
             parameters = this.InjectCommunicationFrameworkObject(parameters);
+            if (this.parameterInfos != null)
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (this.parameterInfos[i] && (parameters[i] is byte[]))
+                    {
+                        parameters[i] = ((byte[])parameters[i]).Deserialize<object>();
+                    }
+                }
+            }
 
             var availableWorkerThreads = default(int);
             var availableCompletionPortThreads = default(int);
@@ -121,41 +148,41 @@
 
             ThreadPool.QueueUserWorkItem(
                 (threadContext) =>
+                {
+                    Log.TraceMessage(
+                        "Local executor has started thread running user code.",
+                        Log.MessageType.UserTaskStateChanged,
+                        keywords: this.Eid.EidAsLogKeywords());
+
+                    try
                     {
-                        Log.TraceMessage(
-                            "Local executor has started thread running user code.",
-                            Log.MessageType.UserTaskStateChanged,
-                            keywords: this.Eid.EidAsLogKeywords());
+                        // Run user code
+                        this.result = this.function(parameters);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle exceptions that are caused by user code
+                        this.Exception = ex;
+                        Log.ExceptionMessage(
+                            ex,
+                            "Local executor caught exception in user code.",
+                            Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged,
+                            this.Eid.EidAsLogKeywords());
+                    }
 
-                        try
-                        {
-                            // Run user code
-                            this.result = this.function(parameters);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Handle exceptions that are caused by user code
-                            this.Exception = ex;
-                            Log.ExceptionMessage(
-                                ex,
-                                "Local executor caught exception in user code.",
-                                Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged,
-                                this.Eid.EidAsLogKeywords());
-                        }
+                    lock (this.finishedRunningLock)
+                    {
+                        this.executorState = this.Exception == null ? ExecutorState.Finished : ExecutorState.Faulted;
+                        this.timeStopped = DateTime.Now;
+                    }
 
-                        lock (this.finishedRunningLock)
-                        {
-                            this.executorState = this.Exception == null ? ExecutorState.Finished : ExecutorState.Faulted;
-                            this.timeStopped = DateTime.Now;
-                        }
+                    Log.TraceMessage(
+                        "Local executor finished running user code.",
+                        Log.MessageType.UserTaskStateChanged,
+                        keywords: this.Eid.EidAsLogKeywords());
 
-                        Log.TraceMessage(
-                            "Local executor finished running user code.",
-                            Log.MessageType.UserTaskStateChanged,
-                            keywords: this.Eid.EidAsLogKeywords());
-
-                        this.doneEvent.Set();
-                    });
+                    this.doneEvent.Set();
+                });
 
             this.timeStarted = DateTime.Now;
             // this.thread.Name = string.Format("User code runner thread on executor '{0}'", this.Eid);
@@ -175,11 +202,30 @@
             return this.doneEvent.WaitOne(timeout);
         }
 
-        public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null, int? communicationObjectParameterIndex = null)
+        public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null,
+            int? communicationObjectParameterIndex = null, ParameterInfo[] parameters = null, Type returnType = null)
         {
             this.function = function;
             this.expectedNumberOfParameters = expectedNumberOfParameters;
             this.communicationObjectParameterIndex = communicationObjectParameterIndex;
+            if (parameters != null)
+            {
+                this.parameterInfos = new bool[parameters.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var parameterType = parameters[i].ParameterType;
+                    this.parameterInfos[i] = parameterType.IsClass && parameterType.IsSerializable;
+                }
+            }
+
+            if(returnType!=null)
+            {
+                if(returnType.IsClass && returnType.IsSerializable)
+                {
+                    this.serializeResult = true;
+                }
+            }
+
             Log.TraceMessage("Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
         }
 

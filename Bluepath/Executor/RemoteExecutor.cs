@@ -21,6 +21,8 @@
         private Thread joinThread;
         private ServiceUri callbackUri;
         private bool callbacksEnabled = true;
+        private bool[] serializeParameters;
+        private bool serializeResult = false;
 
         public RemoteExecutor()
         {
@@ -52,7 +54,20 @@
                 this.ExecutorState = ExecutorState.Running;
             }
 
-            await this.Client.ExecuteAsync(this.Eid, parameters, this.callbackUri);
+            object[] parametersToSend = new object[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if(this.serializeParameters[i])
+                {
+                    parametersToSend[i] = parameters[i].Serialize();
+                }
+                else
+                {
+                    parametersToSend[i] = parameters[i];
+                }
+            }
+
+            await this.Client.ExecuteAsync(this.Eid, parametersToSend, this.callbackUri);
         }
 
         /// <summary>
@@ -163,7 +178,14 @@
                         {
                             this.ExecutorState = ExecutorState.Finished;
                             this.ElapsedTime = joinResult.ElapsedTime;
-                            this.result = joinResult.Result;
+                            if (this.serializeResult && (joinResult.Result is byte[]))
+                            {
+                                this.result = ((byte[])joinResult.Result).Deserialize<object>();
+                            }
+                            else
+                            {
+                                this.result = joinResult.Result;
+                            }
                         }
                     }
 
@@ -257,6 +279,42 @@
             if (!method.IsStatic)
             {
                 throw new ArgumentException("Remote executor supports only static methods.", "method");
+            }
+
+            var parameters = method.GetParameters();
+            this.serializeParameters = new bool[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var parameterType = parameters[i].ParameterType;
+                // TODO: it is not going to work with structs
+                if (parameterType.IsClass)
+                {
+                    if (!parameterType.IsSerializable)
+                    {
+                        throw new ArgumentException(
+                            string.Format("Remote executor supports only serializable classes as method parameters[{0}]. Consider adding [Serializable] attribute.", parameterType.FullName),
+                            "method");
+                    }
+
+                    this.serializeParameters[i] = true;
+                }
+            }
+
+            if(method is MethodInfo)
+            {
+                var returnType = ((MethodInfo)method).ReturnType;
+                if(returnType.IsClass)
+                {
+                    if (!returnType.IsSerializable)
+                    {
+                        throw new ArgumentException(
+                            string.Format("Remote executor supports only serializable classes as method result[{0}]. Consider adding [Serializable] attribute.", returnType.FullName),
+                            "method");
+                    }
+
+                    this.serializeResult = true;
+
+                }
             }
 
             var methodHandle = method.SerializeMethodHandle();

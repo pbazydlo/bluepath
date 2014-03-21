@@ -43,6 +43,7 @@
       <HintPath>..\packages\Shouldly.2.1.0\lib\net40\Shouldly.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Channels" />
   </ItemGroup>
@@ -59,6 +60,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="DistributedThread\ComplexParameter.cs" />
     <Compile Include="DistributedThread\DistributedThreadTests.cs" />
     <Compile Include="FSharpInterop.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

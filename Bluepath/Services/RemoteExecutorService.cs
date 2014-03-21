@@ -207,7 +207,7 @@
             switch (executor.ExecutorState)
             {
                 case ExecutorState.Finished:
-                    result.Result = executor.Result;
+                    result.Result = executor.SerializedResult;
 
                     // we have to make sure that the message with the result is not lost
                     DisposeExecutor(executor);
@@ -253,6 +253,7 @@
             var communicationFrameworkObjectType = typeof(IBluepathCommunicationFramework);
             int? parameterIndex = -1;
             var parameterFound = false;
+            Type returnType = null;
 
             foreach (var parameter in methodParameters)
             {
@@ -264,7 +265,18 @@
                 }
             }
 
-            executor.InitializeNonGeneric((parameters) => methodFromHandle.Invoke(null, parameters), methodParameters.Length, parameterFound ? parameterIndex : null);
+            if(methodFromHandle is MethodInfo)
+            {
+                returnType = ((MethodInfo)methodFromHandle).ReturnType;
+            }
+
+            executor.InitializeNonGeneric(
+                (parameters) => methodFromHandle.Invoke(null, parameters),
+                methodParameters.Length, 
+                parameterFound ? parameterIndex : null,
+                methodParameters,
+                returnType
+                );
         }
     }
 }

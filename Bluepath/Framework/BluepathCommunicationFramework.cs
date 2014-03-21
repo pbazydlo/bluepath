@@ -23,5 +23,11 @@
         }
 
         public IStorage Storage { get; private set; }
+
+        // TODO: Provide locks
+        // Could be based on:
+        //  Apache Zookeeper [https://github.com/ewhauser/zookeeper/tree/trunk/src/dotnet]
+        //  Redis [https://github.com/ServiceStack/ServiceStack.Redis/wiki/RedisLocks] - s1 said that it is easy to deploy
+        //  ZeroMQ [http://zeromq.org/]
     }
 }

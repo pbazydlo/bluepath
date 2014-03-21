@@ -94,6 +94,10 @@
             }
         }
 
+        // TODO: We should store how many threads are run on external executors
+        // so that we can choose the one with the most processing power left.
+        // Information could be fetched either from discovery service, or
+        // we could query all available services.
         public IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices
         {
             get

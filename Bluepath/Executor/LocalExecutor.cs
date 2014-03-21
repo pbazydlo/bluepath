@@ -240,6 +240,11 @@
             this.InitializeNonGeneric((parameters) => method.Invoke(null, parameters));
         }
 
+        /// <summary>
+        /// Adds communication framework object if required by executed function.
+        /// </summary>
+        /// <param name="parameters">Initial parameters passed to function.</param>
+        /// <returns>Parameters with added communication framework.</returns>
         private object[] InjectCommunicationFrameworkObject(object[] parameters)
         {
             if (!this.communicationObjectParameterIndex.HasValue || !this.expectedNumberOfParameters.HasValue)

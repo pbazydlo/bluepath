@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="StackExchange.Redis">
+      <HintPath>..\packages\StackExchange.Redis.1.0.228\lib\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -73,7 +76,7 @@
     <Compile Include="Services\RemoteExecutorServiceResult.cs" />
     <Compile Include="Services\ServiceUri.cs" />
     <Compile Include="Storage\IStorage.cs" />
-    <Compile Include="Storage\RhinoDhtStorage.cs" />
+    <Compile Include="Storage\RedisStorage.cs" />
     <Compile Include="Threading\DistributedThread.cs" />
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />
@@ -82,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

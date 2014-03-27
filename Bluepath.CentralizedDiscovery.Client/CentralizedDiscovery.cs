@@ -19,10 +19,10 @@ namespace Bluepath.CentralizedDiscovery.Client
             this.services = new Dictionary<Services.ServiceUri, Bluepath.ServiceReferences.RemoteExecutorServiceClient>();
             this.client = new ServiceReferences.CentralizedDiscoveryServiceClient(masterUri.Binding, masterUri.ToEndpointAddress());
             this.listenerUri = listener.CallbackUri;
-            ThreadPool.QueueUserWorkItem((threadContext) =>
-                {
-                    this.client.Register(this.ConvertToClientServiceUri(this.listenerUri));
-                });
+            var registerThread = new Thread(() =>
+                    this.client.Register(this.ConvertToClientServiceUri(this.listenerUri))
+                    );
+            registerThread.Start();
         }
 
         public ICollection<Bluepath.ServiceReferences.IRemoteExecutorService> GetAvailableServices()

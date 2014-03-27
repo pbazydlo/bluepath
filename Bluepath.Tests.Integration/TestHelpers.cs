@@ -8,18 +8,29 @@
 
     public static class TestHelpers
     {
-        private const string RemoteServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";
+        private const string BluepathServicePath = @"..\..\..\Bluepath.SampleRunner\bin\Debug\Bluepath.SampleRunner.exe";
+        private const string RedisServicePath = @"..\..\..\packages\Redis-64.2.8.4\redis-server.exe";
 
         private static readonly ConcurrentDictionary<int, Process> SpawnedServices = new ConcurrentDictionary<int, Process>();
 
-        public static Process SpawnRemoteService(int port)
+        public static Process SpawnRemoteService(int port, ServiceType serviceType = ServiceType.Bluepath)
         {
             if (SpawnedServices.ContainsKey(port))
             {
                 throw new Exception(string.Format("There is already service running on port '{0}'", port));
             }
 
-            var processStartInfo = new ProcessStartInfo(TestHelpers.RemoteServicePath, port.ToString());
+            ProcessStartInfo processStartInfo = null;
+            switch(serviceType)
+            {
+                case ServiceType.Bluepath:
+                    processStartInfo = new ProcessStartInfo(TestHelpers.BluepathServicePath, port.ToString());
+                    break;
+                case ServiceType.Redis:
+                    processStartInfo = new ProcessStartInfo(TestHelpers.RedisServicePath);
+                    break;
+            };
+
             processStartInfo.CreateNoWindow = true;
             processStartInfo.RedirectStandardOutput = true;
             processStartInfo.UseShellExecute = false;
@@ -46,6 +57,12 @@
             
             Thread.Sleep(1000);
             return process;
+        }
+
+        public enum ServiceType
+        {
+            Bluepath,
+            Redis
         }
     }
 }

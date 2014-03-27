@@ -4,6 +4,7 @@ using Shouldly;
 using Bluepath.Storage;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
+using Bluepath.Tests.Integration.DistributedThread;
 
 namespace Bluepath.Tests.Integration.Storage
 {
@@ -39,6 +40,41 @@ namespace Bluepath.Tests.Integration.Storage
                 string retrievedObject = storage.Retrieve<string>(objectName);
 
                 retrievedObject.ShouldBe(objectToStore);
+            }
+        }
+
+        [TestMethod]
+        public void RhinoDhtStorageStoresAndRetrievesComplexObjects()
+        {
+            var objectToStore = new ComplexParameter()
+                {
+                    SomeProperty = "this is string",
+                    AnotherProperty = 47
+                };
+            var objectName = Guid.NewGuid().ToString();
+
+            using (var storage = new RedisStorage("localhost"))
+            {
+                storage.Store(objectName, objectToStore);
+                var retrievedObject = storage.Retrieve<ComplexParameter>(objectName);
+
+                retrievedObject.SomeProperty.ShouldBe(objectToStore.SomeProperty);
+                retrievedObject.AnotherProperty.ShouldBe(objectToStore.AnotherProperty);
+            }
+        }
+
+        [TestMethod]
+        public void RhinoDhtStorageStoresAndRemovesObjects()
+        {
+            var objectToStore = "my object";
+            var objectName = Guid.NewGuid().ToString();
+
+            using (var storage = new RedisStorage("localhost"))
+            {
+                storage.Store(objectName, objectToStore);
+                storage.Remove(objectName);
+                Assert.That(() => storage.Retrieve<string>(objectName), 
+                    Throws.InstanceOf<ArgumentOutOfRangeException>());
             }
         }
 

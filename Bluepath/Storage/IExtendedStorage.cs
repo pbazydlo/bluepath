@@ -1,13 +1,10 @@
-﻿using Bluepath.Storage.Locks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bluepath.Storage
+﻿namespace Bluepath.Storage
 {
-    interface IExtendedStorage : IStorage
+    using System;
+
+    using Bluepath.Storage.Locks;
+
+    public interface IExtendedStorage : IStorage
     {
         IStorageLock AcquireLock(string key);
 

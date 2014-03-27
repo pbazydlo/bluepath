@@ -6,18 +6,18 @@
     public interface ILocalExecutor : IExecutor
     {
         /// <summary>
-        /// Result which may be serialized in order to easily send it back.
+        /// Gets result which may be serialized in order to easily send it back.
         /// Useful for remote executor services.
         /// </summary>
         object SerializedResult { get; }
 
         /// <summary>
-        /// Exception thrown during method execution.
+        /// Gets exception thrown during method execution.
         /// </summary>
         Exception Exception { get; }
 
         /// <summary>
-        /// Indicates whether processing is stopped and result available.
+        /// Gets a value indicating whether processing is stopped and result available.
         /// </summary>
         bool IsResultAvailable { get; }
 
@@ -29,7 +29,11 @@
         /// <param name="communicationObjectParameterIndex">Which parameter is communication object.</param>
         /// <param name="parameters">Parameters information from wrapped function.</param>
         /// <param name="returnType">Return type of wrapped function.</param>
-        void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null,
-            int? communicationObjectParameterIndex = null, ParameterInfo[] parameters = null, Type returnType = null);
+        void InitializeNonGeneric(
+            Func<object[], object> function,
+            int? expectedNumberOfParameters = null,
+            int? communicationObjectParameterIndex = null,
+            ParameterInfo[] parameters = null,
+            Type returnType = null);
     }
 }

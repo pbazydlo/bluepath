@@ -54,10 +54,10 @@
                 this.ExecutorState = ExecutorState.Running;
             }
 
-            object[] parametersToSend = new object[parameters.Length];
-            for (int i = 0; i < parameters.Length; i++)
+            var parametersToSend = new object[parameters.Length];
+            for (var i = 0; i < parameters.Length; i++)
             {
-                if(this.serializeParameters[i])
+                if (this.serializeParameters[i])
                 {
                     parametersToSend[i] = parameters[i].Serialize();
                 }
@@ -286,6 +286,7 @@
             for (int i = 0; i < parameters.Length; i++)
             {
                 var parameterType = parameters[i].ParameterType;
+
                 // TODO: it is not going to work with structs
                 if (parameterType.IsClass)
                 {
@@ -300,10 +301,11 @@
                 }
             }
 
-            if(method is MethodInfo)
+            var methodInfo = method as MethodInfo;
+            if (methodInfo != null)
             {
-                var returnType = ((MethodInfo)method).ReturnType;
-                if(returnType.IsClass)
+                var returnType = methodInfo.ReturnType;
+                if (returnType.IsClass)
                 {
                     if (!returnType.IsSerializable)
                     {
@@ -313,7 +315,6 @@
                     }
 
                     this.serializeResult = true;
-
                 }
             }
 

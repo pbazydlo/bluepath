@@ -247,11 +247,15 @@
 
             var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
             if (RemoteExecutorService.Executors.ContainsKey(sourcePort))
+            {
                 foreach (var executor in RemoteExecutorService.Executors[sourcePort])
                 {
-                    Log.TraceMessage(string.Format("[PerfStat] Executor is in '{0}' state.", executor.Value.ExecutorState), keywords: executor.Value.Eid.EidAsLogKeywords());
+                    Log.TraceMessage(
+                        string.Format("[PerfStat] Executor is in '{0}' state.", executor.Value.ExecutorState),
+                        keywords: executor.Value.Eid.EidAsLogKeywords());
                     numberOfTasks[executor.Value.ExecutorState]++;
                 }
+            }
 
             return new PerformanceStatistics() { NumberOfTasks = numberOfTasks };
         }
@@ -330,8 +334,7 @@
                 methodParameters.Length,
                 parameterFound ? parameterIndex : null,
                 methodParameters,
-                returnType
-                );
+                returnType);
         }
     }
 }

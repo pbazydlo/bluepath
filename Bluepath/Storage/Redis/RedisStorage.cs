@@ -1,17 +1,15 @@
-﻿using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bluepath.Extensions;
-using Bluepath.Storage.Locks;
-
-namespace Bluepath.Storage.Redis
+﻿namespace Bluepath.Storage.Redis
 {
+    using System;
+
+    using Bluepath.Extensions;
+    using Bluepath.Storage.Locks;
+
+    using StackExchange.Redis;
+
     public class RedisStorage : IExtendedStorage
     {
-        private ConnectionMultiplexer connection;
+        private readonly ConnectionMultiplexer connection;
 
         public RedisStorage(string host)
         {

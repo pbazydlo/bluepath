@@ -84,7 +84,7 @@
             get
             {
                 var result = this.Result;
-                if(this.serializeResult)
+                if (this.serializeResult)
                 {
                     return result.Serialize();
                 }
@@ -107,9 +107,9 @@
         }
 
         /// <summary>
-        /// 
+        /// Starts thread execution.
         /// </summary>
-        /// <param name="parameters"></param>
+        /// <param name="parameters">Parameters to pass to the method. Those to be injected can be ommited or should be null.</param>
         /// <exception cref="NotSupportedException">The common language runtime (CLR) is hosted, and the host does not support ThreadPool.QueueUserWorkItem action.</exception>
         public override void Execute(object[] parameters)
         {
@@ -202,8 +202,12 @@
             return this.doneEvent.WaitOne(timeout);
         }
 
-        public void InitializeNonGeneric(Func<object[], object> function, int? expectedNumberOfParameters = null,
-            int? communicationObjectParameterIndex = null, ParameterInfo[] parameters = null, Type returnType = null)
+        public void InitializeNonGeneric(
+            Func<object[], object> function,
+            int? expectedNumberOfParameters = null,
+            int? communicationObjectParameterIndex = null,
+            ParameterInfo[] parameters = null,
+            Type returnType = null)
         {
             this.function = function;
             this.expectedNumberOfParameters = expectedNumberOfParameters;
@@ -211,16 +215,16 @@
             if (parameters != null)
             {
                 this.parameterInfos = new bool[parameters.Length];
-                for (int i = 0; i < parameters.Length; i++)
+                for (var i = 0; i < parameters.Length; i++)
                 {
                     var parameterType = parameters[i].ParameterType;
                     this.parameterInfos[i] = parameterType.IsClass && parameterType.IsSerializable;
                 }
             }
 
-            if(returnType!=null)
+            if (returnType != null)
             {
-                if(returnType.IsClass && returnType.IsSerializable)
+                if (returnType.IsClass && returnType.IsSerializable)
                 {
                     this.serializeResult = true;
                 }

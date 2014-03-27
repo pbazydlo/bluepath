@@ -32,7 +32,7 @@
         //  ZeroMQ [http://zeromq.org/]
         public IStorageLock AcquireLock(string key)
         {
-            if(this.Storage is IExtendedStorage)
+            if (this.Storage is IExtendedStorage)
             {
                 return (this.Storage as IExtendedStorage).AcquireLock(key);
             }

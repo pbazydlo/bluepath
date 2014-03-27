@@ -65,7 +65,7 @@
 
         public override bool Equals(object obj)
         {
-            if(obj is ServiceUri)
+            if (obj is ServiceUri)
             {
                 var uri = obj as ServiceUri;
                 return this.Address == uri.Address && this.BindingType == uri.BindingType;
@@ -76,7 +76,7 @@
 
         public override int GetHashCode()
         {
-            return string.Format("{0}{1}",this.Address, (int)this.BindingType).GetHashCode();
+            return string.Format("{0}{1}", this.Address, (int)this.BindingType).GetHashCode();
         }
     }
 }

@@ -1,38 +1,21 @@
-﻿using Bluepath.Storage.Locks;
-using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Bluepath.Storage.Redis
+﻿namespace Bluepath.Storage.Redis
 {
+    using System;
+    using System.Threading;
+
+    using Bluepath.Storage.Locks;
+
+    using StackExchange.Redis;
+
     public class RedisLock : IStorageLock
     {
         private const string LockKeyPrefix = "_lock_";
         private const string LockChannelPrefix = "_lockChannel_";
-        private RedisStorage redisStorage;
+        private readonly object acquireLock = new object();
+        private readonly string key;
+        private readonly RedisStorage redisStorage;
         private bool isAcquired;
-        private object acquireLock = new object();
-        private string key;
         private bool wasPulsed;
-        private string lockKey
-        {
-            get
-            {
-                return string.Format("{0}{1}", LockKeyPrefix, key);
-            }
-        }
-
-        private string lockChannel
-        {
-            get
-            {
-                return string.Format("{0}{1}", LockChannelPrefix, key);
-            }
-        }
 
         public RedisLock(RedisStorage redisStorage, string key)
         {
@@ -40,23 +23,35 @@ namespace Bluepath.Storage.Redis
             this.key = key;
         }
 
+        public string Key
+        {
+            get { return this.key; }
+        }
+
         public bool IsAcquired
         {
             get { return this.isAcquired; }
         }
 
-        private void channelPulse(RedisChannel redisChannel, RedisValue redisValue)
-        {
-            lock (this.acquireLock)
-            {
-                this.wasPulsed = true;
-                Monitor.Pulse(this.acquireLock);
-            }
-        }
-
         public bool Acquire()
         {
             return this.Acquire(null);
+        }
+
+        private string LockKey
+        {
+            get
+            {
+                return string.Format("{0}{1}", LockKeyPrefix, this.key);
+            }
+        }
+
+        private string LockChannel
+        {
+            get
+            {
+                return string.Format("{0}{1}", LockChannelPrefix, this.key);
+            }
         }
 
         public bool Acquire(TimeSpan? timeout)
@@ -70,14 +65,14 @@ namespace Bluepath.Storage.Redis
             bool isFirstWait = true;
             this.wasPulsed = false;
             bool wasLockAcquired = false;
-            this.redisStorage.Subscribe(this.lockChannel, this.channelPulse);
+            this.redisStorage.Subscribe(this.LockChannel, this.ChannelPulse);
             lock (this.acquireLock)
             {
                 do
                 {
                     try
                     {
-                        this.redisStorage.Store(this.lockKey, 1);
+                        this.redisStorage.Store(this.LockKey, 1);
                         wasLockAcquired = true;
                     }
                     catch (ArgumentOutOfRangeException)
@@ -91,7 +86,7 @@ namespace Bluepath.Storage.Redis
                             {
                                 if ((DateTime.Now - start) > timeout.Value)
                                 {
-                                    this.redisStorage.Unsubscribe(this.lockChannel, this.channelPulse);
+                                    this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
                                     return false;
                                 }
                             }
@@ -107,31 +102,36 @@ namespace Bluepath.Storage.Redis
                             }
                         }
                     }
-                } while (!wasLockAcquired);
+                }
+                while (!wasLockAcquired);
             }
 
-            this.redisStorage.Unsubscribe(this.lockChannel, this.channelPulse);
+            this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
             this.isAcquired = true;
             return true;
         }
 
         public void Release()
         {
-            this.redisStorage.Remove(this.lockKey);
-            this.redisStorage.Publish(this.lockChannel, "release");
+            this.redisStorage.Remove(this.LockKey);
+            this.redisStorage.Publish(this.LockChannel, "release");
         }
 
         public void Dispose()
         {
-            if(this.IsAcquired)
+            if (this.IsAcquired)
             {
                 this.Release();
             }
         }
 
-        public string Key
+        private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
         {
-            get { return this.key; }
+            lock (this.acquireLock)
+            {
+                this.wasPulsed = true;
+                Monitor.Pulse(this.acquireLock);
+            }
         }
     }
 }

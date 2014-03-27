@@ -23,17 +23,24 @@
 
         private readonly Thread serviceDiscoveryThread;
 
-        public ConnectionManager(ServiceReferences.IRemoteExecutorService remoteService, IListener listener,
-            IServiceDiscovery serviceDiscovery = null, TimeSpan? serviceDiscoveryPeriod = null)
-            : this(remoteService != null ?
-                    new List<ServiceReferences.IRemoteExecutorService>() { remoteService }
-                    : null,
-            listener, serviceDiscovery, serviceDiscoveryPeriod)
+        public ConnectionManager(
+            ServiceReferences.IRemoteExecutorService remoteService,
+            IListener listener,
+            IServiceDiscovery serviceDiscovery = null,
+            TimeSpan? serviceDiscoveryPeriod = null)
+            : this(
+                remoteService != null ? new List<ServiceReferences.IRemoteExecutorService>() { remoteService } : null,
+                listener,
+                serviceDiscovery,
+                serviceDiscoveryPeriod)
         {
         }
 
-        public ConnectionManager(IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices, IListener listener,
-            IServiceDiscovery serviceDiscovery = null, TimeSpan? serviceDiscoveryPeriod = null)
+        public ConnectionManager(
+            IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices,
+            IListener listener,
+            IServiceDiscovery serviceDiscovery = null,
+            TimeSpan? serviceDiscoveryPeriod = null)
             : this(listener, serviceDiscovery, serviceDiscoveryPeriod)
         {
             if (remoteServices != null)

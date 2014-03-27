@@ -5,6 +5,12 @@ using Shouldly;
 
 namespace Bluepath.Tests.Integration.Services.ConnectionManager
 {
+    using System.Threading;
+
+    using Bluepath.Executor;
+    using Bluepath.Services;
+    using Bluepath.Threading;
+
     [TestClass]
     public class ConnectionManagerTests
     {
@@ -105,6 +111,60 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
 
                     this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 0, times: 10);
                     connectionManager.RemoteServices.Count().ShouldBe(0);
+                }
+            }
+            finally
+            {
+                serviceDiscoveryHost.Stop();
+                bluepathListener1.Stop();
+                bluepathListener2.Stop();
+            }
+        }
+
+        [TestMethod]
+        public void CentralizedDiscoveryProvidesInformationAboutLoadOfTheNodes()
+        {
+            var serviceDiscoveryHost = new CentralizedDiscovery.CentralizedDiscoveryListener("localhost", 41000);
+            var bluepathListener1 = new Bluepath.Services.BluepathListener("localhost", 41001);
+            var bluepathListener2 = new Bluepath.Services.BluepathListener("localhost", 41002);
+            try
+            {
+                using (var serviceDiscoveryClient1
+                    = new CentralizedDiscovery.Client.CentralizedDiscovery(serviceDiscoveryHost.MasterUri, bluepathListener1))
+                {
+                    using (var serviceDiscoveryClient2
+                        = new CentralizedDiscovery.Client.CentralizedDiscovery(serviceDiscoveryHost.MasterUri, bluepathListener2))
+                    {
+                        var connectionManager = new Bluepath.Services.ConnectionManager(
+                            remoteService: null,
+                            listener: bluepathListener1,
+                            serviceDiscovery: serviceDiscoveryClient1);
+                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
+
+                        connectionManager.RemoteServices.Count().ShouldBe(1);
+
+                        // TODO: Review this test
+                        var testMethod = new Func<int, int, int>(
+                        (a, b) =>
+                        {
+                            Thread.Sleep(50);
+                            return a + b;
+                        });
+
+                        var thread = DistributedThread.Create(testMethod, connectionManager, DistributedThread.ExecutorSelectionMode.RemoteOnly);
+                        thread.Start(4, 5);
+
+                        var performanceStatistics = serviceDiscoveryClient1.GetPerformanceStatistics();
+
+                        performanceStatistics.Count.ShouldBe(2);
+                        performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.NotStarted].ShouldBe(0);
+                        (performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Running]
+                            + performanceStatistics.ElementAt(1).Value.NumberOfTasks[ExecutorState.Running]).ShouldBe(1);
+                        performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Finished].ShouldBe(0);
+                        performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Faulted].ShouldBe(0);
+
+                        thread.Join();
+                    }
                 }
             }
             finally

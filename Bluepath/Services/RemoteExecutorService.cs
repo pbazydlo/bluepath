@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Reflection;
-    using System.Runtime.Serialization;
     using System.Threading;
 
     using Bluepath.Executor;
@@ -24,21 +24,21 @@
         /// <summary>
         /// Gets local executor with given id.
         /// </summary>
-        /// <param name="eId">Identifier of the executor.</param>
+        /// <param name="eid">Identifier of the executor.</param>
         /// <returns>Local executor.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
-        public static ILocalExecutor GetExecutor(Guid eId)
+        public static ILocalExecutor GetExecutor(Guid eid)
         {
             ILocalExecutor executor;
             var getSuccess = false;
             do
             {
-                if (!Executors.ContainsKey(eId))
+                if (!Executors.ContainsKey(eid))
                 {
-                    throw new ArgumentOutOfRangeException("eId", string.Format("Executor with eId '{0}' doesn't exist.", eId));
+                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
                 }
 
-                getSuccess = Executors.TryGetValue(eId, out executor);
+                getSuccess = Executors.TryGetValue(eid, out executor);
             }
             while (!getSuccess);
 
@@ -48,21 +48,21 @@
         /// <summary>
         /// Gets remote executor with given id.
         /// </summary>
-        /// <param name="eId">Executor identifier</param>
+        /// <param name="eid">Executor identifier</param>
         /// <returns>Remote executor.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
-        public static IRemoteExecutor GetRemoteExecutor(Guid eId)
+        public static IRemoteExecutor GetRemoteExecutor(Guid eid)
         {
             IRemoteExecutor executor;
             var getSuccess = false;
             do
             {
-                if (!RemoteExecutors.ContainsKey(eId))
+                if (!RemoteExecutors.ContainsKey(eid))
                 {
-                    throw new ArgumentOutOfRangeException("eId", string.Format("RemoteExecutor with eId '{0}' doesn't exist.", eId));
+                    throw new ArgumentOutOfRangeException("eid", string.Format("RemoteExecutor with eid '{0}' doesn't exist.", eid));
                 }
 
-                getSuccess = RemoteExecutors.TryGetValue(eId, out executor);
+                getSuccess = RemoteExecutors.TryGetValue(eid, out executor);
             }
             while (!getSuccess);
 
@@ -73,7 +73,7 @@
         {
             if (executor.Eid == default(Guid))
             {
-                throw new ArgumentException("executor", "Remote executor needs to be initialized first.");
+                throw new ArgumentException("Remote executor needs to be initialized first.", "executor");
             }
 
             do
@@ -81,7 +81,7 @@
                 // TODO: It would be good to have some way of checking that before calling Register...
                 if (RemoteExecutors.ContainsKey(executor.Eid))
                 {
-                    throw new ArgumentException("executor", "Given remote executor already exists.");
+                    throw new ArgumentException("Given remote executor already exists.", "executor");
                 }
             }
             while (!RemoteExecutors.TryAdd(executor.Eid, executor));
@@ -180,11 +180,11 @@
         /// <summary>
         /// Called in response to Execute after processing has finished.
         /// </summary>
-        /// <param name="eId">Executor identifier</param>
+        /// <param name="eid">Executor identifier</param>
         /// <param name="executeResult">Executor processing result.</param>
-        public void ExecuteCallback(Guid eId, RemoteExecutorServiceResult executeResult)
+        public void ExecuteCallback(Guid eid, RemoteExecutorServiceResult executeResult)
         {
-            var executor = GetRemoteExecutor(eId);
+            var executor = GetRemoteExecutor(eid);
             executor.Pulse(executeResult.Convert());
         }
 
@@ -220,6 +220,23 @@
             }
 
             return result;
+        }
+
+        public PerformanceStatistics GetPerformanceStatistics()
+        {
+            var numberOfTasks = new Dictionary<ExecutorState, int>();
+
+            foreach (ExecutorState state in Enum.GetValues(typeof(ExecutorState)))
+            {
+                numberOfTasks[state] = 0;
+            }
+
+            foreach (var executor in RemoteExecutorService.Executors)
+            {
+                numberOfTasks[executor.Value.ExecutorState]++;
+            }
+
+            return new PerformanceStatistics() { NumberOfTasks = numberOfTasks };
         }
 
         private static void DisposeExecutor(ILocalExecutor executor)
@@ -265,14 +282,14 @@
                 }
             }
 
-            if(methodFromHandle is MethodInfo)
+            if (methodFromHandle is MethodInfo)
             {
                 returnType = ((MethodInfo)methodFromHandle).ReturnType;
             }
 
             executor.InitializeNonGeneric(
                 (parameters) => methodFromHandle.Invoke(null, parameters),
-                methodParameters.Length, 
+                methodParameters.Length,
                 parameterFound ? parameterIndex : null,
                 methodParameters,
                 returnType

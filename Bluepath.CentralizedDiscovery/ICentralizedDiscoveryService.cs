@@ -1,13 +1,12 @@
-﻿using Bluepath.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
-using System.Text;
-
-namespace Bluepath.CentralizedDiscovery
+﻿namespace Bluepath.CentralizedDiscovery
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ServiceModel;
+    using System.Threading.Tasks;
+
+    using Bluepath.Services;
+
     [ServiceContract]
     public interface ICentralizedDiscoveryService
     {
@@ -19,5 +18,8 @@ namespace Bluepath.CentralizedDiscovery
 
         [OperationContract]
         void Unregister(ServiceUri uri);
+
+        [OperationContract]
+        Task<Dictionary<ServiceUri, PerformanceStatistics>> GetPerformanceStatistics();
     }
 }

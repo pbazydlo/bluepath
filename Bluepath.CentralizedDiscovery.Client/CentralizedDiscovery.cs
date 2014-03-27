@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Bluepath.CentralizedDiscovery.Client
+﻿namespace Bluepath.CentralizedDiscovery.Client
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using Bluepath.CentralizedDiscovery.Client.Extensions;
+    using Bluepath.Services;
+
     public class CentralizedDiscovery : Bluepath.Services.Discovery.IServiceDiscovery, IDisposable
     {
         private readonly Dictionary<Bluepath.Services.ServiceUri, Bluepath.ServiceReferences.RemoteExecutorServiceClient> services;
-        private object servicesLock = new object();
-        private ServiceReferences.CentralizedDiscoveryServiceClient client;
-        private Bluepath.Services.ServiceUri listenerUri;
+        private readonly object servicesLock = new object();
+        private readonly ServiceReferences.CentralizedDiscoveryServiceClient client;
+        private readonly Bluepath.Services.ServiceUri listenerUri;
 
         public CentralizedDiscovery(Bluepath.Services.ServiceUri masterUri, Bluepath.Services.BluepathListener listener)
         {
@@ -20,8 +22,7 @@ namespace Bluepath.CentralizedDiscovery.Client
             this.client = new ServiceReferences.CentralizedDiscoveryServiceClient(masterUri.Binding, masterUri.ToEndpointAddress());
             this.listenerUri = listener.CallbackUri;
             var registerThread = new Thread(() =>
-                    this.client.Register(this.ConvertToClientServiceUri(this.listenerUri))
-                    );
+                    this.client.Register(this.ConvertToClientServiceUri(this.listenerUri)));
             registerThread.Start();
         }
 
@@ -30,7 +31,7 @@ namespace Bluepath.CentralizedDiscovery.Client
             lock (this.servicesLock)
             {
                 var availableServices = this.client.GetAvailableServices()
-                    .Select(s => this.ConvertToBluepathServiceUri(s))
+                    .Select(this.ConvertToBluepathServiceUri)
                     .Where(s => !s.Equals(this.listenerUri)).ToArray();
                 var newServices = availableServices.Where(s => !this.services.ContainsKey(s)).ToArray();
                 var servicesToDelete = this.services.Keys.Where(k => !availableServices.Contains(k)).ToArray();
@@ -49,15 +50,27 @@ namespace Bluepath.CentralizedDiscovery.Client
 
                 foreach (var service in newServices)
                 {
-                    this.services.Add(service,
+                    this.services.Add(
+                        service,
                         new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
                             service.Binding,
-                            service.ToEndpointAddress())
-                            );
+                            service.ToEndpointAddress()));
                 }
 
                 return this.services.Values.ToArray();
             }
+        }
+
+        public Dictionary<ServiceUri, PerformanceStatistics> GetPerformanceStatistics()
+        {
+            var performanceStatistics = new Dictionary<ServiceUri, PerformanceStatistics>();
+            foreach (var ps in this.client.GetPerformanceStatistics())
+            {
+                // TODO: Extension method to case ServiceUri
+                performanceStatistics.Add(new ServiceUri() { Address = ps.Key.Address, BindingType = (BindingType)ps.Key.BindingType}, ps.Value.FromServiceReference());
+            }
+
+            return performanceStatistics;
         }
 
         public void Dispose()

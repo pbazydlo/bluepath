@@ -102,11 +102,13 @@ namespace Bluepath.ServiceReferences
     [System.Runtime.Serialization.DataContractAttribute(Name="RemoteExecutorServiceResult", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Services")]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.SystemException))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.ArgumentException))]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(object[]))]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.Exception))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.Collections.Generic.Dictionary<Bluepath.ServiceReferences.ExecutorState, int>))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.ServiceUri))]
     [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.BindingType))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.PerformanceStatistics))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(System.Exception))]
     public partial class RemoteExecutorServiceResult : object, System.Runtime.Serialization.IExtensibleDataObject
     {
         
@@ -185,6 +187,42 @@ namespace Bluepath.ServiceReferences
         }
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="PerformanceStatistics", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Services")]
+    public partial class PerformanceStatistics : object, System.Runtime.Serialization.IExtensibleDataObject
+    {
+        
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        private System.Collections.Generic.Dictionary<Bluepath.ServiceReferences.ExecutorState, int> NumberOfTasksField;
+        
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData
+        {
+            get
+            {
+                return this.extensionDataField;
+            }
+            set
+            {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.Dictionary<Bluepath.ServiceReferences.ExecutorState, int> NumberOfTasks
+        {
+            get
+            {
+                return this.NumberOfTasksField;
+            }
+            set
+            {
+                this.NumberOfTasksField = value;
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="Bluepath.ServiceReferences.IRemoteExecutorService")]
     public interface IRemoteExecutorService
@@ -197,30 +235,38 @@ namespace Bluepath.ServiceReferences
         System.Threading.Tasks.Task<System.Guid> InitializeAsync(byte[] methodHandle);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/Execute", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteResponse")]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(object[]))]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.Exception))]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.ArgumentException))]
-        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.SystemException))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.Collections.Generic.Dictionary<Bluepath.ServiceReferences.ExecutorState, int>))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.ServiceUri))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.BindingType))]
         [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.RemoteExecutorServiceResult))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.PerformanceStatistics))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(Bluepath.ServiceReferences.ExecutorState))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.Exception))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.ArgumentException))]
+        [System.ServiceModel.ServiceKnownTypeAttribute(typeof(System.SystemException))]
         void Execute(System.Guid eId, object[] parameters, Bluepath.ServiceReferences.ServiceUri callbackUri);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/Execute", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteResponse")]
         System.Threading.Tasks.Task ExecuteAsync(System.Guid eId, object[] parameters, Bluepath.ServiceReferences.ServiceUri callbackUri);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/ExecuteCallback", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteCallbackResponse")]
-        void ExecuteCallback(System.Guid eId, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult);
+        void ExecuteCallback(System.Guid eid, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/ExecuteCallback", ReplyAction="http://tempuri.org/IRemoteExecutorService/ExecuteCallbackResponse")]
-        System.Threading.Tasks.Task ExecuteCallbackAsync(System.Guid eId, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult);
+        System.Threading.Tasks.Task ExecuteCallbackAsync(System.Guid eid, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/TryJoin", ReplyAction="http://tempuri.org/IRemoteExecutorService/TryJoinResponse")]
         Bluepath.ServiceReferences.RemoteExecutorServiceResult TryJoin(System.Guid eId);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/TryJoin", ReplyAction="http://tempuri.org/IRemoteExecutorService/TryJoinResponse")]
         System.Threading.Tasks.Task<Bluepath.ServiceReferences.RemoteExecutorServiceResult> TryJoinAsync(System.Guid eId);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/GetPerformanceStatistics", ReplyAction="http://tempuri.org/IRemoteExecutorService/GetPerformanceStatisticsResponse")]
+        Bluepath.ServiceReferences.PerformanceStatistics GetPerformanceStatistics();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRemoteExecutorService/GetPerformanceStatistics", ReplyAction="http://tempuri.org/IRemoteExecutorService/GetPerformanceStatisticsResponse")]
+        System.Threading.Tasks.Task<Bluepath.ServiceReferences.PerformanceStatistics> GetPerformanceStatisticsAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -277,14 +323,14 @@ namespace Bluepath.ServiceReferences
             return base.Channel.ExecuteAsync(eId, parameters, callbackUri);
         }
         
-        public void ExecuteCallback(System.Guid eId, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult)
+        public void ExecuteCallback(System.Guid eid, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult)
         {
-            base.Channel.ExecuteCallback(eId, executeResult);
+            base.Channel.ExecuteCallback(eid, executeResult);
         }
         
-        public System.Threading.Tasks.Task ExecuteCallbackAsync(System.Guid eId, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult)
+        public System.Threading.Tasks.Task ExecuteCallbackAsync(System.Guid eid, Bluepath.ServiceReferences.RemoteExecutorServiceResult executeResult)
         {
-            return base.Channel.ExecuteCallbackAsync(eId, executeResult);
+            return base.Channel.ExecuteCallbackAsync(eid, executeResult);
         }
         
         public Bluepath.ServiceReferences.RemoteExecutorServiceResult TryJoin(System.Guid eId)
@@ -295,6 +341,16 @@ namespace Bluepath.ServiceReferences
         public System.Threading.Tasks.Task<Bluepath.ServiceReferences.RemoteExecutorServiceResult> TryJoinAsync(System.Guid eId)
         {
             return base.Channel.TryJoinAsync(eId);
+        }
+        
+        public Bluepath.ServiceReferences.PerformanceStatistics GetPerformanceStatistics()
+        {
+            return base.Channel.GetPerformanceStatistics();
+        }
+        
+        public System.Threading.Tasks.Task<Bluepath.ServiceReferences.PerformanceStatistics> GetPerformanceStatisticsAsync()
+        {
+            return base.Channel.GetPerformanceStatisticsAsync();
         }
     }
 }

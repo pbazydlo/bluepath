@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;BLUEPATH_CORE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -57,6 +57,7 @@
     <Compile Include="Executor\IRemoteExecutor.cs" />
     <Compile Include="Executor\RemoteExecutor.cs" />
     <Compile Include="Extensions\MethodHandleSerializerExtensions.cs" />
+    <Compile Include="Extensions\PerformanceStatisticsExtensions.cs" />
     <Compile Include="Extensions\RemoteExecutorServiceResultExtensions.cs" />
     <Compile Include="Extensions\ServiceUriExtensions.cs" />
     <Compile Include="Framework\BluepathCommunicationFramework.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Services\IListener.cs" />
     <Compile Include="Services\IRemoteExecutorService.cs" />
     <Compile Include="Services\NetworkInfo.cs" />
+    <Compile Include="Services\PerformanceStatistics.cs" />
     <Compile Include="Services\RemoteExecutorService.cs" />
     <Compile Include="Service References\RemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorServiceResult.cs" />

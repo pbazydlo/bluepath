@@ -79,6 +79,60 @@ namespace Bluepath.CentralizedDiscovery.ServiceReferences
         BasicHttpsBinding = 2,
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="PerformanceStatistics", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Services")]
+    public partial class PerformanceStatistics : object, System.Runtime.Serialization.IExtensibleDataObject
+    {
+        
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        private System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ExecutorState, int> NumberOfTasksField;
+        
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData
+        {
+            get
+            {
+                return this.extensionDataField;
+            }
+            set
+            {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ExecutorState, int> NumberOfTasks
+        {
+            get
+            {
+                return this.NumberOfTasksField;
+            }
+            set
+            {
+                this.NumberOfTasksField = value;
+            }
+        }
+    }
+    
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="ExecutorState", Namespace="http://schemas.datacontract.org/2004/07/Bluepath.Executor")]
+    public enum ExecutorState : int
+    {
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        NotStarted = 0,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Running = 1,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Finished = 2,
+        
+        [System.Runtime.Serialization.EnumMemberAttribute()]
+        Faulted = 3,
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="Bluepath.CentralizedDiscovery.ServiceReferences.ICentralizedDiscoveryService")]
     public interface ICentralizedDiscoveryService
@@ -101,6 +155,12 @@ namespace Bluepath.CentralizedDiscovery.ServiceReferences
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICentralizedDiscoveryService/Unregister", ReplyAction="http://tempuri.org/ICentralizedDiscoveryService/UnregisterResponse")]
         System.Threading.Tasks.Task UnregisterAsync(Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri uri);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICentralizedDiscoveryService/GetPerformanceStatistics", ReplyAction="http://tempuri.org/ICentralizedDiscoveryService/GetPerformanceStatisticsResponse")]
+        System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri, Bluepath.CentralizedDiscovery.ServiceReferences.PerformanceStatistics> GetPerformanceStatistics();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICentralizedDiscoveryService/GetPerformanceStatistics", ReplyAction="http://tempuri.org/ICentralizedDiscoveryService/GetPerformanceStatisticsResponse")]
+        System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri, Bluepath.CentralizedDiscovery.ServiceReferences.PerformanceStatistics>> GetPerformanceStatisticsAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -165,6 +225,16 @@ namespace Bluepath.CentralizedDiscovery.ServiceReferences
         public System.Threading.Tasks.Task UnregisterAsync(Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri uri)
         {
             return base.Channel.UnregisterAsync(uri);
+        }
+        
+        public System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri, Bluepath.CentralizedDiscovery.ServiceReferences.PerformanceStatistics> GetPerformanceStatistics()
+        {
+            return base.Channel.GetPerformanceStatistics();
+        }
+        
+        public System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<Bluepath.CentralizedDiscovery.ServiceReferences.ServiceUri, Bluepath.CentralizedDiscovery.ServiceReferences.PerformanceStatistics>> GetPerformanceStatisticsAsync()
+        {
+            return base.Channel.GetPerformanceStatisticsAsync();
         }
     }
 }

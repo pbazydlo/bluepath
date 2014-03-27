@@ -177,6 +177,16 @@
                 return this.TryJoin(eId);
             }
 
+            public PerformanceStatistics GetPerformanceStatistics()
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task<PerformanceStatistics> GetPerformanceStatisticsAsync()
+            {
+                throw new NotImplementedException();
+            }
+
             public void ExecuteCallback(Guid eId, RemoteExecutorServiceResult executeResult)
             {
                 base.ExecuteCallback(eId, executeResult.Convert());

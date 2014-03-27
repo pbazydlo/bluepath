@@ -18,7 +18,7 @@
         // TODO: When should we remove executors (both local and remote), after Join/Callback?
         // we shouldn't use another lock for ConcurrentDictionary access http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
         // private static readonly object ExecutorsLock = new object();
-        private static readonly ConcurrentDictionary<Guid, ILocalExecutor> Executors = new ConcurrentDictionary<Guid, ILocalExecutor>();
+        private static readonly ConcurrentDictionary<int, ConcurrentDictionary<Guid, ILocalExecutor>> Executors = new ConcurrentDictionary<int, ConcurrentDictionary<Guid, ILocalExecutor>>();
         private static readonly ConcurrentDictionary<Guid, IRemoteExecutor> RemoteExecutors = new ConcurrentDictionary<Guid, IRemoteExecutor>();
 
         /// <summary>
@@ -29,16 +29,22 @@
         /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
         public static ILocalExecutor GetExecutor(Guid eid)
         {
+            var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
+            if (!Executors.ContainsKey(sourcePort))
+            {
+                throw new Exception(string.Format("There are no executors running on port '{0}'.", sourcePort));
+            }
+
             ILocalExecutor executor;
             var getSuccess = false;
             do
             {
-                if (!Executors.ContainsKey(eid))
+                if (!Executors[sourcePort].ContainsKey(eid))
                 {
                     throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
                 }
 
-                getSuccess = Executors.TryGetValue(eid, out executor);
+                getSuccess = Executors[sourcePort].TryGetValue(eid, out executor);
             }
             while (!getSuccess);
 
@@ -71,6 +77,8 @@
 
         public static void RegisterRemoteExecutor(IRemoteExecutor executor)
         {
+            var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
+
             if (executor.Eid == default(Guid))
             {
                 throw new ArgumentException("Remote executor needs to be initialized first.", "executor");
@@ -103,12 +111,18 @@
                     throw new ArgumentException("Executor supports only static methods.", "methodHandle");
                 }
 
+                var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
+                if (!Executors.ContainsKey(sourcePort))
+                {
+                    Executors.TryAdd(sourcePort, new ConcurrentDictionary<Guid, ILocalExecutor>());
+                }
+
                 ILocalExecutor executor;
                 do
                 {
                     executor = new LocalExecutor();
                 }
-                while (!Executors.TryAdd(executor.Eid, executor));
+                while (!Executors[sourcePort].TryAdd(executor.Eid, executor));
 
                 InitializeLocalExecutor(executor, methodFromHandle);
 
@@ -231,16 +245,40 @@
                 numberOfTasks[state] = 0;
             }
 
-            foreach (var executor in RemoteExecutorService.Executors)
-            {
-                numberOfTasks[executor.Value.ExecutorState]++;
-            }
+            var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
+            if (RemoteExecutorService.Executors.ContainsKey(sourcePort))
+                foreach (var executor in RemoteExecutorService.Executors[sourcePort])
+                {
+                    Log.TraceMessage(string.Format("[PerfStat] Executor is in '{0}' state.", executor.Value.ExecutorState), keywords: executor.Value.Eid.EidAsLogKeywords());
+                    numberOfTasks[executor.Value.ExecutorState]++;
+                }
 
             return new PerformanceStatistics() { NumberOfTasks = numberOfTasks };
         }
 
+        private static int GetPortNumberFromRequest()
+        {
+            var port = default(int);
+
+            try
+            {
+                port = System.ServiceModel.OperationContext.Current.RequestContext.RequestMessage.Headers.To.Port;
+            }
+            catch (NullReferenceException)
+            {
+            }
+
+            return port;
+        }
+
         private static void DisposeExecutor(ILocalExecutor executor)
         {
+            var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
+            if (!Executors.ContainsKey(sourcePort))
+            {
+                throw new Exception(string.Format("There are no executors running on port '{0}'.", sourcePort));
+            }
+
             var eid = executor.Eid;
 
             if (executor.ExecutorState == ExecutorState.Running)
@@ -253,12 +291,12 @@
             var removed = false;
             do
             {
-                if (!Executors.ContainsKey(eid))
+                if (!Executors[sourcePort].ContainsKey(eid))
                 {
                     break;
                 }
 
-                removed = Executors.TryRemove(eid, out executor);
+                removed = Executors[sourcePort].TryRemove(eid, out executor);
             }
             while (!removed);
         }

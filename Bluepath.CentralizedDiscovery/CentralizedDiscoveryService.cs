@@ -68,10 +68,13 @@
             // get performance statistics from each node
             foreach (var service in availableServices)
             {
-                var client = new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
+                using (var client = new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
                     service.Binding,
-                    service.ToEndpointAddress());
-                performanceStatistics.Add(service, (await client.GetPerformanceStatisticsAsync()).FromServiceReference());
+                    service.ToEndpointAddress()))
+                {
+                    Log.TraceMessage(string.Format("[PerfStat] Getting performance statistics from '{0}'.", service.Address));
+                    performanceStatistics.Add(service, (await client.GetPerformanceStatisticsAsync()).FromServiceReference());
+                }
             }
 
             return performanceStatistics;

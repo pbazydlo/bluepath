@@ -157,7 +157,17 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                         var performanceStatistics = serviceDiscoveryClient1.GetPerformanceStatistics();
 
                         performanceStatistics.Count.ShouldBe(2);
+                        performanceStatistics.ElementAt(0).Key.Address.ShouldNotBeSameAs(performanceStatistics.ElementAt(1).Key.Address);
                         performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.NotStarted].ShouldBe(0);
+                        performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Running].ShouldBeLessThanOrEqualTo(1);
+                        performanceStatistics.ElementAt(1).Value.NumberOfTasks[ExecutorState.Running].ShouldBeLessThanOrEqualTo(1);
+
+                        if (performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Running] > 0
+                            && performanceStatistics.ElementAt(1).Value.NumberOfTasks[ExecutorState.Running] > 0)
+                        {
+                            Assert.Fail("One task was scheduled but two are reported to be running.");
+                        }
+
                         (performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Running]
                             + performanceStatistics.ElementAt(1).Value.NumberOfTasks[ExecutorState.Running]).ShouldBe(1);
                         performanceStatistics.ElementAt(0).Value.NumberOfTasks[ExecutorState.Finished].ShouldBe(0);

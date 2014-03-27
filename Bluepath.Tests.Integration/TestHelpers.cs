@@ -15,13 +15,13 @@
 
         public static Process SpawnRemoteService(int port, ServiceType serviceType = ServiceType.Bluepath)
         {
-            if (SpawnedServices.ContainsKey(port))
+            if (port != 0 && SpawnedServices.ContainsKey(port))
             {
                 throw new Exception(string.Format("There is already service running on port '{0}'", port));
             }
 
             ProcessStartInfo processStartInfo = null;
-            switch(serviceType)
+            switch (serviceType)
             {
                 case ServiceType.Bluepath:
                     processStartInfo = new ProcessStartInfo(TestHelpers.BluepathServicePath, port.ToString());
@@ -54,7 +54,7 @@
                     }
                 });
             t.Start();
-            
+
             Thread.Sleep(1000);
             return process;
         }

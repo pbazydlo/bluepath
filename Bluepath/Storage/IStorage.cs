@@ -1,6 +1,7 @@
-﻿namespace Bluepath.Storage
+﻿using System;
+namespace Bluepath.Storage
 {
-    public interface IStorage
+    public interface IStorage : IDisposable
     {
         void Store<T>(string key, T value);
 
@@ -9,5 +10,7 @@
         void Update<T>(string key, T newValue);
 
         T Retrieve<T>(string key);
+
+        void Remove(string key);
     }
 }

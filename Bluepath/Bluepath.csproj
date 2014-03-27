@@ -77,8 +77,11 @@
     <Compile Include="Service References\RemoteExecutorService.cs" />
     <Compile Include="Services\RemoteExecutorServiceResult.cs" />
     <Compile Include="Services\ServiceUri.cs" />
+    <Compile Include="Storage\IExtendedStorage.cs" />
     <Compile Include="Storage\IStorage.cs" />
-    <Compile Include="Storage\RedisStorage.cs" />
+    <Compile Include="Storage\Locks\IStorageLock.cs" />
+    <Compile Include="Storage\Redis\RedisLock.cs" />
+    <Compile Include="Storage\Redis\RedisStorage.cs" />
     <Compile Include="Threading\DistributedThread.cs" />
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />

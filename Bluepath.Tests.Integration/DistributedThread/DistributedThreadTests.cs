@@ -1,18 +1,15 @@
 ﻿namespace Bluepath.Tests.Integration.DistributedThread
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Runtime.Remoting.Messaging;
     using System.Threading;
 
     using Bluepath.Exceptions;
     using Bluepath.Executor;
     using Bluepath.Services;
 
-    using Microsoft.FSharp.Collections;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-    using NUnit.Framework;
 
     using Shouldly;
 
@@ -21,9 +18,11 @@
     [TestClass]
     public class DistributedThreadTests
     {
-        private const int JoinWaitTime = 2000;
+        private static int LastUsedPortNumber = 24500;
 
-        private static Thread serviceThread = null;
+        private static object LastUsedPortNumberLock = new object();
+
+        private const int JoinWaitTime = 2000;
 
         private Process executorHostProcess;
 
@@ -48,30 +47,24 @@
             {
                 Debug.WriteLine("Couldn't kill process ({0}).", ex.Message);
             }
-
-            if (DistributedThreadTests.serviceThread != null)
-            {
-                DistributedThreadTests.serviceThread.Abort();
-                DistributedThreadTests.serviceThread = null;
-            }
         }
 
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithCallback()
         {
-            const int ExecutorPort = 23004;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
             const string Ip = "127.0.0.1";
-            const int Port = 24000;
+            var port = DistributedThreadTests.GetNextPortNumber();
 
             if (this.listener != null)
             {
                 throw new Exception("Test can have only one listener.");
             }
 
-            this.listener = new BluepathListener(Ip, Port);
+            this.listener = new BluepathListener(Ip, port);
 
-            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true, callbackListener: this.listener);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true, callbackListener: this.listener);
 
             myThread.Start(5, 3);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -87,21 +80,21 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesFSharpMethodWithCallback()
         {
-            const int ExecutorPort = 23005;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
             const string Ip = "127.0.0.1";
-            const int Port = 24001;
+            var port = DistributedThreadTests.GetNextPortNumber();
 
             if (this.listener != null)
             {
                 throw new Exception("Test can have only one listener.");
             }
 
-            this.listener = new BluepathListener(Ip, Port);
+            this.listener = new BluepathListener(Ip, port);
             // Computes the sum of the squares of the numbers divisible by 3
             var testFunc = new Func<int, int>(Bluepath.Tests.Methods.DefaultModule.sumOfSquaresDivisibleBy3UpTo);
 
-            var myThread = this.InitializeWithExternalRunner(testFunc, ExecutorPort, this.listener);
+            var myThread = this.InitializeWithExternalRunner(testFunc, executorPort, this.listener);
 
             // n = 7 => generates [ 1 .. 7 ]
             myThread.Start(7);
@@ -118,8 +111,8 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoin()
         {
-            const int ExecutorPort = 23003;
-            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             myThread.Start(5, 3);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -143,9 +136,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodWithPollingJoinOnExternalRunner()
         {
-            const int ExecutorPort = 23002;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
-            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             myThread.Start(5, 3);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -169,9 +162,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfIncorrectInvokation()
         {
-            const int ExecutorPort = 23001;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
-            var myThread = this.InitializeWithSubtractFunc(ExecutorPort, externalRunner: true);
+            var myThread = this.InitializeWithSubtractFunc(executorPort, externalRunner: true);
 
             // Function expects two parameters, but we are passing only one to test exception handling
             myThread.Start(5);
@@ -209,9 +202,9 @@
         [TestMethod]
         public void DistributedThreadRemotelyPassesExceptionInCaseOfFunctionError()
         {
-            const int ExecutorPort = 23000;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
-            var myThread = this.InitializeWithExceptionThrowingFunc(ExecutorPort, externalRunner: true);
+            var myThread = this.InitializeWithExceptionThrowingFunc(executorPort, externalRunner: true);
             var exception = default(Exception);
             myThread.Start();
             var joinThread = new System.Threading.Thread(() =>
@@ -245,8 +238,8 @@
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodTakingClassAsItsParameter()
         {
-            const int ExecutorPort = 33004;
-            
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
+
             Func<ComplexParameter, string> testFunc = (complexParameter) =>
             {
                 return string.Format("{0}_{1}", complexParameter.SomeProperty, complexParameter.AnotherProperty);
@@ -258,7 +251,15 @@
                 AnotherProperty = 56
             };
 
-            var myThread = this.Initialize(testFunc, ExecutorPort);
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            var listenerAndThreadTuple = Initialize(testFunc, executorPort);
+
+            this.listener = listenerAndThreadTuple.Listener;
+            var myThread = listenerAndThreadTuple.Thread;
 
             myThread.Start(parameter);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -266,14 +267,13 @@
             joinThread.Join();
 
             myThread.Result.ToString().ShouldBe(string.Format("{0}_{1}", parameter.SomeProperty, parameter.AnotherProperty));
-
             this.listener.Stop();
         }
 
         [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodReturningClass()
         {
-            const int ExecutorPort = 33004;
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
 
             Func<string, ComplexParameter> testFunc = (parameter) =>
             {
@@ -285,7 +285,16 @@
             };
 
             var testValue = "jack";
-            var myThread = this.Initialize(testFunc, ExecutorPort);
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            var listenerAndThreadTuple = Initialize(testFunc, executorPort);
+
+            this.listener = listenerAndThreadTuple.Listener;
+            var myThread = listenerAndThreadTuple.Thread;
 
             myThread.Start(testValue);
             var joinThread = new System.Threading.Thread(myThread.Join);
@@ -334,21 +343,16 @@
             }
         }
 
-        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, int port)
+        private static ListenerAndThreadTuple<TFunc> Initialize<TFunc>(TFunc testFunc, int port)
         {
             const string Ip = "127.0.0.1";
-            if (this.listener != null)
-            {
-                throw new Exception("Test can have only one listener.");
-            }
+            var listener = new BluepathListener(Ip, port);
 
-            serviceThread = new System.Threading.Thread(() =>
-            {
-                this.listener = new BluepathListener(Ip, port);
-            });
-            serviceThread.Start();
-
-            return this.Initialize<TFunc>(testFunc, Ip, port);
+            return new ListenerAndThreadTuple<TFunc>()
+                       {
+                           Listener = listener,
+                           Thread = Initialize(testFunc, Ip, port)
+                       };
         }
 
         private Threading.DistributedThread<TFunc> InitializeWithExternalRunner<TFunc>(TFunc testFunc, int port, IListener callbackListener = null)
@@ -360,10 +364,10 @@
 
             const string Ip = "127.0.0.1";
             this.executorHostProcess = TestHelpers.SpawnRemoteService(port);
-            return this.Initialize<TFunc>(testFunc, Ip, port, callbackListener);
+            return Initialize(testFunc, Ip, port, callbackListener);
         }
 
-        private Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, string ip, int port, IListener callbackListener = null)
+        private static Threading.DistributedThread<TFunc> Initialize<TFunc>(TFunc testFunc, string ip, int port, IListener callbackListener = null)
         {
             var endpointAddress = new System.ServiceModel.EndpointAddress(
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
@@ -376,5 +380,20 @@
             var myThread = Bluepath.Threading.DistributedThread.Create(testFunc, connectionManager);
             return myThread;
         }
+
+        private static int GetNextPortNumber()
+        {
+            lock (LastUsedPortNumberLock)
+            {
+                return ++LastUsedPortNumber;
+            }
+        }
+    }
+
+    internal class ListenerAndThreadTuple<TFunc>
+    {
+        public BluepathListener Listener { get; set; }
+
+        public Threading.DistributedThread<TFunc> Thread { get; set; }
     }
 }

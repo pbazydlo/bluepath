@@ -46,16 +46,31 @@ namespace Bluepath.Storage
             var db = this.connection.GetDatabase();
             var transaction = db.CreateTransaction();
             transaction.AddCondition(Condition.KeyExists(key));
-            var awaitableResult = transaction.StringGetAsync(key);
+            var pendingResult = transaction.StringGetAsync(key);
             var transactionSuccess = transaction.Execute();
             if(!transactionSuccess)
             {
                 throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] doesn't exist!", key));
             }
 
-            awaitableResult.Wait();
+            pendingResult.Wait();
             
-            return ((byte[])awaitableResult.Result).Deserialize<T>();
+            return ((byte[])pendingResult.Result).Deserialize<T>();
+        }
+
+        public void Remove(string key)
+        {
+            var db = this.connection.GetDatabase();
+            var transaction = db.CreateTransaction();
+            transaction.AddCondition(Condition.KeyExists(key));
+            var pendingResult = transaction.KeyDeleteAsync(key);
+            var transactionSuccess = transaction.Execute();
+            if (!transactionSuccess)
+            {
+                throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] doesn't exist!", key));
+            }
+
+            pendingResult.Wait();
         }
 
         public void Dispose()

@@ -9,5 +9,7 @@
         void Update<T>(string key, T newValue);
 
         T Retrieve<T>(string key);
+
+        void Remove(string key);
     }
 }

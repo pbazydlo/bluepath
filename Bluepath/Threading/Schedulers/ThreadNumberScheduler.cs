@@ -16,12 +16,28 @@ namespace Bluepath.Threading.Schedulers
             this.connectionManager = connectionManager;
         }
 
-        public ServiceReferences.IRemoteExecutorService GetRemoteService()
+        public ServiceUri GetRemoteServiceUri()
         {
             var remoteServices = this.connectionManager.RemoteServices;
-            var minNumberOfTasks = remoteServices.Min(rs=>rs.Value.NumberOfTasks);
-            var serviceData = remoteServices.Where(rs => rs.Value.NumberOfTasks == minNumberOfTasks).First();
-            var serviceUri = serviceData.Key;
+            var minNumberOfTasks = remoteServices.Min( rs => CountTasks(rs));
+            var serviceData = remoteServices.Where(rs => CountTasks(rs) == minNumberOfTasks).First();
+            return serviceData.Key;
+        }
+
+        private static int CountTasks(KeyValuePair<ServiceUri, PerformanceStatistics> rs)
+        {
+            return rs.Value.NumberOfTasks
+                                .Where(
+                                task =>
+                                    task.Key != Executor.ExecutorState.Finished &&
+                                    task.Key != Executor.ExecutorState.Faulted
+                                    )
+                                .Sum(task => task.Value);
+        }
+
+        public ServiceReferences.IRemoteExecutorService GetRemoteService()
+        {
+            var serviceUri = this.GetRemoteServiceUri();
             return new Bluepath.ServiceReferences.RemoteExecutorServiceClient(serviceUri.Binding, serviceUri.ToEndpointAddress());
         }
     }

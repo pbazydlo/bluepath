@@ -13,6 +13,7 @@
     using Shouldly;
 
     using IRemoteExecutorService = Bluepath.ServiceReferences.IRemoteExecutorService;
+    using Bluepath.Threading.Schedulers;
 
     [TestClass]
     public class DistributedThreadTests
@@ -42,6 +43,7 @@
             var dt1 = Bluepath.Threading.DistributedThread<Func<List<int>, int, int, int, int?>>.Create(
                 function,
                 connectionManager,
+                null, 
                 Threading.DistributedThread.ExecutorSelectionMode.LocalOnly);
             dt1.Start(listToProcess, 0, listToProcess.Count, 5);
             dt1.Join();
@@ -62,7 +64,6 @@
 
             var remoteExecutorId = Guid.Empty;
             var serviceMock = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-
             var result  = new ServiceReferences.RemoteExecutorServiceResult()
                         {
                             ExecutorState = ServiceReferences.ExecutorState.Finished,
@@ -79,9 +80,13 @@
                 .Returns(() => Task.Run(() => Services.RemoteExecutorService.GetRemoteExecutor(remoteExecutorId).Pulse(result)));
             serviceMock.Setup(rs => rs.TryJoin(It.IsAny<Guid>())).Returns(result);
 
+            var schedulerMock = new Mock<IScheduler>(MockBehavior.Strict);
+            schedulerMock.Setup(s => s.GetRemoteService()).Returns(serviceMock.Object);
+
             var dt1 = Bluepath.Threading.DistributedThread<Func<object[], object>>.Create(
                 function,
-                new ConnectionManager(serviceMock.Object, listener: null),
+                new ConnectionManager(remoteServices: null, listener: null),
+                schedulerMock.Object,
                 Threading.DistributedThread.ExecutorSelectionMode.RemoteOnly);
             dt1.Start(4, 2);
             dt1.Join();
@@ -91,9 +96,9 @@
 
         public class FakeConnectionManager : IConnectionManager
         {
-            public IEnumerable<IRemoteExecutorService> RemoteServices { get; private set; }
-
             public IListener Listener { get; private set; }
+
+            public IDictionary<ServiceUri, PerformanceStatistics> RemoteServices { get; private set; }
         }
     }
 }

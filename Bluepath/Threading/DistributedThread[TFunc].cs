@@ -31,6 +31,29 @@ using Bluepath.Threading.Schedulers;
         /// <returns>Instance of distributed thread.</returns>
         /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
         public static DistributedThread<TFunc> Create(
+            TFunc function,
+            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly
+            )
+        {
+            return new DistributedThread<TFunc>(
+                Services.ConnectionManager.Default, 
+                new ThreadNumberScheduler(Services.ConnectionManager.Default)
+                )
+            {
+                function = function,
+                Mode = mode
+            };
+        }
+
+        /// <summary>
+        /// Creates distributed thread using default connection manager.
+        /// </summary>
+        /// <param name="function">Method to be run.</param>
+        /// <param name="scheduler">Scheduler wich will be used to select executing site.</param>
+        /// <param name="mode">Executor selection strategy.</param>
+        /// <returns>Instance of distributed thread.</returns>
+        /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
+        public static DistributedThread<TFunc> Create(
             TFunc function, 
             IScheduler scheduler,
             DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly
@@ -47,6 +70,7 @@ using Bluepath.Threading.Schedulers;
         /// Creates distributed thread using supplied connection manager.
         /// </summary>
         /// <param name="function">Method to be run.</param>
+        /// <param name="scheduler">Scheduler wich will be used to select executing site.</param>
         /// <param name="connectionManager">Connection manager.</param>
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>

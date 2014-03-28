@@ -10,6 +10,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
     using Bluepath.Executor;
     using Bluepath.Services;
     using Bluepath.Threading;
+    using Bluepath.Threading.Schedulers;
 
     [TestClass]
     public class ConnectionManagerTests
@@ -139,6 +140,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                             remoteService: null,
                             listener: bluepathListener1,
                             serviceDiscovery: serviceDiscoveryClient1);
+                        var scheduler = new ThreadNumberScheduler(connectionManager);
                         this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
 
                         connectionManager.RemoteServices.Count().ShouldBe(1);
@@ -151,7 +153,12 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                             return a + b;
                         });
 
-                        var thread = DistributedThread.Create(testMethod, connectionManager, DistributedThread.ExecutorSelectionMode.RemoteOnly);
+                        var thread = DistributedThread.Create(
+                            testMethod,
+                            connectionManager, 
+                            scheduler,
+                            DistributedThread.ExecutorSelectionMode.RemoteOnly
+                            );
                         thread.Start(4, 5);
 
                         var performanceStatistics = serviceDiscoveryClient1.GetPerformanceStatistics();
@@ -192,6 +199,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
             while (timesExecuted < times && !function())
             {
                 System.Threading.Thread.Sleep(waitTime);
+                timesExecuted++;
             }
         }
     }

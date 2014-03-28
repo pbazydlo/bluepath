@@ -76,7 +76,10 @@
                             this.remoteServices.Clear();
                             foreach (var service in availableServices.Keys)
                             {
-                                this.remoteServices.Add(service, availableServices[service]);
+                                if (!service.Equals(this.Listener.CallbackUri))
+                                {
+                                    this.remoteServices.Add(service, availableServices[service]);
+                                }
                             }
                         }
 

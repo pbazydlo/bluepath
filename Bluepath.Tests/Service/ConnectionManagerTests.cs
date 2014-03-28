@@ -13,9 +13,9 @@ namespace Bluepath.Tests.Service
     public class ConnectionManagerTests
     {
         [TestMethod]
-        public void ConnectionManagerHandlesNullListInConstructor()
+        public void ConnectionManagerHandlesNullDictionaryInConstructor()
         {
-            List<Bluepath.ServiceReferences.IRemoteExecutorService> services = null;
+            Dictionary<ServiceUri, PerformanceStatistics> services = null;
 
             var manager = new ConnectionManager(services, null);
 
@@ -25,7 +25,7 @@ namespace Bluepath.Tests.Service
         [TestMethod]
         public void ConnectionManagerHandlesNullRemoteServiceInConstructor()
         {
-            Bluepath.ServiceReferences.IRemoteExecutorService service = null;
+            KeyValuePair<ServiceUri, PerformanceStatistics>? service = null;
 
             var manager = new ConnectionManager(service, null);
 
@@ -37,16 +37,16 @@ namespace Bluepath.Tests.Service
         public void ConnectionManagerFetchesServicesFromServiceDiscovery()
         {
             var manualResetEvent = new System.Threading.ManualResetEvent(false);
-            var serviceMock1 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            var serviceMock2 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            List<Bluepath.ServiceReferences.IRemoteExecutorService> services
-                = new List<ServiceReferences.IRemoteExecutorService>()
+            var serviceUri1 = new ServiceUri() { Address = "1" };
+            var serviceUri2 = new ServiceUri() { Address = "2" };
+            Dictionary<ServiceUri, PerformanceStatistics> services
+                = new Dictionary<ServiceUri, PerformanceStatistics>()
                 {
-                    serviceMock1.Object,
-                    serviceMock2.Object
+                    {serviceUri1, new PerformanceStatistics()},
+                    {serviceUri2, new PerformanceStatistics()}
                 };
             var serviceDiscoveryMock = new Mock<IServiceDiscovery>(MockBehavior.Strict);
-            serviceDiscoveryMock.Setup(sd => sd.GetAvailableServices()).Returns(services).Callback(() => manualResetEvent.Set());
+            serviceDiscoveryMock.Setup(sd => sd.GetPerformanceStatistics()).Returns(services).Callback(() => manualResetEvent.Set());
 
             var manager = new ConnectionManager(remoteService: null, listener: null,
                 serviceDiscovery: serviceDiscoveryMock.Object);
@@ -61,25 +61,24 @@ namespace Bluepath.Tests.Service
         public void ConnectionManagerAddsNewServicesFromServiceDiscovery()
         {
             var manualResetEvent = new System.Threading.ManualResetEvent(false);
-            var serviceMock1 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            var serviceMock2 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            var serviceMock3 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            List<Bluepath.ServiceReferences.IRemoteExecutorService> services
-                = new List<ServiceReferences.IRemoteExecutorService>()
+            var serviceUri1 = new ServiceUri() { Address = "1" };
+            var serviceUri2 = new ServiceUri() { Address = "2" };
+            Dictionary<ServiceUri, PerformanceStatistics> services
+                = new Dictionary<ServiceUri, PerformanceStatistics>()
                 {
-                    serviceMock1.Object,
-                    serviceMock2.Object
+                    {serviceUri1, new PerformanceStatistics()},
+                    {serviceUri2, new PerformanceStatistics()}
                 };
             var serviceDiscoveryMock = new Mock<IServiceDiscovery>(MockBehavior.Strict);
-            serviceDiscoveryMock.Setup(sd => sd.GetAvailableServices()).Returns(() => services).Callback(() => manualResetEvent.Set());
+            serviceDiscoveryMock.Setup(sd => sd.GetPerformanceStatistics()).Returns(() => services).Callback(() => manualResetEvent.Set());
 
             var manager = new ConnectionManager(remoteService: null, listener: null,
-                serviceDiscovery: serviceDiscoveryMock.Object, 
-                serviceDiscoveryPeriod: new TimeSpan(days: 0,hours: 0, minutes:0, seconds:0, milliseconds: 10));
+                serviceDiscovery: serviceDiscoveryMock.Object,
+                serviceDiscoveryPeriod: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 10));
 
             manualResetEvent.WaitOne();
             manager.RemoteServices.Count().ShouldBe(2);
-            services.Add(serviceMock3.Object);
+            services.Add(new ServiceUri(), new PerformanceStatistics());
             manualResetEvent.Reset();
             manualResetEvent.WaitOne();
 
@@ -91,16 +90,26 @@ namespace Bluepath.Tests.Service
         public void ConnectionManagerRemovesServicesNotExistingInServiceDiscovery()
         {
             var manualResetEvent = new System.Threading.ManualResetEvent(false);
-            var serviceMock1 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            var serviceMock2 = new Mock<Bluepath.ServiceReferences.IRemoteExecutorService>(MockBehavior.Strict);
-            List<Bluepath.ServiceReferences.IRemoteExecutorService> services
-                = new List<ServiceReferences.IRemoteExecutorService>()
+            var serviceUri1 = new ServiceUri()
+            {
+                Address = "jack",
+                BindingType = BindingType.BasicHttpBinding
+            };
+
+            var serviceUri2 = new ServiceUri()
+            {
+                Address = "jackie",
+                BindingType = BindingType.BasicHttpBinding
+            };
+
+            Dictionary<ServiceUri, PerformanceStatistics> services
+                = new Dictionary<ServiceUri, PerformanceStatistics>()
                 {
-                    serviceMock1.Object,
-                    serviceMock2.Object
+                    {serviceUri1, new PerformanceStatistics()},
+                    {serviceUri2, new PerformanceStatistics()}
                 };
             var serviceDiscoveryMock = new Mock<IServiceDiscovery>(MockBehavior.Strict);
-            serviceDiscoveryMock.Setup(sd => sd.GetAvailableServices()).Returns(() => services).Callback(() => manualResetEvent.Set());
+            serviceDiscoveryMock.Setup(sd => sd.GetPerformanceStatistics()).Returns(() => services).Callback(() => manualResetEvent.Set());
 
             var manager = new ConnectionManager(remoteService: null, listener: null,
                 serviceDiscovery: serviceDiscoveryMock.Object,
@@ -109,7 +118,7 @@ namespace Bluepath.Tests.Service
             manualResetEvent.WaitOne();
             System.Threading.Thread.Sleep(10);
             manager.RemoteServices.Count().ShouldBe(2);
-            services.RemoveAt(1);
+            services.Remove(serviceUri1);
             manualResetEvent.Reset();
             manualResetEvent.WaitOne();
 

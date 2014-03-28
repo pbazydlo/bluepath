@@ -14,6 +14,8 @@
     using Shouldly;
 
     using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
+    using Moq;
+    using Bluepath.Threading.Schedulers;
 
     [TestClass]
     public class DistributedThreadTests
@@ -373,11 +375,19 @@
                 string.Format("http://{0}:{1}/BluepathExecutorService.svc", ip, port));
 
             var connectionManager = new ConnectionManager(
-                    new ServiceReferences.RemoteExecutorServiceClient(
-                        new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
-                        endpointAddress),
+                     remoteServices: null,
                     listener: callbackListener);
-            var myThread = Bluepath.Threading.DistributedThread.Create(testFunc, connectionManager);
+
+            var schedulerMock = new Mock<IScheduler>(MockBehavior.Strict);
+            schedulerMock.Setup(s=>s.GetRemoteService())
+                .Returns(()=>
+                new ServiceReferences.RemoteExecutorServiceClient(
+                        new System.ServiceModel.BasicHttpBinding(System.ServiceModel.BasicHttpSecurityMode.None),
+                        endpointAddress
+                        )
+                );
+
+            var myThread = Bluepath.Threading.DistributedThread.Create(testFunc, connectionManager, schedulerMock.Object);
             return myThread;
         }
 

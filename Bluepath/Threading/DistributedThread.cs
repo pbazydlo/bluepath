@@ -76,6 +76,23 @@ using Bluepath.Threading.Schedulers;
         /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
         public static DistributedThread<TFunc> Create<TFunc>(
             TFunc function,
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            )
+        {
+            return DistributedThread<TFunc>.Create(function, mode);
+        }
+
+        /// <summary>
+        /// Creates distributed thread using default connection manager.
+        /// </summary>
+        /// <typeparam name="TFunc">Delegate type of method to be run.</typeparam>
+        /// <param name="function">Method to be run.</param>
+        /// <param name="scheduler">Scheduler wich will be used to select executing site.</param>
+        /// <param name="mode">Executor selection strategy.</param>
+        /// <returns>Instance of distributed thread.</returns>
+        /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
+        public static DistributedThread<TFunc> Create<TFunc>(
+            TFunc function,
             IScheduler scheduler,
             ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
             )
@@ -88,6 +105,7 @@ using Bluepath.Threading.Schedulers;
         /// </summary>
         /// <typeparam name="TFunc">Delegate type of method to be run.</typeparam>
         /// <param name="function">Method to be run.</param>
+        /// <param name="scheduler">Scheduler wich will be used to select executing site.</param>
         /// <param name="connectionManager">Connection manager.</param>
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>

@@ -6,6 +6,7 @@
     using Bluepath.Executor;
     using Bluepath.Extensions;
     using Bluepath.Services;
+using Bluepath.Threading.Schedulers;
 
     /// <summary>
     /// TODO: Description, Remote Execution, Choosing executing node
@@ -17,8 +18,8 @@
     {
         private TFunc function;
 
-        protected DistributedThread(IConnectionManager connectionManager)
-            : base(connectionManager)
+        protected DistributedThread(IConnectionManager connectionManager, IScheduler scheduler)
+            : base(connectionManager, scheduler)
         {
         }
 
@@ -29,9 +30,13 @@
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>
         /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
-        public static DistributedThread<TFunc> Create(TFunc function, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create(
+            TFunc function, 
+            IScheduler scheduler,
+            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly
+            )
         {
-            return new DistributedThread<TFunc>(Services.ConnectionManager.Default)
+            return new DistributedThread<TFunc>(Services.ConnectionManager.Default, scheduler)
             {
                 function = function,
                 Mode = mode
@@ -45,9 +50,14 @@
         /// <param name="connectionManager">Connection manager.</param>
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>
-        public static DistributedThread<TFunc> Create(TFunc function, IConnectionManager connectionManager, DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create(
+            TFunc function,
+            IConnectionManager connectionManager, 
+            IScheduler scheduler,
+            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly
+            )
         {
-            return new DistributedThread<TFunc>(connectionManager)
+            return new DistributedThread<TFunc>(connectionManager, scheduler)
             {
                 function = function,
                 Mode = mode
@@ -72,7 +82,7 @@
                     break;
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
-                    var service = this.RemoteServices.FirstOrDefault();
+                    var service = this.Scheduler.GetRemoteService();
                     if (service == null)
                     {
                         throw new MissingRemoteServiceReferenceException("No remote service was specified in DistributedThread.RemoteServices.");

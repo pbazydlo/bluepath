@@ -13,7 +13,7 @@
 
         private static ConnectionManager defaultConnectionManager;
 
-        private readonly List<ServiceReferences.IRemoteExecutorService> remoteServices;
+        private readonly IDictionary<ServiceUri, PerformanceStatistics> remoteServices;
 
         private readonly object remoteServicesLock = new object();
 
@@ -24,12 +24,12 @@
         private readonly Thread serviceDiscoveryThread;
 
         public ConnectionManager(
-            ServiceReferences.IRemoteExecutorService remoteService,
+            KeyValuePair<ServiceUri,PerformanceStatistics>? remoteService,
             IListener listener,
             IServiceDiscovery serviceDiscovery = null,
             TimeSpan? serviceDiscoveryPeriod = null)
             : this(
-                remoteService != null ? new List<ServiceReferences.IRemoteExecutorService>() { remoteService } : null,
+                remoteService.HasValue ? new Dictionary<ServiceUri, PerformanceStatistics>() { {remoteService.Value.Key, remoteService.Value.Value} } : null,
                 listener,
                 serviceDiscovery,
                 serviceDiscoveryPeriod)
@@ -37,7 +37,7 @@
         }
 
         public ConnectionManager(
-            IEnumerable<ServiceReferences.IRemoteExecutorService> remoteServices,
+            IDictionary<ServiceUri, PerformanceStatistics> remoteServices,
             IListener listener,
             IServiceDiscovery serviceDiscovery = null,
             TimeSpan? serviceDiscoveryPeriod = null)
@@ -47,14 +47,20 @@
             {
                 lock (this.remoteServicesLock)
                 {
-                    this.remoteServices.AddRange(remoteServices);
+                    foreach (var remoteService in remoteServices.Keys)
+                    {
+                        if(!this.remoteServices.ContainsKey(remoteService))
+                        {
+                            this.remoteServices.Add(remoteService, remoteServices[remoteService]);
+                        }
+                    }
                 }
             }
         }
 
         private ConnectionManager(IListener listener, IServiceDiscovery serviceDiscovery, TimeSpan? serviceDiscoveryPeriod)
         {
-            this.remoteServices = new List<ServiceReferences.IRemoteExecutorService>();
+            this.remoteServices = new Dictionary<ServiceUri, PerformanceStatistics>();
             this.Listener = listener;
             if (serviceDiscovery != null)
             {
@@ -64,12 +70,14 @@
                 {
                     while (true)
                     {
-                        var availableServices = this.serviceDiscovery.GetAvailableServices();
+                        var availableServices = this.serviceDiscovery.GetPerformanceStatistics();
                         lock (this.remoteServicesLock)
                         {
-                            // What about services parmanently removed, where should they be disposed?
                             this.remoteServices.Clear();
-                            this.remoteServices.AddRange(availableServices);
+                            foreach (var service in availableServices.Keys)
+                            {
+                                this.remoteServices.Add(service, availableServices[service]);
+                            }
                         }
 
                         Thread.Sleep(this.serviceDiscoveryPeriod);
@@ -101,11 +109,7 @@
             }
         }
 
-        // TODO: We should store how many threads are run on external executors
-        // so that we can choose the one with the most processing power left.
-        // Information could be fetched either from discovery service, or
-        // we could query all available services.
-        public IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices
+        public IDictionary<ServiceUri, PerformanceStatistics> RemoteServices
         {
             get
             {

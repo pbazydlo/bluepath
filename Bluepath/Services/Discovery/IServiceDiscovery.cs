@@ -4,6 +4,8 @@
 
     public interface IServiceDiscovery
     {
-        ICollection<ServiceReferences.IRemoteExecutorService> GetAvailableServices();
+        ICollection<ServiceUri> GetAvailableServices();
+
+        Dictionary<ServiceUri, PerformanceStatistics> GetPerformanceStatistics();
     }
 }

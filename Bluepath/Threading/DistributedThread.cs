@@ -6,14 +6,17 @@
     using Bluepath.Exceptions;
     using Bluepath.Executor;
     using Bluepath.Services;
+using Bluepath.Threading.Schedulers;
 
     public abstract class DistributedThread
     {
         protected readonly IConnectionManager ConnectionManager;
+        protected readonly IScheduler Scheduler;
 
-        protected DistributedThread(IConnectionManager connectionManager)
+        protected DistributedThread(IConnectionManager connectionManager, IScheduler scheduler)
         {
             this.ConnectionManager = connectionManager;
+            this.Scheduler = scheduler;
         }
 
         /// <summary>
@@ -30,17 +33,6 @@
             /// Run on remote executor.
             /// </summary>
             RemoteOnly = 1
-        }
-
-        /// <summary>
-        /// Gets list of known remote executor services.
-        /// </summary>
-        public IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices
-        {
-            get
-            {
-                return this.ConnectionManager.RemoteServices;
-            }
         }
 
         /// <summary>
@@ -82,9 +74,13 @@
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>
         /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
-        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create<TFunc>(
+            TFunc function,
+            IScheduler scheduler,
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            )
         {
-            return DistributedThread<TFunc>.Create(function, mode);
+            return DistributedThread<TFunc>.Create(function, scheduler, mode);
         }
 
         /// <summary>
@@ -95,9 +91,14 @@
         /// <param name="connectionManager">Connection manager.</param>
         /// <param name="mode">Executor selection strategy.</param>
         /// <returns>Instance of distributed thread.</returns>
-        public static DistributedThread<TFunc> Create<TFunc>(TFunc function, IConnectionManager connectionManager, ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly)
+        public static DistributedThread<TFunc> Create<TFunc>(
+            TFunc function, 
+            IConnectionManager connectionManager, 
+            IScheduler scheduler,
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            )
         {
-            return DistributedThread<TFunc>.Create(function, connectionManager, mode);
+            return DistributedThread<TFunc>.Create(function, connectionManager, scheduler, mode);
         }
 
         /// <summary>

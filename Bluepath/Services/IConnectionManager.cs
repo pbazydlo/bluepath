@@ -4,7 +4,7 @@
 
     public interface IConnectionManager
     {
-        IEnumerable<ServiceReferences.IRemoteExecutorService> RemoteServices { get; }
+        IDictionary<ServiceUri, PerformanceStatistics> RemoteServices { get; }
 
         IListener Listener { get; }
     }

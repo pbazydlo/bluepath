@@ -147,7 +147,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                         var testMethod = new Func<int, int, int>(
                         (a, b) =>
                         {
-                            Thread.Sleep(50);
+                            Thread.Sleep(100);
                             return a + b;
                         });
 

@@ -8,6 +8,16 @@
     [DataContract]
     public class ServiceUri
     {
+        public ServiceUri()
+        {
+        }
+
+        public ServiceUri(string address, BindingType bindingType)
+        {
+            this.Address = address;
+            this.BindingType = bindingType;
+        }
+
         // TODO: Maybe we could serialize just the type of binding and then
         // create new object based on serialized type
         [DataMember]

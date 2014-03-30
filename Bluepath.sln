@@ -65,6 +65,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{F7C505
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bluepath.MapReduce.Tests", "Bluepath.MapReduce.Tests\Bluepath.MapReduce.Tests.csproj", "{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -143,6 +145,10 @@ Global
 		{E5B8849E-F1D9-4FBC-A44D-BCFEC9EECEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5B8849E-F1D9-4FBC-A44D-BCFEC9EECEF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5B8849E-F1D9-4FBC-A44D-BCFEC9EECEF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -163,5 +169,6 @@ Global
 		{98D394CA-9FEF-49AD-8DAB-FE039152E001} = {BCCD5EA0-F76E-4C72-A0EA-035E0CC7B4A5}
 		{BBFCA804-D325-41D6-A700-D2C8E0871232} = {0819F1BA-7904-4355-BC57-89578EE27F40}
 		{54926892-8A43-4857-BDAF-3332512D47BE} = {BBFCA804-D325-41D6-A700-D2C8E0871232}
+		{AE5E9FB3-79B3-4D08-B74E-DD029B54A87C} = {BBFCA804-D325-41D6-A700-D2C8E0871232}
 	EndGlobalSection
 EndGlobal

@@ -10,6 +10,10 @@
     {
         private readonly ILocalExecutor executor;
 
+        public BluepathCommunicationFramework()
+        {
+        }
+
         public BluepathCommunicationFramework(ILocalExecutor executor)
         {
             this.executor = executor;
@@ -19,6 +23,11 @@
         {
             get
             {
+                if (this.executor == null)
+                {
+                    throw new Exception("Current BluepathCommunicationFramework object is not bound to the local executor and this information is unavailable.");
+                }
+
                 return this.executor.Eid;
             }
         }

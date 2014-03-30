@@ -6,12 +6,12 @@
     public class Mapper
     {
         private Func<string, string, IEnumerable<KeyValuePair<string, string>>> map;
-        private IStorage storage;
+        private IMapReduceStorage storage;
 
         public string Key { get; private set; }
         public string Value { get; private set; }
 
-        public Mapper(string filePath, Func<string, string, IEnumerable<KeyValuePair<string, string>>> map, IStorage storage)
+        public Mapper(string filePath, Func<string, string, IEnumerable<KeyValuePair<string, string>>> map, IMapReduceStorage storage)
         {
             this.Key = filePath;
             this.Value = storage.Read(filePath);

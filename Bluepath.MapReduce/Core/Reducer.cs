@@ -13,12 +13,12 @@
         private string key;
         private IEnumerable<string> values;
         private Func<string, IEnumerable<string>, KeyValuePair<string, string>> reduce;
-        private IStorage storage;
+        private IMapReduceStorage storage;
 
         public int LoadedFileCount { get; set; }
         public Regex FileFilter { get; private set; }
 
-        public Reducer(string key, Func<string, IEnumerable<string>, KeyValuePair<string, string>> reduce, IStorage storage)
+        public Reducer(string key, Func<string, IEnumerable<string>, KeyValuePair<string, string>> reduce, IMapReduceStorage storage)
         {
             this.key = key;
             this.reduce = reduce;

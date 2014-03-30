@@ -1,21 +1,37 @@
-﻿namespace Bluepath.MapReduce
+﻿namespace Bluepath.MapReduce.Core
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using Bluepath.Framework;
-    using Bluepath.MapReduce.Core;
+    using Bluepath.Services;
+    using Bluepath.Storage;
     using Bluepath.Threading;
+    using Bluepath.Threading.Schedulers;
 
     using NetReduce;
     using NetReduce.Core;
 
     public class Coordinator
     {
+        private readonly IConnectionManager connectionManager;
+        private readonly IScheduler scheduler;
+        private readonly DistributedThread.ExecutorSelectionMode executorSelectionMode;
         private List<DistributedThread> mapWorkers;
         private List<DistributedThread> reduceWorkers;
         private List<string> keys;
+
+        public Coordinator()
+        {
+        }
+
+        public Coordinator(IConnectionManager connectionManager, IScheduler scheduler, DistributedThread.ExecutorSelectionMode executorSelectionMode)
+        {
+            this.connectionManager = connectionManager;
+            this.scheduler = scheduler;
+            this.executorSelectionMode = executorSelectionMode;
+        }
 
         public void Start(int maxMapperNo, int maxReducerNo, FileUri mapFuncFileName, FileUri reduceFuncFileName, IEnumerable<FileUri> filesToProcess)
         {
@@ -31,7 +47,12 @@
         {
             var mapFunc = new Func<string, string, IBluepathCommunicationFramework, IEnumerable<string>>((filePath, mapFileName, bluepath) =>
                 {
-                    var storage = new BluepathStorage(bluepath.Storage);
+                    if (!(bluepath.Storage is IExtendedStorage))
+                    {
+                        throw new Exception("Mapper requires IExtendedStorage features.");
+                    }
+
+                    var storage = new BluepathStorage(bluepath.Storage as IExtendedStorage);
 
                     var mapProvider = Loader.Load<IMapProvider>(mapFileName, storage);
                     var mapper = new Mapper(filePath, mapProvider.Map, storage);
@@ -51,9 +72,14 @@
 
         private List<DistributedThread> InitReduceThreads(int startWorkerNo, int workersCount)
         {
-            var mapFunc = new Func<string, string, IBluepathCommunicationFramework, IEnumerable<string>>((filePath, reduceFuncName, bluepath) =>
+            var reduceFunc = new Func<string, string, IBluepathCommunicationFramework, IEnumerable<string>>((filePath, reduceFuncName, bluepath) =>
             {
-                var storage = new BluepathStorage(bluepath.Storage);
+                if (!(bluepath.Storage is IExtendedStorage))
+                {
+                    throw new Exception("Reducer requires IExtendedStorage features.");
+                }
+
+                var storage = new BluepathStorage(bluepath.Storage as IExtendedStorage);
 
                 var mapProvider = Loader.Load<IReduceProvider>(reduceFuncName, storage);
                 var mapper = new Reducer(filePath, mapProvider.Reduce, storage);
@@ -64,7 +90,7 @@
                 return new List<string>() { reduceResult.Key };
             });
 
-            return this.InitThread(startWorkerNo, workersCount, mapFunc);
+            return this.InitThread(startWorkerNo, workersCount, reduceFunc);
         }
 
         private List<DistributedThread> InitThread(int startWorkerNo, int workersCount, Func<string, string, IBluepathCommunicationFramework, IEnumerable<string>> func)
@@ -72,7 +98,15 @@
             var workers = new List<DistributedThread>();
             for (int i = 0; i < workersCount; i++)
             {
-                var worker = DistributedThread.Create(func);
+                var worker = default(DistributedThread);
+                if (this.connectionManager == null || this.scheduler == null)
+                {
+                    worker = DistributedThread.Create(func);
+                }
+                else
+                {
+                    worker = DistributedThread.Create(func, this.connectionManager, this.scheduler, this.executorSelectionMode);
+                }
 
                 // worker.Id = startWorkerNo + i;
                 workers.Add(worker);

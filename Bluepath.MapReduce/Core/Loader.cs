@@ -6,7 +6,7 @@
 
     public class Loader
     {
-        public static T Load<T>(string fileName, IStorage storage) 
+        public static T Load<T>(string fileName, IMapReduceStorage storage) 
             where T : class
         {
             bool success = false;

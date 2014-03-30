@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Generic;
 
-    public interface IStorage
+    public interface IMapReduceStorage
     {
         IEnumerable<Uri> ListFiles();
         string Read(string fileName);

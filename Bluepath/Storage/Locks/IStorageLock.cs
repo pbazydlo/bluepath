@@ -13,5 +13,13 @@
         bool Acquire(TimeSpan? timeout);
 
         void Release();
+
+        void Wait();
+
+        void Wait(TimeSpan? timeout);
+
+        void Pulse();
+
+        void PulseAll();
     }
 }

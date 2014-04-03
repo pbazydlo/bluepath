@@ -133,5 +133,31 @@
                 Monitor.Pulse(this.acquireLock);
             }
         }
+
+
+        public void Wait()
+        {
+            throw new NotImplementedException();
+            this.Release();
+            this.Acquire();
+        }
+
+        public void Wait(TimeSpan? timeout)
+        {
+            throw new NotImplementedException();
+            this.Release();
+            // wait no longer than timeout
+            this.Acquire();
+        }
+
+        public void Pulse()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PulseAll()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

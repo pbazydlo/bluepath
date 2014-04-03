@@ -104,6 +104,22 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
+        public void RedisLockAllowsAcquireAfterReleaseTimeout()
+        {
+            using (var storage = new RedisStorage(Host))
+            {
+                var lockKey = Guid.NewGuid().ToString();
+                var @lock = storage.AcquireLock(lockKey);
+                @lock.IsAcquired.ShouldBe(true);
+                @lock.Release();
+                @lock.IsAcquired.ShouldBe(false);
+                @lock.Acquire();
+                @lock.IsAcquired.ShouldBe(true);
+                @lock.Dispose();
+            }
+        }
+
+        [TestMethod]
         public void RedisLockAllowsWaitingAndWakingALock()
         {
             using (var storage = new RedisStorage(Host))
@@ -124,6 +140,7 @@ namespace Bluepath.Tests.Integration.Storage
                 waitingThread.Start();
                 TestHelpers.RepeatUntilTrue(() => isWaiting, times: 5);
                 isWaiting.ShouldBe(true);
+                isFinished.ShouldBe(false);
                 using(var anotherLock = storage.AcquireLock(lockKey))
                 {
                     anotherLock.PulseAll();
@@ -194,6 +211,8 @@ namespace Bluepath.Tests.Integration.Storage
                 TestHelpers.RepeatUntilTrue(() => isWaiting1 && isWaiting2, times: 5);
                 isWaiting1.ShouldBe(true);
                 isWaiting2.ShouldBe(true);
+                isFinished1.ShouldBe(false);
+                isFinished2.ShouldBe(false);
                 using (var anotherLock = storage.AcquireLock(lockKey))
                 {
                     anotherLock.Pulse();

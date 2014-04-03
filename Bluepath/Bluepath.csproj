@@ -82,6 +82,7 @@
     <Compile Include="Storage\Locks\IStorageLock.cs" />
     <Compile Include="Storage\Redis\RedisLock.cs" />
     <Compile Include="Storage\Redis\RedisStorage.cs" />
+    <Compile Include="Storage\Structures\DistributedCounter.cs" />
     <Compile Include="Threading\DistributedThread.cs" />
     <Compile Include="Executor\IExecutor.cs" />
     <Compile Include="Executor\LocalExecutor.cs" />
@@ -110,6 +111,9 @@
       <Project>{f30b2d63-ced5-4c8a-908f-0b5503d984a9}</Project>
       <Name>Rhino.PersistentHashTable</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Storage\Structures\Collections\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

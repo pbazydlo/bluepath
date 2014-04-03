@@ -74,6 +74,7 @@
     <Compile Include="Services\ConnectionManager\ConnectionManagerTests.cs" />
     <Compile Include="Storage\RedisStorageTests.cs" />
     <Compile Include="Storage\RedisLocksTests.cs" />
+    <Compile Include="Storage\Structures\DistributedCounterTests.cs" />
     <Compile Include="TestHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +98,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

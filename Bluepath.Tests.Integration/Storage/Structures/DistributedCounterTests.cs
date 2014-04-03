@@ -28,13 +28,13 @@ namespace Bluepath.Tests.Integration.Storage.Structures
         }
 
         [TestMethod]
-        public void DistributedCounterInitialCountIs0()
+        public void DistributedCounterInitialCountIsAsIndicated()
         {
             using (var storage = new RedisStorage(Host))
             {
                 var id = Guid.NewGuid().ToString();
-                var counter = new DistributedCounter(storage, id);
-                counter.GetValue().ShouldBe(0);
+                var counter = new DistributedCounter(storage, id, 18);
+                counter.GetValue().ShouldBe(18);
             }
         }
 

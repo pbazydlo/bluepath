@@ -241,7 +241,34 @@
 
         protected override void InitializeFromMethod(MethodBase method)
         {
-            this.InitializeNonGeneric((parameters) => method.Invoke(null, parameters));
+            // Check if method expects IBluepathCommunicationFramework object
+            var methodParameters = method.GetParameters();
+            var communicationFrameworkObjectType = typeof(IBluepathCommunicationFramework);
+            int? parameterIndex = -1;
+            var parameterFound = false;
+            Type returnType = null;
+
+            foreach (var parameter in methodParameters)
+            {
+                parameterIndex++;
+                if (parameter.ParameterType == communicationFrameworkObjectType)
+                {
+                    parameterFound = true;
+                    break;
+                }
+            }
+
+            if (method is MethodInfo)
+            {
+                returnType = ((MethodInfo)method).ReturnType;
+            }
+
+            this.InitializeNonGeneric(
+                (parameters) => method.Invoke(null, parameters),
+                methodParameters.Length,
+                parameterFound ? parameterIndex : null,
+                methodParameters,
+                returnType);
         }
 
         /// <summary>

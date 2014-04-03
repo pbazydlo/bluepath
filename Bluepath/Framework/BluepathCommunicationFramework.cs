@@ -5,6 +5,7 @@
     using Bluepath.Executor;
     using Bluepath.Storage;
     using Bluepath.Storage.Locks;
+    using Bluepath.Storage.Redis;
 
     public class BluepathCommunicationFramework : IBluepathCommunicationFramework
     {
@@ -12,9 +13,12 @@
 
         public BluepathCommunicationFramework()
         {
+            // TODO: Refactor
+            this.Storage = new RedisStorage("localhost");
         }
 
         public BluepathCommunicationFramework(ILocalExecutor executor)
+            : this()
         {
             this.executor = executor;
         }

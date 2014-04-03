@@ -51,6 +51,11 @@
 
         public string Read(string fileName)
         {
+            if (fileName.StartsWith("file:///"))
+            {
+                fileName = this.GetFileName(new Uri(fileName));
+            }
+
             return this.storage.Retrieve<string>(fileName);
         }
 
@@ -66,7 +71,12 @@
 
         public void Store(string fileName, string value)
         {
-            this.storage.Store(fileName, value);
+            if (fileName.StartsWith("file:///"))
+            {
+                fileName = this.GetFileName(new Uri(fileName));
+            }
+
+            this.storage.StoreOrUpdate(fileName, value);
 
             using (this.storage.AcquireLock(fileListLockKey))
             {
@@ -92,13 +102,26 @@
 
             foreach (var file in list)
             {
-                this.storage.Remove(file);
+                try
+                {
+                    this.storage.Remove(file);
+                }
+                catch
+                {
+                }
             }
         }
 
         public string GetFileName(Uri uri)
         {
-            return uri.Segments.Last();
+            return BluepathStorage.GetFileNameStatic(uri);
+        }
+
+        public static string GetFileNameStatic(Uri uri)
+        {
+            var fileName = uri.Segments.Last();
+            
+            return fileName;
         }
 
         public IEnumerable<string> GetKeys()

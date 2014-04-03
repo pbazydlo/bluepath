@@ -7,7 +7,7 @@
 
     using StackExchange.Redis;
 
-    public class RedisStorage : IExtendedStorage
+    public class RedisStorage : IExtendedStorage, IStorage
     {
         private readonly ConnectionMultiplexer connection;
 

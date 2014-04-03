@@ -35,6 +35,7 @@
 
         public void Start(int maxMapperNo, int maxReducerNo, FileUri mapFuncFileName, FileUri reduceFuncFileName, IEnumerable<FileUri> filesToProcess)
         {
+            maxMapperNo = filesToProcess.Count();
             this.mapWorkers = this.InitMapThreads(1, maxMapperNo);
             this.keys = this.PerformMap(mapFuncFileName, filesToProcess);
             this.keys = this.keys.Distinct().OrderBy(k => k).ToList();
@@ -55,13 +56,14 @@
                     var storage = new BluepathStorage(bluepath.Storage as IExtendedStorage);
 
                     var mapProvider = Loader.Load<IMapProvider>(mapFileName, storage);
-                    var mapper = new Mapper(filePath, mapProvider.Map, storage);
+                    var mapper = new Mapper(filePath.ToString(), mapProvider.Map, storage);
                     var mapResult = mapper.PerformMap();
 
                     var keys = mapResult.Select(r => r.Key).Distinct().OrderBy(k => k);
                     foreach (var res in mapResult)
                     {
-                        bluepath.Storage.Store(res.Key, res.Value);
+                        Log.TraceMessage(string.Format("[Map] Storing key '{0}', value '{1}'", res.Key, res.Value));
+                        bluepath.Storage.StoreOrUpdate(res.Key, res.Value);
                     }
 
                     return keys;
@@ -82,10 +84,11 @@
                 var storage = new BluepathStorage(bluepath.Storage as IExtendedStorage);
 
                 var mapProvider = Loader.Load<IReduceProvider>(reduceFuncName, storage);
-                var mapper = new Reducer(filePath, mapProvider.Reduce, storage);
+                var mapper = new Reducer(filePath.ToString(), mapProvider.Reduce, storage);
                 var reduceResult = mapper.PerformReduce();
 
-                bluepath.Storage.Store(reduceResult.Key, reduceResult.Value);
+                Log.TraceMessage(string.Format("[Reduce] Storing key '{0}', value '{1}'", reduceResult.Key, reduceResult.Value));
+                bluepath.Storage.StoreOrUpdate(reduceResult.Key, reduceResult.Value);
 
                 return new List<string>() { reduceResult.Key };
             });
@@ -123,7 +126,7 @@
             foreach (var file in filesToProcess)
             {
                 var worker = this.mapWorkers[(index++) % this.mapWorkers.Count];
-                worker.Start(file, mapFuncFileName);
+                worker.Start(BluepathStorage.GetFileNameStatic(file.Uri), BluepathStorage.GetFileNameStatic(mapFuncFileName.Uri));
             }
 
             for (var i = 0; i < this.mapWorkers.Count; i++)
@@ -145,7 +148,7 @@
             foreach (var assignment in assignments)
             {
                 var worker = this.reduceWorkers[assignment.Value];
-                worker.Start(assignment.Key, reduceFuncFileName);
+                worker.Start(Base64.Encode(assignment.Key), BluepathStorage.GetFileNameStatic(reduceFuncFileName.Uri));
             }
 
             for (var i = 0; i < this.reduceWorkers.Count; i++)
@@ -156,7 +159,16 @@
 
         private Dictionary<string, int> TransferIntermediateFiles(IEnumerable<string> keys)
         {
-            throw new NotImplementedException();
+            var reduceWorkersCount = this.reduceWorkers.Count;
+            var result = new Dictionary<string, int>();
+
+            var i = 0;
+            foreach (var key in keys)
+            {
+                result.Add(key, (i++) % reduceWorkersCount);
+            }
+
+            return result;
         }
     }
 }

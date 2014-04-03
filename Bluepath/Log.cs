@@ -46,7 +46,26 @@
                 type |= MessageType.Exception;
             }
 
-            var formattedMessage = string.Format("[LOG][{1}] {0} ({3}) {2}[caller: {4}]", message, type, keywords.ToLogString(), exception.Message, memberName);
+            var formattedMessage = string.Format(
+                    "[LOG][{1}] {0} ({3}) {2}[caller: {4}]",
+                    message,
+                    type,
+                    keywords.ToLogString(),
+                    exception.Message,
+                    memberName);
+
+            if ((type & MessageType.UserCodeException) == MessageType.UserCodeException)
+            {
+                formattedMessage = string.Format(
+                    "[LOG][{1}] {0} ({3}) {2}[caller: {4}]\n[details: {5}]\n---------------------------------------------------------------------------",
+                    message,
+                    type,
+                    keywords.ToLogString(),
+                    exception.Message,
+                    memberName,
+                    exception.ToString());
+            }
+
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
         }

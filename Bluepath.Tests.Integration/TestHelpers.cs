@@ -59,6 +59,17 @@
             return process;
         }
 
+        public static void RepeatUntilTrue(Func<bool> function, int times = 5, TimeSpan? wait = null)
+        {
+            var waitTime = wait ?? new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 500);
+            int timesExecuted = 0;
+            while (timesExecuted < times && !function())
+            {
+                System.Threading.Thread.Sleep(waitTime);
+                timesExecuted++;
+            }
+        }
+
         public enum ServiceType
         {
             Bluepath,

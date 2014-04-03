@@ -32,7 +32,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                         var connectionManager = new Bluepath.Services.ConnectionManager(remoteService: null,
                             listener: bluepathListener1,
                             serviceDiscovery: serviceDiscoveryClient1);
-                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
+                        TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
 
                         connectionManager.RemoteServices.Count().ShouldBe(1);
                     }
@@ -65,13 +65,13 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                             listener: bluepathListener1,
                             serviceDiscovery: serviceDiscoveryClient1,
                             serviceDiscoveryPeriod: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 100));
-                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
+                        TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
 
                         connectionManager.RemoteServices.Count().ShouldBe(1);
                         using (var serviceDiscoveryClient3
                             = new CentralizedDiscovery.Client.CentralizedDiscovery(serviceDiscoveryHost.MasterUri, bluepathListener3))
                         {
-                            this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 2, times: 10);
+                            TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 2, times: 10);
                             connectionManager.RemoteServices.Count().ShouldBe(2);
                         }
 
@@ -106,11 +106,11 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                     using (var serviceDiscoveryClient2
                         = new CentralizedDiscovery.Client.CentralizedDiscovery(serviceDiscoveryHost.MasterUri, bluepathListener2))
                     {
-                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
+                        TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
                         connectionManager.RemoteServices.Count().ShouldBe(1);
                     }
 
-                    this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 0, times: 10);
+                    TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 0, times: 10);
                     connectionManager.RemoteServices.Count().ShouldBe(0);
                 }
             }
@@ -141,7 +141,7 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                             listener: bluepathListener1,
                             serviceDiscovery: serviceDiscoveryClient1);
                         var scheduler = new ThreadNumberScheduler(connectionManager);
-                        this.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
+                        TestHelpers.RepeatUntilTrue(() => connectionManager.RemoteServices.Count() == 1, times: 10);
 
                         connectionManager.RemoteServices.Count().ShouldBe(1);
 
@@ -189,17 +189,6 @@ namespace Bluepath.Tests.Integration.Services.ConnectionManager
                 serviceDiscoveryHost.Stop();
                 bluepathListener1.Stop();
                 bluepathListener2.Stop();
-            }
-        }
-
-        private void RepeatUntilTrue(Func<bool> function, int times = 5, TimeSpan? wait = null)
-        {
-            var waitTime = wait ?? new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 500);
-            int timesExecuted = 0;
-            while (timesExecuted < times && !function())
-            {
-                System.Threading.Thread.Sleep(waitTime);
-                timesExecuted++;
             }
         }
     }

@@ -30,7 +30,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageStoresAndRetrievesObjects()
+        public void RedisStorageStoresAndRetrievesObjects()
         {
             var objectToStore = "my object";
             var objectName = Guid.NewGuid().ToString();
@@ -45,7 +45,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageStoresAndRetrievesComplexObjects()
+        public void RedisStorageStoresAndRetrievesComplexObjects()
         {
             var objectToStore = new ComplexParameter()
                 {
@@ -65,7 +65,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageStoresAndRemovesObjects()
+        public void RedisStorageStoresAndRemovesObjects()
         {
             var objectToStore = "my object";
             var objectName = Guid.NewGuid().ToString();
@@ -80,7 +80,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageDoesntAllowDuplicateStoreWithStoreMethod()
+        public void RedisStorageDoesntAllowDuplicateStoreWithStoreMethod()
         {
             var objectToStore = "my object";
             var objectName = Guid.NewGuid().ToString();
@@ -93,7 +93,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageDoesntAllowUpdatingNotExistingObject()
+        public void RedisStorageDoesntAllowUpdatingNotExistingObject()
         {
             var objectToStore = "my object";
             var objectName = Guid.NewGuid().ToString();
@@ -105,7 +105,7 @@ namespace Bluepath.Tests.Integration.Storage
         }
 
         [TestMethod]
-        public void RhinoDhtStorageThrowsArgumentOutOfRangeExceptionWhenTryingToGetNotExistingObject()
+        public void RedisStorageThrowsArgumentOutOfRangeExceptionWhenTryingToGetNotExistingObject()
         {
             var objectName = Guid.NewGuid().ToString();
             using (var storage = new RedisStorage(RedisStorageTests.Host))

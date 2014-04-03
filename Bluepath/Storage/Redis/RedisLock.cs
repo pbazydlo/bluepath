@@ -11,11 +11,15 @@
     {
         private const string LockKeyPrefix = "_lock_";
         private const string LockChannelPrefix = "_lockChannel_";
+        private const string WaitChannelPrefix = "_lockWaitChannel_";
+        private const string PulseFilePrefix = "_lockPulseFile_";
         private readonly object acquireLock = new object();
+        private readonly object waitLock = new object();
         private readonly string key;
         private readonly RedisStorage redisStorage;
         private bool isAcquired;
         private bool wasPulsed;
+        private bool wasWaitPulsed;
 
         public RedisLock(RedisStorage redisStorage, string key)
         {
@@ -42,7 +46,7 @@
         {
             get
             {
-                return string.Format("{0}{1}", LockKeyPrefix, this.key);
+                return this.ApplyPrefix(LockKeyPrefix);
             }
         }
 
@@ -50,7 +54,26 @@
         {
             get
             {
-                return string.Format("{0}{1}", LockChannelPrefix, this.key);
+                return this.ApplyPrefix(LockChannelPrefix);
+            }
+        }
+
+        private string WaitChannel
+        {
+            get
+            {
+                return this.ApplyPrefix(WaitChannelPrefix);
+            }
+        }
+
+        /// <summary>
+        /// File that needs to be removed (succesfully) if we want to wake on pulse.
+        /// </summary>
+        private string PulseFile
+        {
+            get
+            {
+                return this.ApplyPrefix(PulseFilePrefix);
             }
         }
 
@@ -113,6 +136,7 @@
 
         public void Release()
         {
+            this.isAcquired = false;
             this.redisStorage.Remove(this.LockKey);
             this.redisStorage.Publish(this.LockChannel, "release");
         }
@@ -132,6 +156,102 @@
                 this.wasPulsed = true;
                 Monitor.Pulse(this.acquireLock);
             }
+        }
+
+        private void WaitChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
+        {
+            lock (this.waitLock)
+            {
+                if (this.wasWaitPulsed)
+                {
+                    // somehow we got message that we shouldn't get
+                    return;
+                }
+
+                try
+                {
+                    this.wasWaitPulsed = true;
+                    var pulseType = (PulseType)(int.Parse(redisValue.ToString()));
+                    if (pulseType == PulseType.One)
+                    {
+                        // try get permission to wake
+                        try
+                        {
+                            this.redisStorage.Remove(this.PulseFile);
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            // failed - need to sleep longer
+                            return;
+                        }
+                    }
+
+                    // unsubscribe yourself
+                    this.redisStorage.Unsubscribe(this.WaitChannel, this.WaitChannelPulse);
+                    Monitor.Pulse(this.waitLock);
+                }
+                finally
+                {
+                    this.wasWaitPulsed = false;
+                }
+            }
+        }
+
+        public void Wait()
+        {
+            this.Wait(null);
+        }
+
+        public void Wait(TimeSpan? timeout)
+        {
+            this.wasWaitPulsed = false;
+            this.redisStorage.Subscribe(this.WaitChannel, this.WaitChannelPulse);
+            var waitThread = new Thread(() =>
+            {
+                lock (this.waitLock)
+                {
+                    if (timeout.HasValue)
+                    {
+                        Monitor.Wait(this.waitLock, timeout.Value);
+                    }
+                    else
+                    {
+                        Monitor.Wait(this.waitLock);
+                    }
+                }
+            });
+            waitThread.Start();
+            
+            this.Release();
+            waitThread.Join();
+            this.Acquire();
+        }
+
+        public void Pulse()
+        {
+            this.redisStorage.Store(this.PulseFile, "pulsed");
+            this.PublishPulse(PulseType.One);
+        }
+
+        public void PulseAll()
+        {
+            this.PublishPulse(PulseType.All);
+        }
+
+        private void PublishPulse(PulseType pulseType)
+        {
+            this.redisStorage.Publish(this.WaitChannel, ((int)pulseType).ToString());
+        }
+
+        private string ApplyPrefix(string prefix)
+        {
+            return string.Format("{0}{1}", prefix, this.key);
+        }
+
+        private enum PulseType
+        {
+            One,
+            All
         }
     }
 }

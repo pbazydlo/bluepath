@@ -75,6 +75,7 @@
     <Compile Include="Storage\RedisStorageTests.cs" />
     <Compile Include="Storage\RedisLocksTests.cs" />
     <Compile Include="Storage\Structures\Collections\DistributedListTests.cs" />
+    <Compile Include="Storage\Structures\Collections\DistributedDictionaryTests.cs" />
     <Compile Include="Storage\Structures\DistributedCounterTests.cs" />
     <Compile Include="TestHelpers.cs" />
   </ItemGroup>

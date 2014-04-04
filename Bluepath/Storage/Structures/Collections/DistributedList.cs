@@ -246,6 +246,7 @@ namespace Bluepath.Storage.Structures.Collections
             this.storage.Update(this.GetItemKey(index), value);
         }
 
+        // TODO: Could contain some kind of index for faster search and index find operations
         [Serializable]
         private class DistributedListMetadata
         {

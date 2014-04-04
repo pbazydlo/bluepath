@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Bluepath.Storage.Redis;
 using Bluepath.Storage.Structures.Collections;
 using Shouldly;
+using System.Threading;
 
 namespace Bluepath.Tests.Integration.Storage.Structures.Collections
 {
@@ -64,6 +65,70 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             list1.Count.ShouldBe(10);
             var list2 = new DistributedList<int>(storage, key);
             list2.Count.ShouldBe(10);
+        }
+
+        [TestMethod]
+        public void DistributedListsPostponeRemovingItemsUntilEnumarationIsFinished()
+        {
+            var storage = new RedisStorage(Host);
+            var key = Guid.NewGuid().ToString();
+            var list1 = new DistributedList<int>(storage, key);
+            var synchLock = new object();
+            bool finishedRemoving = false;
+            bool isEnumerating = false;
+            int count = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                list1.Add(i);
+            }
+
+            var enumerationThread = new Thread(() =>
+            {
+                var storage1 = new RedisStorage(Host);
+                var list = new DistributedList<int>(storage1, key);
+                bool isFirstTurn = true;
+                int localCount = 0;
+                foreach (var item in list)
+                {
+                    localCount++;
+                    isEnumerating = true;
+                    if(isFirstTurn)
+                    {
+                        isFirstTurn = false;
+                        lock(synchLock)
+                        {
+                            Monitor.Wait(synchLock);
+                        }
+                    }
+                }
+
+                count = localCount;
+            });
+            var removeItemThread = new Thread(() =>
+            {
+                var storage2 = new RedisStorage(Host);
+                var list = new DistributedList<int>(storage2, key);
+                list.RemoveAt(4);
+                finishedRemoving = true;
+            });
+
+            enumerationThread.Start();
+            TestHelpers.RepeatUntilTrue(() => isEnumerating, times: 5);
+            removeItemThread.Start();
+            Thread.Sleep(10);
+            list1.Count.ShouldBe(10);
+            finishedRemoving.ShouldBe(false);
+            lock(synchLock)
+            {
+                Monitor.Pulse(synchLock);
+            }
+
+            enumerationThread.Join();
+            removeItemThread.Join();
+            finishedRemoving.ShouldBe(true);
+            list1.Count.ShouldBe(9);
+            count.ShouldBe(10);
         }
     }
 }

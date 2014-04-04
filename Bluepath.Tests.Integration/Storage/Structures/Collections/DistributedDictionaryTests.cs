@@ -30,7 +30,8 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
         public void DistributedDictionaryAllowsAddingAndReadingEntries()
         {
             var storage = new RedisStorage(Host);
-            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>();
+            var id = Guid.NewGuid().ToString();
+            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>(storage, id);
             dictionary.Add(0, "ala");
             dictionary.Add(2, "ola");
             dictionary.Add(18, "zuza");
@@ -39,10 +40,28 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
         }
 
         [TestMethod]
+        public void DistributedDictionaryAllowsRemovingEntries()
+        {
+            var storage = new RedisStorage(Host);
+            var id = Guid.NewGuid().ToString();
+            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>(storage, id);
+            dictionary.Add(0, "ala");
+            dictionary.Add(2, "ola");
+            dictionary.Add(18, "zuza");
+
+            dictionary.ContainsKey(2).ShouldBe(true);
+
+            dictionary.Remove(2);
+
+            dictionary.ContainsKey(2).ShouldBe(false);
+        }
+
+        [TestMethod]
         public void DistributedDictionaryProperlyManagesKeysCollection()
         {
             var storage = new RedisStorage(Host);
-            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>();
+            var id = Guid.NewGuid().ToString();
+            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>(storage, id);
             dictionary.Add(0, "ala");
             dictionary.Add(2, "ola");
             dictionary.Add(18, "zuza");
@@ -55,7 +74,8 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
         public void DistributedDictionaryProperlyManagesValuesCollection()
         {
             var storage = new RedisStorage(Host);
-            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>();
+            var id = Guid.NewGuid().ToString();
+            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, string>(storage, id);
             dictionary.Add(0, "ala");
             dictionary.Add(2, "ola");
             dictionary.Add(18, "zuza");

@@ -63,7 +63,7 @@
                     foreach (var res in mapResult)
                     {
                         Log.TraceMessage(string.Format("[Map] Storing key '{0}', value '{1}'", res.Key, res.Value));
-                        bluepath.Storage.StoreOrUpdate(res.Key, res.Value);
+                        storage.Store(res.Key, res.Value);
                     }
 
                     return keys;
@@ -88,7 +88,7 @@
                 var reduceResult = mapper.PerformReduce();
 
                 Log.TraceMessage(string.Format("[Reduce] Storing key '{0}', value '{1}'", reduceResult.Key, reduceResult.Value));
-                bluepath.Storage.StoreOrUpdate(reduceResult.Key, reduceResult.Value);
+                storage.Store(reduceResult.Key, reduceResult.Value);
 
                 return new List<string>() { reduceResult.Key };
             });

@@ -4,6 +4,7 @@ using Bluepath.Storage;
 using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading;
 using Bluepath.Threading.Schedulers;
+using Bluepath.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +25,10 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             this.selector = selector;
         }
 
-        private DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] Execute()
+        private DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[] Execute()
         {
             //                    args,                                                             result key
-            var func = new Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>(
+            var func = new Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>(
                 (args, framework) =>
                 {
                     if (!(framework.Storage is IExtendedStorage))
@@ -45,7 +46,10 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                         index++;
                     }
 
-                    return result;
+                    return new SelectQueryResult<TOutput>()
+                    {
+                        Result = result
+                    }.Serialize();
                 });
 
             var collectionToProcess = new DistributedList<TInput>(this.Settings.Storage, this.Settings.CollectionKey);
@@ -54,10 +58,15 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             // TODO: Partition size should be calculated!
             var partitionSize = 10;
             var partitionNum = collectionCount / partitionSize;
+            if(partitionNum==0)
+            {
+                partitionNum = 1;
+            }
+
             var minItemsPerPartition = collectionCount / partitionNum;
 
-            DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] threads
-                = new DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[partitionNum];
+            DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[] threads
+                = new DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[partitionNum];
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));
@@ -107,7 +116,11 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             foreach (var thread in threads)
             {
                 thread.Join();
-                var result = (TOutput[])thread.Result;
+
+                // TODO: For some reason thread.Result gets deserialized even though it should stay byte[]
+                // Tried implementing tests covering this case [DistributedThreadRemotelyExecutesStaticMethodTakingArrayAsParameterAndReturningArray],
+                // however they seem to work differently
+                var result = ((SelectQueryResult<TOutput>)thread.Result).Result;
                 temporaryResult.AddRange(result);
             }
 
@@ -131,6 +144,16 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             public int StartIndex { get; set; }
 
             public int StopIndex { get; set; }
+        }
+
+        /// <summary>
+        /// This class wraps processing result so that it can be safely transfered.
+        /// </summary>
+        /// <typeparam name="TOutput"></typeparam>
+        [Serializable]
+        private class SelectQueryResult<TOutput>
+        {
+            public TOutput[] Result { get; set; }
         }
     }
 }

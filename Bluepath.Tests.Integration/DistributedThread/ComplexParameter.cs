@@ -22,4 +22,12 @@ namespace Bluepath.Tests.Integration.DistributedThread
 
         public string Input { get; set; }
     }
+
+    [Serializable]
+    public class ComplexGenericParameter<TA, TB>
+    {
+        public TA SomeProperty { get; set; }
+
+        public TB AnotherProperty { get; set; }
+    }
 }

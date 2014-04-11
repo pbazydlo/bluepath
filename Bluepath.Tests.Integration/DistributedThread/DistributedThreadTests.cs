@@ -273,6 +273,76 @@
         }
 
         [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodTakingGenericClassAsItsParameter()
+        {
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
+
+            Func<ComplexGenericParameter<string, int>, string> testFunc = (complexParameter) =>
+            {
+                return string.Format("{0}_{1}", complexParameter.SomeProperty, complexParameter.AnotherProperty);
+            };
+
+            var parameter = new ComplexGenericParameter<string, int>()
+            {
+                SomeProperty = "jack",
+                AnotherProperty = 56
+            };
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            var listenerAndThreadTuple = Initialize(testFunc, executorPort);
+
+            this.listener = listenerAndThreadTuple.Listener;
+            var myThread = listenerAndThreadTuple.Thread;
+
+            myThread.Start(parameter);
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            myThread.Result.ToString().ShouldBe(string.Format("{0}_{1}", parameter.SomeProperty, parameter.AnotherProperty));
+            this.listener.Stop();
+        }
+
+        [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodTakingArrayAsParameterAndReturningArray()
+        {
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
+
+            Func<byte[], byte[]> testFunc = (p) =>
+            {
+                return p;
+            };
+
+            var parameter = new ComplexParameter()
+                {
+                    AnotherProperty=1,
+                    SomeProperty="ala"
+                };
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            var listenerAndThreadTuple = Initialize(testFunc, executorPort);
+
+            this.listener = listenerAndThreadTuple.Listener;
+            var myThread = listenerAndThreadTuple.Thread;
+
+            myThread.Start(Bluepath.Extensions.MethodHandleSerializerExtensions.Serialize(parameter));
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            Bluepath.Extensions.MethodHandleSerializerExtensions.Deserialize<ComplexParameter>((byte[])myThread.Result).SomeProperty.ShouldBe(parameter.SomeProperty);
+            this.listener.Stop();
+        }
+
+        [TestMethod]
         public void DistributedThreadRemotelyExecutesStaticMethodReturningClass()
         {
             var executorPort = DistributedThreadTests.GetNextPortNumber();

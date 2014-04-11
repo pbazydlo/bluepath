@@ -67,8 +67,8 @@ namespace Bluepath.Tests.Integration.DLINQ
 
             try
             {
-                var inputCollection = new List<int>(100);
-                for (int i = 0; i < 100; i++)
+                var inputCollection = new List<int>(8);
+                for (int i = 0; i < 8; i++)
                 {
                     inputCollection.Add(i);
                 }

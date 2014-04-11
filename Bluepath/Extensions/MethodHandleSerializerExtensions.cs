@@ -12,60 +12,62 @@ namespace Bluepath.Extensions
     {
         public static byte[] SerializeMethodHandle(this MethodBase method)
         {
-            return SerializeMethodHandle(method.MethodHandle);
+            return SerializeMethodHandle(method.MethodHandle, method.DeclaringType.TypeHandle);
         }
 
         #region Generic SerializeMethodHandle overloads
         public static byte[] SerializeMethodHandle<TResult>(this Func<TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, TResult>(this Func<T1, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, TResult>(this Func<T1, T2, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, TResult>(this Func<T1, T2, T3, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, T4, TResult>(this Func<T1, T2, T3, T4, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, TResult>(this Func<T1, T2, T3, T4, T5, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, TResult>(this Func<T1, T2, T3, T4, T5, T6, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, T7, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
 
         public static byte[] SerializeMethodHandle<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(this Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> function)
         {
-            return SerializeMethodHandle(function.Method.MethodHandle);
+            return SerializeMethodHandle(function.Method.MethodHandle, function.Method.DeclaringType.TypeHandle);
         }
         #endregion
 
         public static MethodBase DeserializeMethodHandle(this byte[] methodHandle)
         {
-            var runtimeMethodHandle = methodHandle.Deserialize<RuntimeMethodHandle>();
-            var methodFromHandle = MethodBase.GetMethodFromHandle(runtimeMethodHandle);
+            var methodHandleParts = methodHandle.Deserialize<MethodHandleParts>();
+            var runtimeMethodHandle = methodHandleParts.MethodHandle;
+            var runtimeTypeHandle = methodHandleParts.TypeHandle;
+            var methodFromHandle = MethodBase.GetMethodFromHandle(runtimeMethodHandle, runtimeTypeHandle);
             return methodFromHandle;
         }
 
@@ -103,9 +105,21 @@ namespace Bluepath.Extensions
             return Regex.Replace(input, @"\p{Cc}", a => string.Format("[{0:X2}]", (byte)a.Value[0]));
         }
 
-        private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle)
+        private static byte[] SerializeMethodHandle(RuntimeMethodHandle methodHandle, RuntimeTypeHandle typeHandle)
         {
-            return methodHandle.Serialize();
+            return new MethodHandleParts()
+            {
+                MethodHandle = methodHandle,
+                TypeHandle = typeHandle
+            }.Serialize();
+        }
+
+        [Serializable]
+        public class MethodHandleParts
+        {
+            public RuntimeMethodHandle MethodHandle { get; set; }
+
+            public RuntimeTypeHandle TypeHandle { get; set; }
         }
     }
 }

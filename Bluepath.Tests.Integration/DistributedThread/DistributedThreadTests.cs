@@ -310,6 +310,43 @@
             this.listener.Stop();
         }
 
+        [TestMethod]
+        public void DistributedThreadRemotelyExecutesStaticMethodExpectingClassWithFunction()
+        {
+            var executorPort = DistributedThreadTests.GetNextPortNumber();
+
+            Func<ComplexParameterWithFunc, string> testFunc = (parameter) =>
+            {
+                return parameter.Function(parameter.Input);
+            };
+
+            var testValue = new ComplexParameterWithFunc()
+            {
+                Input = "jack",
+                Function = (inp) => string.Format("{0}{0}", inp)
+            };
+
+            if (this.listener != null)
+            {
+                throw new Exception("Test can have only one listener.");
+            }
+
+            var listenerAndThreadTuple = Initialize(testFunc, executorPort);
+
+            this.listener = listenerAndThreadTuple.Listener;
+            var myThread = listenerAndThreadTuple.Thread;
+
+            myThread.Start(testValue);
+            var joinThread = new System.Threading.Thread(myThread.Join);
+            joinThread.Start();
+            joinThread.Join();
+
+            var result = (string)myThread.Result;
+            result.ShouldBe(testFunc(testValue));
+
+            this.listener.Stop();
+        }
+
         private Threading.DistributedThread<Func<int, int, int>> InitializeWithSubtractFunc(int port, bool externalRunner = false, IListener callbackListener = null)
         {
             Func<int, int, int> testFunc = (a, b) =>

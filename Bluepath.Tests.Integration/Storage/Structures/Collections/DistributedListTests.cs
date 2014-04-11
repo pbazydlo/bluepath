@@ -4,6 +4,7 @@ using Bluepath.Storage.Redis;
 using Bluepath.Storage.Structures.Collections;
 using Shouldly;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Bluepath.Tests.Integration.Storage.Structures.Collections
 {
@@ -48,6 +49,23 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
                 item.ShouldNotBe(5);
             }
 
+        }
+
+        [TestMethod]
+        public void DistributedListAllowsAddingEnumerablesInOneStep()
+        {
+            var storage = new RedisStorage(Host);
+            var key = Guid.NewGuid().ToString();
+            var list = new DistributedList<int>(storage, key);
+            var localList = new List<int>();
+
+            for (int i = 0; i < 10; i++)
+            {
+                localList.Add(i);
+            }
+
+            list.AddRange(localList);
+            list.Count.ShouldBe(10);
         }
 
         [TestMethod]

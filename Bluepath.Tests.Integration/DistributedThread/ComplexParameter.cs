@@ -14,4 +14,12 @@ namespace Bluepath.Tests.Integration.DistributedThread
 
         public int AnotherProperty { get; set; }
     }
+
+    [Serializable]
+    public class ComplexParameterWithFunc
+    {
+        public Func<string, string> Function { get; set; }
+
+        public string Input { get; set; }
+    }
 }

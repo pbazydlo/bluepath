@@ -95,12 +95,19 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void Add(T item)
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            this.AddRange(new T[] { item });
+        }
+
+        public void AddRange(IEnumerable<T> items)
+        {
+            using(var @lock = this.storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
-                var itemIndex = metadata.Count;
-                metadata.Count++;
-                this.storage.Store(this.GetItemKey(itemIndex), item);
+                foreach (var item in items)
+                {
+                    this.InternalAdd(item, metadata);
+                }
+
                 this.SetMetadata(metadata);
             }
         }
@@ -244,6 +251,13 @@ namespace Bluepath.Storage.Structures.Collections
         private void InternalSet(int index, T value)
         {
             this.storage.Update(this.GetItemKey(index), value);
+        }
+
+        private void InternalAdd(T item, DistributedListMetadata metadata)
+        {
+            var itemIndex = metadata.Count;
+            metadata.Count++;
+            this.storage.Store(this.GetItemKey(itemIndex), item);
         }
 
         // TODO: Could contain some kind of index for faster search and index find operations

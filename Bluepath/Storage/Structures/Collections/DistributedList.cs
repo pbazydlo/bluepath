@@ -11,16 +11,16 @@ namespace Bluepath.Storage.Structures.Collections
 {
     public class DistributedList<T> : IList<T> where T : new()
     {
-        private string id;
+        private string key;
         protected IExtendedStorage storage;
 
-        public DistributedList(IExtendedStorage storage, string id)
+        public DistributedList(IExtendedStorage storage, string key)
         {
             if (!typeof(T).IsSerializable)
                 throw new InvalidOperationException("A serializable Type is required");
 
             this.storage = storage;
-            this.id = id;
+            this.key = key;
             this.Initialize();
         }
 
@@ -28,7 +28,7 @@ namespace Bluepath.Storage.Structures.Collections
         {
             get
             {
-                return string.Format("_listLock_{0}", this.Id);
+                return string.Format("_listLock_{0}", this.Key);
             }
         }
 
@@ -36,15 +36,15 @@ namespace Bluepath.Storage.Structures.Collections
         {
             get
             {
-                return string.Format("_listMetadata_{0}", this.Id);
+                return string.Format("_listMetadata_{0}", this.Key);
             }
         }
 
-        public string Id
+        public string Key
         {
             get
             {
-                return this.id;
+                return this.key;
             }
         }
 
@@ -197,7 +197,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         private string GetItemKey(int index)
         {
-            return string.Format("_listItem_{0}_{1}", index, this.Id);
+            return string.Format("_listItem_{0}_{1}", index, this.Key);
         }
 
         private void SetMetadata(DistributedListMetadata metadata, bool initialize = false)

@@ -9,17 +9,17 @@ namespace Bluepath.Storage.Structures
     public class DistributedCounter
     {
         private IExtendedStorage storage;
-        private string id;
+        private string key;
 
         /// <summary>
         /// Creates distributed counter.
         /// </summary>
         /// <param name="storage">Storage which will be used to save counter state and synchronize threads.</param>
-        /// <param name="id">Unique counter identifier. All counters in the same storage with the same identifier share value.</param>
-        public DistributedCounter(IExtendedStorage storage, string id, int value = 0)
+        /// <param name="key">Unique counter identifier. All counters in the same storage with the same identifier share value.</param>
+        public DistributedCounter(IExtendedStorage storage, string key, int value = 0)
         {
             this.storage = storage;
-            this.id = id;
+            this.key = key;
             this.Initialize(value);
         }
 
@@ -27,18 +27,18 @@ namespace Bluepath.Storage.Structures
         {
             get
             {
-                return string.Format("dc{0}", this.Id);
+                return string.Format("dc{0}", this.Key);
             }
         }
 
         /// <summary>
         /// Object identifier in storage.
         /// </summary>
-        public string Id
+        public string Key
         {
             get
             {
-                return this.id;
+                return this.key;
             }
         }
 
@@ -48,7 +48,7 @@ namespace Bluepath.Storage.Structures
         /// <returns>Counter value read from the storage.</returns>
         public int GetValue()
         {
-            return this.storage.Retrieve<int>(this.Id);
+            return this.storage.Retrieve<int>(this.Key);
         }
 
         /// <summary>
@@ -93,14 +93,14 @@ namespace Bluepath.Storage.Structures
 
         private void InternalSet(int value)
         {
-            this.storage.Update(this.Id, value);
+            this.storage.Update(this.Key, value);
         }
 
         private void Initialize(int value)
         {
             try
             {
-                this.storage.Store(this.Id, value);
+                this.storage.Store(this.Key, value);
             }
             catch (ArgumentOutOfRangeException)
             {

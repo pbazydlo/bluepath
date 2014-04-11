@@ -43,7 +43,6 @@ namespace Bluepath.DLINQ.Enumerables
     }
 
     public class DistributedQuery<TSource> : DistributedQuery, IEnumerable<TSource>
-        where TSource : new()
     {
         internal DistributedQuery(DistributedQuerySettings settings)
             : base(settings)

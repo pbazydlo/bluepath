@@ -2,6 +2,7 @@
 using Bluepath.DLINQ.QueryOperators.Unary;
 using Bluepath.Services;
 using Bluepath.Storage;
+using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading.Schedulers;
 using System;
 using System.Collections.Generic;
@@ -48,6 +49,20 @@ namespace Bluepath.DLINQ
             if (predicate == null) throw new ArgumentNullException("predicate");
 
             return new WhereQueryOperator<TSource>(source, predicate);
+        }
+
+        public static int Count<TSource>(
+            this DistributedQuery<TSource> source, Func<TSource, bool> predicate)
+            where TSource : new()
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (predicate == null) throw new ArgumentNullException("predicate");
+
+            var whereResult = Where<TSource>(source, predicate);
+            var collectionKey = whereResult.Settings.CollectionKey;
+            var resultCollection = new DistributedList<TSource>(whereResult.Settings.Storage, collectionKey);
+
+            return resultCollection.Count;
         }
     }
 }

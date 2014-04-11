@@ -23,7 +23,7 @@ namespace Bluepath.Tests.Integration.DLINQ
         public static void FixtureSetup(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext tc)
         {
             redisProcess = TestHelpers.SpawnRemoteService(0, TestHelpers.ServiceType.Redis);
-            
+
         }
 
         [ClassCleanup]
@@ -87,6 +87,67 @@ namespace Bluepath.Tests.Integration.DLINQ
                 }
 
                 sum.ShouldBe(expectedSum);
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedWhere()
+        {
+            var listener1 = new BluepathListener("127.0.0.1", StartPort);
+            var listener2 = new BluepathListener("127.0.0.1", StartPort + 1);
+            var availableServices = new Dictionary<ServiceUri, PerformanceStatistics>()
+                {
+                    {listener1.CallbackUri, new PerformanceStatistics()
+                    {
+                        NumberOfTasks = new Dictionary<Bluepath.Executor.ExecutorState, int>()
+                        {
+                            {Bluepath.Executor.ExecutorState.Faulted, 0},
+                            {Bluepath.Executor.ExecutorState.Finished, 0},
+                            {Bluepath.Executor.ExecutorState.NotStarted, 0},
+                            {Bluepath.Executor.ExecutorState.Running, 0},
+                        }
+                    }},
+                    {listener2.CallbackUri, new PerformanceStatistics()
+                    {
+                        NumberOfTasks = new Dictionary<Bluepath.Executor.ExecutorState, int>()
+                        {
+                            {Bluepath.Executor.ExecutorState.Faulted, 0},
+                            {Bluepath.Executor.ExecutorState.Finished, 0},
+                            {Bluepath.Executor.ExecutorState.NotStarted, 0},
+                            {Bluepath.Executor.ExecutorState.Running, 0},
+                        }
+                    }},
+                };
+            var connectionManager = new ConnectionManager(availableServices, listener1);
+
+            try
+            {
+                var inputCollection = new List<int>(100);
+                for (int i = 0; i < 100; i++)
+                {
+                    inputCollection.Add(i);
+                }
+
+                var expectedCount = (from val in inputCollection
+                                     where val % 2 == 0
+                                     select val).Count();
+
+                var storage = new RedisStorage(Host);
+
+                var processedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .Where(val => val % 2 == 0);
+                int count = 0;
+                foreach (var val in processedCollection)
+                {
+                    count++;
+                }
+
+                count.ShouldBe(expectedCount);
             }
             finally
             {

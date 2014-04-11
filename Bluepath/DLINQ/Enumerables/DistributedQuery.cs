@@ -43,6 +43,7 @@ namespace Bluepath.DLINQ.Enumerables
     }
 
     public class DistributedQuery<TSource> : DistributedQuery, IEnumerable<TSource>
+        where TSource : new()
     {
         internal DistributedQuery(DistributedQuerySettings settings)
             : base(settings)
@@ -53,8 +54,9 @@ namespace Bluepath.DLINQ.Enumerables
         internal sealed override DistributedQuery<TCastTo> Cast<TCastTo>()
         {
             throw new NotImplementedException();
+            // DistributedEnumerable.Select<TSource, TCastTo>(this, elem=> (TCastTo)(object)elem)
             // TODO: ParallelEnumerable.Select<TSource, TCastTo>(this, elem => (TCastTo)(object)elem);
-            //return base.Cast<TCastTo>();
+            // return base.Cast<TCastTo>();
         }
 
         internal sealed override DistributedQuery<TCastTo> OfType<TCastTo>()

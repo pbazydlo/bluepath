@@ -39,5 +39,15 @@ namespace Bluepath.DLINQ
 
             return new SelectQueryOperator<TSource, TResult>(source, selector);
         }
+
+        public static DistributedQuery<TSource> Where<TSource>(
+            this DistributedQuery<TSource> source, Func<TSource, bool> predicate)
+            where TSource : new()
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (predicate == null) throw new ArgumentNullException("predicate");
+
+            return new WhereQueryOperator<TSource>(source, predicate);
+        }
     }
 }

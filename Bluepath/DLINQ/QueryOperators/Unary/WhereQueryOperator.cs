@@ -3,7 +3,6 @@ using Bluepath.Framework;
 using Bluepath.Storage;
 using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading;
-using Bluepath.Threading.Schedulers;
 using Bluepath.Extensions;
 using System;
 using System.Collections.Generic;
@@ -13,22 +12,21 @@ using System.Threading.Tasks;
 
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
-    internal class SelectQueryOperator<TInput, TOutput> : UnaryQueryOperator<TOutput>
-        where TInput : new()
-        where TOutput : new()
+    public class WhereQueryOperator<TInputOutput> : UnaryQueryOperator<TInputOutput>
+        where TInputOutput : new()
     {
-        private Func<TInput, TOutput> selector;
+        private Func<TInputOutput, bool> predicate;
 
-        internal SelectQueryOperator(DistributedQuery<TInput> query, Func<TInput, TOutput> selector)
+        public WhereQueryOperator(DistributedQuery<TInputOutput> query, Func<TInputOutput, bool> predicate)
             : base(query.Settings)
         {
-            this.selector = selector;
+            this.predicate = predicate;
         }
 
         protected override DistributedThread[] Execute()
         {
             //                    args,                                                             result key
-            var func = new Func<UnaryQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>(
+            var func = new Func<UnaryQueryArguments<TInputOutput, bool>, IBluepathCommunicationFramework, byte[]>(
                 (args, framework) =>
                 {
                     if (!(framework.Storage is IExtendedStorage))
@@ -37,28 +35,29 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     }
 
                     var storage = framework.Storage as IExtendedStorage;
-                    var initialCollection = new DistributedList<TInput>(storage, args.CollectionKey);
-                    TOutput[] result = new TOutput[args.StopIndex - args.StartIndex];
-                    int index = 0;
+                    var initialCollection = new DistributedList<TInputOutput>(storage, args.CollectionKey);
+                    List<TInputOutput> result = new List<TInputOutput>(args.StopIndex - args.StartIndex);
                     for (int i = args.StartIndex; i < args.StopIndex; i++)
                     {
-                        result[index] = args.QueryOperator(initialCollection[i]);
-                        index++;
+                        if(args.QueryOperator(initialCollection[i]))
+                        {
+                            result.Add(initialCollection[i]);
+                        }
                     }
 
-                    return new UnaryQueryResult<TOutput>()
+                    return new UnaryQueryResult<TInputOutput>()
                     {
-                        Result = result
+                        Result = result.ToArray()
                     }.Serialize();
                 });
 
-            var collectionToProcess = new DistributedList<TInput>(this.Settings.Storage, this.Settings.CollectionKey);
+            var collectionToProcess = new DistributedList<TInputOutput>(this.Settings.Storage, this.Settings.CollectionKey);
             var collectionCount = collectionToProcess.Count;
 
             // TODO: Partition size should be calculated!
             var partitionSize = 10;
             var partitionNum = collectionCount / partitionSize;
-            if(partitionNum==0)
+            if (partitionNum == 0)
             {
                 partitionNum = 1;
             }
@@ -70,9 +69,9 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));
-                var args = new UnaryQueryArguments<TInput, TOutput>()
+                var args = new UnaryQueryArguments<TInputOutput, bool>()
                 {
-                    QueryOperator = this.selector,
+                    QueryOperator = this.predicate,
                     CollectionKey = this.Settings.CollectionKey,
                     StartIndex = (partNum * partitionSize),
                     StopIndex = isLastPartition ? collectionCount : ((partNum * partitionSize) + partitionSize)

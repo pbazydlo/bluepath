@@ -1,6 +1,8 @@
 ﻿using Bluepath.DLINQ.Enumerables;
+using Bluepath.Services;
 using Bluepath.Storage;
 using Bluepath.Storage.Structures.Collections;
+using Bluepath.Threading.Schedulers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,12 +15,21 @@ namespace Bluepath.DLINQ
     {
         private readonly IEnumerable<T> wrappedEnumerable;
 
-        internal DistributedEnumerableWrapper(IEnumerable<T> wrappedEnumerable, IExtendedStorage storage)
+        internal DistributedEnumerableWrapper(
+            IEnumerable<T> wrappedEnumerable, 
+            IExtendedStorage storage,
+            IConnectionManager connectionManager,
+            IScheduler scheduler
+            )
             : base(new DistributedQuerySettings())
         {
             var key = string.Format("_queryData_{0}", Guid.NewGuid());
+
             this.Settings.CollectionKey = key;
             this.Settings.Storage = storage;
+            this.Settings.DefaultConnectionManager = connectionManager;
+            this.Settings.DefaultScheduler = scheduler;
+
             var distributedList = new DistributedList<T>(storage, this.Settings.CollectionKey);
             distributedList.AddRange(wrappedEnumerable);
             this.wrappedEnumerable = distributedList;

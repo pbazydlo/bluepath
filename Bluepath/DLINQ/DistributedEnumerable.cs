@@ -1,6 +1,8 @@
 ﻿using Bluepath.DLINQ.Enumerables;
 using Bluepath.DLINQ.QueryOperators.Unary;
+using Bluepath.Services;
 using Bluepath.Storage;
+using Bluepath.Threading.Schedulers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +13,12 @@ namespace Bluepath.DLINQ
 {
     public static class DistributedEnumerable
     {
-        public static DistributedQuery<TSource> AsParallel<TSource>(this IEnumerable<TSource> source, IExtendedStorage storage)
+        public static DistributedQuery<TSource> AsDistributed<TSource>(
+            this IEnumerable<TSource> source,
+            IExtendedStorage storage,
+            IConnectionManager connectionManager = null,
+            IScheduler scheduler = null
+            )
             where TSource : new()
         {
             if(source == null)
@@ -19,7 +26,7 @@ namespace Bluepath.DLINQ
                 throw new ArgumentNullException("source");
             }
 
-            return new DistributedEnumerableWrapper<TSource>(source, storage);
+            return new DistributedEnumerableWrapper<TSource>(source, storage, connectionManager, scheduler);
         }
 
         public static DistributedQuery<TResult> Select<TSource, TResult>(

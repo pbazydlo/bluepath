@@ -3,6 +3,7 @@ using Bluepath.Framework;
 using Bluepath.Storage;
 using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading;
+using Bluepath.Threading.Schedulers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,13 +24,13 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             this.selector = selector;
         }
 
-        internal DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] Execute()
+        private DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] Execute()
         {
             //                    args,                                                             result key
             var func = new Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>(
                 (args, framework) =>
                 {
-                    if(!(framework.Storage is IExtendedStorage))
+                    if (!(framework.Storage is IExtendedStorage))
                     {
                         throw new ArgumentException("Provided storage must implement IExtendedStorage interface!");
                     }
@@ -38,7 +39,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     var initialCollection = new DistributedList<TInput>(storage, args.CollectionKey);
                     TOutput[] result = new TOutput[args.StopIndex - args.StartIndex];
                     int index = 0;
-                    for (int i = args.StartIndex; i < args.StopIndex;i++)
+                    for (int i = args.StartIndex; i < args.StopIndex; i++)
                     {
                         result[index] = args.Selector(initialCollection[i]);
                         index++;
@@ -68,7 +69,29 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     StopIndex = isLastPartition ? collectionCount : ((partNum * partitionSize) + partitionSize)
                 };
 
-                threads[partNum] = DistributedThread.Create(func);
+                if (this.Settings.DefaultConnectionManager != null)
+                {
+                    if (this.Settings.DefaultScheduler != null)
+                    {
+                        threads[partNum] = DistributedThread.Create(func, this.Settings.DefaultConnectionManager, this.Settings.DefaultScheduler);
+                    }
+                    else
+                    {
+                        threads[partNum] = DistributedThread.Create(func, this.Settings.DefaultConnectionManager, new ThreadNumberScheduler(this.Settings.DefaultConnectionManager));
+                    }
+                }
+                else
+                {
+                    if (this.Settings.DefaultScheduler != null)
+                    {
+                        threads[partNum] = DistributedThread.Create(func, this.Settings.DefaultScheduler);
+                    }
+                    else
+                    {
+                        threads[partNum] = DistributedThread.Create(func);
+                    }
+                }
+
                 threads[partNum].Start(args);
             }
 
@@ -89,7 +112,12 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             }
 
             var resultEnumerable
-                = new DistributedEnumerableWrapper<TOutput>(temporaryResult, this.Settings.Storage);
+                = new DistributedEnumerableWrapper<TOutput>(
+                    temporaryResult,
+                    this.Settings.Storage,
+                    this.Settings.DefaultConnectionManager,
+                    this.Settings.DefaultScheduler
+                    );
             return resultEnumerable.GetEnumerator();
         }
 

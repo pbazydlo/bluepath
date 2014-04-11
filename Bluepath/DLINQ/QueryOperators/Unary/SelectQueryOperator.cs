@@ -1,4 +1,5 @@
 ﻿using Bluepath.DLINQ.Enumerables;
+using Bluepath.Framework;
 using Bluepath.Storage;
 using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading;
@@ -22,26 +23,28 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             this.selector = selector;
         }
 
-        internal void Execute()
+        internal DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] Execute()
         {
-            //                    args,                               result key
-            var func = new Func<SelectQueryArguments<TInput, TOutput>, IExtendedStorage, string>(
-                (args, storage) =>
+            //                    args,                                                             result key
+            var func = new Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>(
+                (args, framework) =>
                 {
-                    var initialCollection = new DistributedList<TInput>(storage, args.CollectionKey);
-                    TOutput[] result = new TOutput[initialCollection.Count];
-                    int index = 0;
-                    foreach (var item in initialCollection)
+                    if(!(framework.Storage is IExtendedStorage))
                     {
-                        result[index] = args.Selector(item);
+                        throw new ArgumentException("Provided storage must implement IExtendedStorage interface!");
+                    }
+
+                    var storage = framework.Storage as IExtendedStorage;
+                    var initialCollection = new DistributedList<TInput>(storage, args.CollectionKey);
+                    TOutput[] result = new TOutput[args.StopIndex - args.StartIndex];
+                    int index = 0;
+                    for (int i = args.StartIndex; i < args.StopIndex;i++)
+                    {
+                        result[index] = args.Selector(initialCollection[i]);
                         index++;
                     }
 
-                    var resultKey = string.Format("_selectResult_{0}", Guid.NewGuid());
-                    var resultCollection = new DistributedList<TOutput>(storage, resultKey);
-                    resultCollection.AddRange(result);
-
-                    return resultKey;
+                    return result;
                 });
 
             var collectionToProcess = new DistributedList<TInput>(this.Settings.Storage, this.Settings.CollectionKey);
@@ -52,8 +55,8 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             var partitionNum = collectionCount / partitionSize;
             var minItemsPerPartition = collectionCount / partitionNum;
 
-            DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IExtendedStorage, string>>[] threads
-                = new DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IExtendedStorage, string>>[partitionNum];
+            DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[] threads
+                = new DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, TOutput[]>>[partitionNum];
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));
@@ -69,6 +72,25 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                 threads[partNum].Start(args);
             }
 
+            return threads;
+        }
+
+        public override IEnumerator<TOutput> GetEnumerator()
+        {
+            var threads = this.Execute();
+
+            // TODO: It would be better if we knew what size result would be
+            List<TOutput> temporaryResult = new List<TOutput>();
+            foreach (var thread in threads)
+            {
+                thread.Join();
+                var result = (TOutput[])thread.Result;
+                temporaryResult.AddRange(result);
+            }
+
+            var resultEnumerable
+                = new DistributedEnumerableWrapper<TOutput>(temporaryResult, this.Settings.Storage);
+            return resultEnumerable.GetEnumerator();
         }
 
         [Serializable]
@@ -81,39 +103,6 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             public int StartIndex { get; set; }
 
             public int StopIndex { get; set; }
-        }
-
-        private class SelectQueryEnumerator : IEnumerator<TOutput>
-        {
-            public SelectQueryEnumerator()
-            {
-
-            }
-
-            public TOutput Current
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            public void Dispose()
-            {
-                throw new NotImplementedException();
-            }
-
-            object System.Collections.IEnumerator.Current
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            public bool MoveNext()
-            {
-                throw new NotImplementedException();
-            }
-
-            public void Reset()
-            {
-                throw new NotImplementedException();
-            }
         }
     }
 }

@@ -52,16 +52,18 @@ namespace Bluepath.DLINQ.Enumerables
 
         internal sealed override DistributedQuery<TCastTo> Cast<TCastTo>()
         {
+            throw new NotImplementedException();
             // TODO: ParallelEnumerable.Select<TSource, TCastTo>(this, elem => (TCastTo)(object)elem);
-            return base.Cast<TCastTo>();
+            //return base.Cast<TCastTo>();
         }
 
         internal sealed override DistributedQuery<TCastTo> OfType<TCastTo>()
         {
+            throw new NotImplementedException();
             // TODO: this
                 //.Where<TSource>(elem => elem is TCastTo)
                 //.Select<TSource, TCastTo>(elem => (TCastTo)(object)elem);
-            return base.OfType<TCastTo>();
+            //return base.OfType<TCastTo>();
         }
 
         internal override IEnumerator GetEnumeratorUntyped()

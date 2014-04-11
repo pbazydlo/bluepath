@@ -1,4 +1,5 @@
 ﻿using Bluepath.DLINQ.Enumerables;
+using Bluepath.DLINQ.QueryOperators.Unary;
 using Bluepath.Storage;
 using System;
 using System.Collections.Generic;
@@ -21,11 +22,15 @@ namespace Bluepath.DLINQ
             return new DistributedEnumerableWrapper<TSource>(source, storage);
         }
 
-        //public static DistributedQuery<TResult> Select<TSource, TResult>(
-        //    this DistributedQuery<TSource> source, Func<TSource, TResult> selector)
-        //{
-        //    if (source == null) throw new ArgumentNullException("source");
-        //    if (selector == null) throw new ArgumentNullException("selector");
-        //}
+        public static DistributedQuery<TResult> Select<TSource, TResult>(
+            this DistributedQuery<TSource> source, Func<TSource, TResult> selector)
+            where TSource : new()
+            where TResult : new()
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (selector == null) throw new ArgumentNullException("selector");
+
+            return new SelectQueryOperator<TSource, TResult>(source, selector);
+        }
     }
 }

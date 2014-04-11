@@ -25,7 +25,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             this.selector = selector;
         }
 
-        private DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[] Execute()
+        private DistributedThread[] Execute()
         {
             //                    args,                                                             result key
             var func = new Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>(
@@ -65,8 +65,8 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
 
             var minItemsPerPartition = collectionCount / partitionNum;
 
-            DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[] threads
-                = new DistributedThread<Func<SelectQueryArguments<TInput, TOutput>, IBluepathCommunicationFramework, byte[]>>[partitionNum];
+            DistributedThread[] threads
+                = new DistributedThread[partitionNum];
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));

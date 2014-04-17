@@ -26,15 +26,6 @@ namespace Bluepath.Tests.Integration.DLINQ
 
         }
 
-        [ClassCleanup]
-        public static void FixtureTearDown()
-        {
-            if (redisProcess != null)
-            {
-                redisProcess.Kill();
-            }
-        }
-
         [TestMethod]
         public void DLINQPerformsDistributedSelect()
         {

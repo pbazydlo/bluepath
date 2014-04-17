@@ -27,18 +27,21 @@
         [ClassInitialize]
         public static void FixtureSetup(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext tc)
         {
+            //System.Threading.Monitor.Enter(Bluepath.Tests.Integration.TestHelpers.RedisLock);
             // TODO: Exclude test helpers to another project
             redisProcess = Bluepath.Tests.Integration.TestHelpers.SpawnRemoteService(0, Bluepath.Tests.Integration.TestHelpers.ServiceType.Redis);
         }
 
-        [ClassCleanup]
-        public static void FixtureTearDown()
-        {
-            if (redisProcess != null)
-            {
-                redisProcess.Kill();
-            }
-        }
+        //[ClassCleanup]
+        //public static void FixtureTearDown()
+        //{
+        //    if (redisProcess != null)
+        //    {
+        //        redisProcess.Kill();
+        //    }
+
+        //    System.Threading.Monitor.Exit(Bluepath.Tests.Integration.TestHelpers.RedisLock);
+        //}
 
         [TestInitialize]
         public void Init()

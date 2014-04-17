@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
     using System.Threading;
@@ -13,7 +14,10 @@
 
         private static readonly ConcurrentDictionary<int, Process> SpawnedServices = new ConcurrentDictionary<int, Process>();
 
-        public static Process SpawnRemoteService(int port, ServiceType serviceType = ServiceType.Bluepath)
+        //public static object RedisLock = new object();
+        private static CleanUper cleanuper = new CleanUper();
+
+        public static Process SpawnRemoteService(int port, ServiceType serviceType = ServiceType.Bluepath, int restartCounter = 3)
         {
             if (port != 0 && SpawnedServices.ContainsKey(port))
             {
@@ -27,6 +31,27 @@
                     processStartInfo = new ProcessStartInfo(TestHelpers.BluepathServicePath, port.ToString());
                     break;
                 case ServiceType.Redis:
+                    bool isKillFailure = true;
+                    while(isKillFailure)
+                    {
+                        isKillFailure = false;
+                        try
+                        {
+                            var redisInstances = Process.GetProcessesByName("redis-server");
+                            foreach (var redisInstance in redisInstances)
+                            {
+                                return redisInstance;
+                                //redisInstance.Kill();
+                            }
+                        }
+                        catch(Win32Exception ex)
+                        {
+                            isKillFailure = true;
+                            Debug.WriteLine(ex.ToString());
+                            Thread.Sleep(100);
+                        }
+                    }
+
                     processStartInfo = new ProcessStartInfo(TestHelpers.RedisServicePath);
                     break;
             };
@@ -35,6 +60,8 @@
             processStartInfo.RedirectStandardOutput = true;
             processStartInfo.UseShellExecute = false;
             var process = Process.Start(processStartInfo);
+            bool isRedisStarted = false;
+            bool isRedisError = false;
 
             SpawnedServices.TryAdd(port, process);
 
@@ -47,6 +74,19 @@
                         var line = default(string);
                         while ((line = reader.ReadLine()) != null)
                         {
+                            if (serviceType == ServiceType.Redis)
+                            {
+                                if (line.Contains("The server is now ready"))
+                                {
+                                    isRedisStarted = true;
+                                }
+
+                                if (line.Contains("system error"))
+                                {
+                                    isRedisError = true;
+                                }
+                            }
+
                             Debug.WriteLine(string.Format("CONSOLE[{1}]> {0}", line, process.Id));
                         }
 
@@ -56,6 +96,32 @@
             t.Start();
 
             Thread.Sleep(1000);
+            if (serviceType == ServiceType.Redis)
+            {
+                while(!isRedisStarted)
+                {
+                    Thread.Sleep(100);
+                    if(isRedisError)
+                    {
+                        break;
+                    }
+                }
+
+                if(isRedisError)
+                {
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch(Exception ex)
+                    {
+                        Debug.WriteLine(string.Format("Kill redis before restarting - exception: {0}", ex));
+                    }
+
+                    return SpawnRemoteService(port, serviceType, restartCounter - 1);
+                }
+            }
+
             return process;
         }
 
@@ -74,6 +140,18 @@
         {
             Bluepath,
             Redis
+        }
+
+        private class CleanUper : IDisposable
+        {
+            public void Dispose()
+            {
+                var redisInstances = Process.GetProcessesByName("redis-server");
+                foreach (var redisInstance in redisInstances)
+                {
+                    redisInstance.Kill();
+                }
+            }
         }
     }
 }

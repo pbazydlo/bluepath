@@ -22,14 +22,14 @@
         {
             this.key = key;
             this.reduce = reduce;
-            this.FileFilter = new Regex(string.Format("^" + Settings.Default.MapOutputFileName + "$", Base64.EscapeForRegex(this.key), "[0-9]+", RegexExtensions.GuidRegexString));
+            this.FileFilter = new Regex(string.Format("^" + Settings.Default.MapOutputFileName + "$", this.key, RegexExtensions.GuidRegexString, "[0-9]+"));
             this.storage = storage;
             this.Load();
         }
 
         public KeyValuePair<string, string> PerformReduce()
         {
-            return this.reduce.Invoke(Base64.Decode(key), values);
+            return this.reduce.Invoke(key, values);
         }
 
         private void Load()

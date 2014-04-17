@@ -60,10 +60,11 @@
                     var mapResult = mapper.PerformMap();
 
                     var keys = mapResult.Select(r => r.Key).Distinct().OrderBy(k => k);
+                    var i = 0;
                     foreach (var res in mapResult)
                     {
                         Log.TraceMessage(string.Format("[Map] Storing key '{0}', value '{1}'", res.Key, res.Value));
-                        storage.Store(res.Key, res.Value);
+                        storage.Store(string.Format(Properties.Settings.Default.MapOutputFileName, res.Key, bluepath.ProcessEid, i++), res.Value);
                     }
 
                     return keys;
@@ -83,12 +84,12 @@
 
                 var storage = new BluepathStorage(bluepath.Storage as IExtendedStorage);
 
-                var mapProvider = Loader.Load<IReduceProvider>(reduceFuncName, storage);
-                var mapper = new Reducer(filePath.ToString(), mapProvider.Reduce, storage);
-                var reduceResult = mapper.PerformReduce();
+                var reduceProvider = Loader.Load<IReduceProvider>(reduceFuncName, storage);
+                var reducer = new Reducer(filePath.ToString(), reduceProvider.Reduce, storage);
+                var reduceResult = reducer.PerformReduce();
 
                 Log.TraceMessage(string.Format("[Reduce] Storing key '{0}', value '{1}'", reduceResult.Key, reduceResult.Value));
-                storage.Store(reduceResult.Key, reduceResult.Value);
+                storage.Store(string.Format(Properties.Settings.Default.ReduceOutputFileName, reduceResult.Key, bluepath.ProcessEid, 0), reduceResult.Value);
 
                 return new List<string>() { reduceResult.Key };
             });
@@ -148,7 +149,7 @@
             foreach (var assignment in assignments)
             {
                 var worker = this.reduceWorkers[assignment.Value];
-                worker.Start(Base64.Encode(assignment.Key), BluepathStorage.GetFileNameStatic(reduceFuncFileName.Uri));
+                worker.Start(assignment.Key, BluepathStorage.GetFileNameStatic(reduceFuncFileName.Uri));
             }
 
             for (var i = 0; i < this.reduceWorkers.Count; i++)

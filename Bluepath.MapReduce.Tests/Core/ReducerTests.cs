@@ -33,7 +33,7 @@
 
         public static string[] CreateTwoKeyFileSet(IMapReduceStorage storage)
         {
-            var keys = new string[] { Base64.Encode("k1"), Base64.Encode("k2") };
+            var keys = new string[] { "k1", "k2" };
             foreach (var key in keys)
             {
                 for (int i = 0; i < 3; i++)

@@ -53,9 +53,9 @@
             {
                 this.storage = new BluepathStorage(redisStorage);
                 this.storage.Clean();
-                this.storage.Store(Base64.Encode("f1"), "ala ma kota");
-                this.storage.Store(Base64.Encode("f2"), "kota alama");
-                this.storage.Store(Base64.Encode("f3"), "dolan ma");
+                this.storage.Store("f1", "ala ma kota");
+                this.storage.Store("f2", "kota alama");
+                this.storage.Store("f3", "dolan ma");
                 var filesToRead = this.storage.ListFiles();
                 var mapperCodeFile = new FileUri("file:///SampleMapper.cs");
                 var reducerCodeFile = new FileUri("file:///SampleReducer.cs");
@@ -88,13 +88,16 @@
                 foreach (var uri in this.storage.ListFiles())
                 {
                     var file = this.storage.GetFileName(uri);
-                    if (file.Contains("REDUCE") && file.Contains(Base64.Encode("kota")))
+                    if (file.Contains("REDUCE") && file.Contains("kota"))
                     {
                         result = this.storage.Read(file);
+                        Debug.WriteLine("File '{0}' contains '{1}'.", file, result);
                     }
                 }
 
                 result.ShouldBe("2");
+
+                this.storage.Clean();
             }
         }
 

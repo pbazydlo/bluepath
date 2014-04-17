@@ -38,7 +38,7 @@
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    var fileName = string.Format(Bluepath.MapReduce.Properties.Settings.Default.MapOutputFileName, key, i, Guid.NewGuid());
+                    var fileName = string.Format(Bluepath.MapReduce.Properties.Settings.Default.MapOutputFileName, key, Guid.NewGuid(), i);
                     storage.Store(fileName, "1");
                 }
             }

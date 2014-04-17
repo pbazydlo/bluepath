@@ -45,6 +45,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DLINQ\DistributedEnumerable.cs" />
+    <Compile Include="DLINQ\DistributedEnumerableWrapper.cs" />
+    <Compile Include="DLINQ\Enumerables\DistributedQuery.cs" />
+    <Compile Include="DLINQ\Enumerables\DistributedQuerySettings.cs" />
+    <Compile Include="DLINQ\QueryOperators\Unary\SelectQueryOperator.cs" />
+    <Compile Include="DLINQ\QueryOperators\Unary\UnaryQueryOperator.cs" />
+    <Compile Include="DLINQ\QueryOperators\Unary\WhereQueryOperator.cs" />
     <Compile Include="Exceptions\CannotInitializeDefaultConnectionManagerException.cs" />
     <Compile Include="Exceptions\DelegateExpectedException.cs" />
     <Compile Include="Exceptions\MissingRemoteServiceReferenceException.cs" />

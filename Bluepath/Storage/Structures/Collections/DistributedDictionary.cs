@@ -9,14 +9,14 @@ namespace Bluepath.Storage.Structures.Collections
 {
     public class DistributedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        private string id;
+        private string key;
         protected IExtendedStorage storage;
 
 
-        public DistributedDictionary(IExtendedStorage storage, string id)
+        public DistributedDictionary(IExtendedStorage storage, string key)
         {
             this.storage = storage;
-            this.id = id;
+            this.key = key;
             this.Initialize();
         }
 
@@ -24,7 +24,7 @@ namespace Bluepath.Storage.Structures.Collections
         {
             get
             {
-                return string.Format("_ddictLock_{0}", this.Id);
+                return string.Format("_ddictLock_{0}", this.Key);
             }
         }
 
@@ -32,15 +32,15 @@ namespace Bluepath.Storage.Structures.Collections
         {
             get
             {
-                return string.Format("_ddictMetadata_{0}", this.Id);
+                return string.Format("_ddictMetadata_{0}", this.Key);
             }
         }
 
-        public string Id
+        public string Key
         {
             get
             {
-                return this.id;
+                return this.key;
             }
         }
 
@@ -226,7 +226,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         private string GetItemStorageKey(TKey key)
         {
-            return string.Format("_ddictItem_{0}_{1}", EqualityComparer<TKey>.Default.GetHashCode(key), this.Id);
+            return string.Format("_ddictItem_{0}_{1}", EqualityComparer<TKey>.Default.GetHashCode(key), this.Key);
         }
 
         [Serializable]

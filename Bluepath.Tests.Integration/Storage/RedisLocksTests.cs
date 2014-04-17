@@ -21,15 +21,6 @@ namespace Bluepath.Tests.Integration.Storage
             redisProcess = TestHelpers.SpawnRemoteService(0, TestHelpers.ServiceType.Redis);
         }
 
-        [ClassCleanup]
-        public static void FixtureTearDown()
-        {
-            if (redisProcess != null)
-            {
-                redisProcess.Kill();
-            }
-        }
-
         [TestMethod]
         public void RedisLockCannotBeAcquiredTwice()
         {

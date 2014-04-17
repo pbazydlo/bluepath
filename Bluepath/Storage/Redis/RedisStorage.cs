@@ -11,9 +11,9 @@
     {
         private readonly ConnectionMultiplexer connection;
 
-        public RedisStorage(string host)
+        public RedisStorage(string configurationString)
         {
-            this.connection = ConnectionMultiplexer.Connect(host);
+            this.connection = ConnectionMultiplexer.Connect(configurationString);
         }
 
         public void Store<T>(string key, T value)

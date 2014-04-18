@@ -88,8 +88,7 @@ namespace Bluepath.DLINQ
             if (selector == null) throw new ArgumentNullException("selector");
             if (!selector.Method.IsStatic) throw new ArgumentException("Selector needs to be a static function.", "selector");
 
-            throw new NotImplementedException();
-            //return new SelectManyQueryOperator<TSource, TResult, TResult>(source, selector, null, null);
+            return new SelectManyQueryOperator<TSource, TResult, TResult>(source, selector, null, null);
         }
 
         /// <summary>
@@ -113,8 +112,7 @@ namespace Bluepath.DLINQ
             if (selector == null) throw new ArgumentNullException("selector");
             if (!selector.Method.IsStatic) throw new ArgumentException("Selector needs to be a static function.", "selector");
 
-            throw new NotImplementedException();
-            //return new SelectManyQueryOperator<TSource, TResult, TResult>(source, null, selector, null);
+            return new SelectManyQueryOperator<TSource, TResult, TResult>(source, null, selector, null);
         }
 
         /// <summary>
@@ -147,8 +145,7 @@ namespace Bluepath.DLINQ
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
             if (!resultSelector.Method.IsStatic) throw new ArgumentException("ResultSelector needs to be a static function.", "resultSelector");
 
-            throw new NotImplementedException();
-            //return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, collectionSelector, null, resultSelector);
+            return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, collectionSelector, null, resultSelector);
         }
 
         /// <summary>
@@ -186,8 +183,7 @@ namespace Bluepath.DLINQ
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
             if (!resultSelector.Method.IsStatic) throw new ArgumentException("ResultSelector needs to be a static function.", "resultSelector");
 
-            throw new NotImplementedException();
-            //return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, null, collectionSelector, resultSelector);
+            return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, null, collectionSelector, resultSelector);
         }
     }
 }

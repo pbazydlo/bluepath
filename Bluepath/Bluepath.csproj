@@ -49,6 +49,7 @@
     <Compile Include="DLINQ\DistributedEnumerableWrapper.cs" />
     <Compile Include="DLINQ\Enumerables\DistributedQuery.cs" />
     <Compile Include="DLINQ\Enumerables\DistributedQuerySettings.cs" />
+    <Compile Include="DLINQ\QueryOperators\Unary\SelectManyQueryOperator.cs" />
     <Compile Include="DLINQ\QueryOperators\Unary\SelectQueryOperator.cs" />
     <Compile Include="DLINQ\QueryOperators\Unary\UnaryQueryOperator.cs" />
     <Compile Include="DLINQ\QueryOperators\Unary\WhereQueryOperator.cs" />

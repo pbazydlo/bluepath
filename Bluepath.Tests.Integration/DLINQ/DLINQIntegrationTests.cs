@@ -19,18 +19,10 @@ namespace Bluepath.Tests.Integration.DLINQ
 
         private const string Host = "localhost";
 
-        [ClassInitialize]
-        public static void FixtureSetup(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext tc)
+        private static void PrepareDLINQEnviroment(out BluepathListener listener1, out BluepathListener listener2, out ConnectionManager connectionManager)
         {
-            redisProcess = TestHelpers.SpawnRemoteService(0, TestHelpers.ServiceType.Redis);
-
-        }
-
-        [TestMethod]
-        public void DLINQPerformsDistributedSelect()
-        {
-            var listener1 = new BluepathListener("127.0.0.1", StartPort);
-            var listener2 = new BluepathListener("127.0.0.1", StartPort + 1);
+            listener1 = new BluepathListener("127.0.0.1", StartPort);
+            listener2 = new BluepathListener("127.0.0.1", StartPort + 1);
             var availableServices = new Dictionary<ServiceUri, PerformanceStatistics>()
                 {
                     {listener1.CallbackUri, new PerformanceStatistics()
@@ -54,7 +46,23 @@ namespace Bluepath.Tests.Integration.DLINQ
                         }
                     }},
                 };
-            var connectionManager = new ConnectionManager(availableServices, listener1);
+            connectionManager = new ConnectionManager(availableServices, listener1);
+        }
+
+        [ClassInitialize]
+        public static void FixtureSetup(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext tc)
+        {
+            redisProcess = TestHelpers.SpawnRemoteService(0, TestHelpers.ServiceType.Redis);
+
+        }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedSelect()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
 
             try
             {
@@ -89,32 +97,10 @@ namespace Bluepath.Tests.Integration.DLINQ
         [TestMethod]
         public void DLINQPerformsDistributedWhere()
         {
-            var listener1 = new BluepathListener("127.0.0.1", StartPort);
-            var listener2 = new BluepathListener("127.0.0.1", StartPort + 1);
-            var availableServices = new Dictionary<ServiceUri, PerformanceStatistics>()
-                {
-                    {listener1.CallbackUri, new PerformanceStatistics()
-                    {
-                        NumberOfTasks = new Dictionary<Bluepath.Executor.ExecutorState, int>()
-                        {
-                            {Bluepath.Executor.ExecutorState.Faulted, 0},
-                            {Bluepath.Executor.ExecutorState.Finished, 0},
-                            {Bluepath.Executor.ExecutorState.NotStarted, 0},
-                            {Bluepath.Executor.ExecutorState.Running, 0},
-                        }
-                    }},
-                    {listener2.CallbackUri, new PerformanceStatistics()
-                    {
-                        NumberOfTasks = new Dictionary<Bluepath.Executor.ExecutorState, int>()
-                        {
-                            {Bluepath.Executor.ExecutorState.Faulted, 0},
-                            {Bluepath.Executor.ExecutorState.Finished, 0},
-                            {Bluepath.Executor.ExecutorState.NotStarted, 0},
-                            {Bluepath.Executor.ExecutorState.Running, 0},
-                        }
-                    }},
-                };
-            var connectionManager = new ConnectionManager(availableServices, listener1);
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
 
             try
             {

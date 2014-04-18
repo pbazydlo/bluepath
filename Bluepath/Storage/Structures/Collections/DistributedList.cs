@@ -9,7 +9,7 @@ using Bluepath.Storage.Locks;
 
 namespace Bluepath.Storage.Structures.Collections
 {
-    public class DistributedList<T> : IList<T> where T : new()
+    public class DistributedList<T> : IList<T>/* where T : new()*/
     {
         private string key;
         protected IExtendedStorage storage;
@@ -267,7 +267,7 @@ namespace Bluepath.Storage.Structures.Collections
             public int Count { get; set; }
         }
 
-        public class DistributedListEnumerator<X> : IEnumerator<X> where X : new()
+        public class DistributedListEnumerator<X> : IEnumerator<X>/* where X : new()*/
         {
             private DistributedList<X> list;
             private int currentIndex;

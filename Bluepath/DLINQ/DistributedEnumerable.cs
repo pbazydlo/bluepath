@@ -20,9 +20,9 @@ namespace Bluepath.DLINQ
             IConnectionManager connectionManager = null,
             IScheduler scheduler = null
             )
-            where TSource : new()
+        //where TSource : new()
         {
-            if(source == null)
+            if (source == null)
             {
                 throw new ArgumentNullException("source");
             }
@@ -32,31 +32,34 @@ namespace Bluepath.DLINQ
 
         public static DistributedQuery<TResult> Select<TSource, TResult>(
             this DistributedQuery<TSource> source, Func<TSource, TResult> selector)
-            where TSource : new()
-            where TResult : new()
+        //where TSource : new()
+        /*where TResult : new()*/
         {
             if (source == null) throw new ArgumentNullException("source");
             if (selector == null) throw new ArgumentNullException("selector");
+            if (!selector.Method.IsStatic) throw new ArgumentException("Selector needs to be a static function.", "selector");
 
             return new SelectQueryOperator<TSource, TResult>(source, selector);
         }
 
         public static DistributedQuery<TSource> Where<TSource>(
             this DistributedQuery<TSource> source, Func<TSource, bool> predicate)
-            where TSource : new()
+        //where TSource : new()
         {
             if (source == null) throw new ArgumentNullException("source");
             if (predicate == null) throw new ArgumentNullException("predicate");
+            if (!predicate.Method.IsStatic) throw new ArgumentException("Predicate needs to be a static function.", "predicate");
 
             return new WhereQueryOperator<TSource>(source, predicate);
         }
 
         public static int Count<TSource>(
             this DistributedQuery<TSource> source, Func<TSource, bool> predicate)
-            where TSource : new()
+        //where TSource : new()
         {
             if (source == null) throw new ArgumentNullException("source");
             if (predicate == null) throw new ArgumentNullException("predicate");
+            if (!predicate.Method.IsStatic) throw new ArgumentException("Predicate needs to be a static function.", "predicate");
 
             var whereResult = Where<TSource>(source, predicate);
             var collectionKey = whereResult.Settings.CollectionKey;
@@ -83,6 +86,7 @@ namespace Bluepath.DLINQ
         {
             if (source == null) throw new ArgumentNullException("source");
             if (selector == null) throw new ArgumentNullException("selector");
+            if (!selector.Method.IsStatic) throw new ArgumentException("Selector needs to be a static function.", "selector");
 
             throw new NotImplementedException();
             //return new SelectManyQueryOperator<TSource, TResult, TResult>(source, selector, null, null);
@@ -107,6 +111,7 @@ namespace Bluepath.DLINQ
         {
             if (source == null) throw new ArgumentNullException("source");
             if (selector == null) throw new ArgumentNullException("selector");
+            if (!selector.Method.IsStatic) throw new ArgumentException("Selector needs to be a static function.", "selector");
 
             throw new NotImplementedException();
             //return new SelectManyQueryOperator<TSource, TResult, TResult>(source, null, selector, null);
@@ -138,7 +143,9 @@ namespace Bluepath.DLINQ
         {
             if (source == null) throw new ArgumentNullException("source");
             if (collectionSelector == null) throw new ArgumentNullException("collectionSelector");
+            if (!collectionSelector.Method.IsStatic) throw new ArgumentException("CollectionSelector needs to be a static function.", "collectionSelector");
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
+            if (!resultSelector.Method.IsStatic) throw new ArgumentException("ResultSelector needs to be a static function.", "resultSelector");
 
             throw new NotImplementedException();
             //return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, collectionSelector, null, resultSelector);
@@ -175,7 +182,9 @@ namespace Bluepath.DLINQ
         {
             if (source == null) throw new ArgumentNullException("source");
             if (collectionSelector == null) throw new ArgumentNullException("collectionSelector");
+            if (!collectionSelector.Method.IsStatic) throw new ArgumentException("CollectionSelector needs to be a static function.", "collectionSelector");
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
+            if (!resultSelector.Method.IsStatic) throw new ArgumentException("ResultSelector needs to be a static function.", "resultSelector");
 
             throw new NotImplementedException();
             //return new SelectManyQueryOperator<TSource, TCollection, TResult>(source, null, collectionSelector, resultSelector);

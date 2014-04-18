@@ -14,8 +14,8 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     internal class SelectQueryOperator<TInput, TOutput> : UnaryQueryOperator<TOutput>
-        where TInput : new()
-        where TOutput : new()
+        //where TInput : new()
+        //where TOutput : new()
     {
         private Func<TInput, TOutput> selector;
 

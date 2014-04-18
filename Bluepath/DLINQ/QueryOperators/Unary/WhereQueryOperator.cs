@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     public class WhereQueryOperator<TInputOutput> : UnaryQueryOperator<TInputOutput>
-        where TInputOutput : new()
+        //where TInputOutput : new()
     {
         private Func<TInputOutput, bool> predicate;
 

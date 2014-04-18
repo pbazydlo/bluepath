@@ -132,5 +132,44 @@ namespace Bluepath.Tests.Integration.DLINQ
                 listener2.Stop();
             }
         }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedSelectMany()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
+
+            try
+            {
+                var inputCollection = new List<string>()
+                    {
+                        "jack",
+                        "checked",
+                        "chicken",
+                        "in",
+                        "the",
+                        "kitchen"
+                    };
+
+                var expectedResult = inputCollection.SelectMany(word => word.ToCharArray()).ToList();
+
+                var storage = new RedisStorage(Host);
+
+                var processedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .SelectMany(word => word.ToCharArray()).ToList();
+
+                for (int i = 0; i < processedCollection.Count; i++)
+                {
+                    processedCollection[i].ShouldBe(expectedResult[i]);
+                }
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
     }
 }

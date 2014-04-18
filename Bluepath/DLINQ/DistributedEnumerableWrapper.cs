@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Bluepath.DLINQ
 {
-    internal class DistributedEnumerableWrapper<T> : DistributedQuery<T> where T : new()
+    internal class DistributedEnumerableWrapper<T> : DistributedQuery<T> /*where T : new()*/
     {
         private readonly IEnumerable<T> wrappedEnumerable;
 

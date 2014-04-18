@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     public class UnaryQueryOperator<TOutput> : DistributedQuery<TOutput>
-        where TOutput : new()
+        //where TOutput : new()
     {
         protected UnaryQueryOperator(DistributedQuerySettings settings)
             : base(settings)

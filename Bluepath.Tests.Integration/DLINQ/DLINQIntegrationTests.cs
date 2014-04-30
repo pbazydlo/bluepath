@@ -171,5 +171,83 @@ namespace Bluepath.Tests.Integration.DLINQ
                 listener2.Stop();
             }
         }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedSelectManyWithIndex()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
+
+            try
+            {
+                var inputCollection = new List<string>()
+                    {
+                        "jack",
+                        "checked",
+                        "chicken",
+                        "in",
+                        "the",
+                        "kitchen"
+                    };
+
+                var expectedResult = inputCollection.SelectMany((word, i) => (string.Format("{0}{1}", i, word)).ToCharArray()).ToList();
+
+                var storage = new RedisStorage(Host);
+
+                var processedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .SelectMany((word, i) => (string.Format("{0}{1}", i, word)).ToCharArray()).ToList();
+
+                for (int i = 0; i < processedCollection.Count; i++)
+                {
+                    processedCollection[i].ShouldBe(expectedResult[i]);
+                }
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedSelectManyWithResultSelector()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
+
+            try
+            {
+                var inputCollection = new List<string>()
+                    {
+                        "jack",
+                        "checked",
+                        "chicken",
+                        "in",
+                        "the",
+                        "kitchen"
+                    };
+
+                var expectedResult = inputCollection.SelectMany(word => word.ToCharArray(), (word, character) => string.Format("{0} - {1}", word, character)).ToList();
+
+                var storage = new RedisStorage(Host);
+
+                var processedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .SelectMany(word => word.ToCharArray(), (word, character) => string.Format("{0} - {1}", word, character)).ToList();
+
+                for (int i = 0; i < processedCollection.Count; i++)
+                {
+                    processedCollection[i].ShouldBe(expectedResult[i]);
+                }
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
     }
 }

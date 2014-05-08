@@ -14,6 +14,8 @@ namespace Bluepath.DLINQ
 {
     public static class DistributedEnumerable
     {
+        public static int PartitionSize = 10;
+
         public static DistributedQuery<TSource> AsDistributed<TSource>(
             this IEnumerable<TSource> source,
             IExtendedStorage storage,

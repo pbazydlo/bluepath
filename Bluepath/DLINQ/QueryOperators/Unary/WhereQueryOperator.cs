@@ -55,7 +55,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             var collectionCount = collectionToProcess.Count;
 
             // TODO: Partition size should be calculated!
-            var partitionSize = 10;
+            var partitionSize = DistributedEnumerable.PartitionSize;
             var partitionNum = collectionCount / partitionSize;
             if (partitionNum == 0)
             {

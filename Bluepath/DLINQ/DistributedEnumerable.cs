@@ -207,14 +207,13 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="elementSelector"/> or <paramref name="resultSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<TResult> GroupBy<TSource, TKey, TElement, TResult>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, Func<TKey, IEnumerable<TElement>, TResult> resultSelector)
+        public static DistributedQuery<TResult> GroupBy<TSource, TKey, TElement, TResult>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, Func<TKey, IEnumerable<TElement>, TResult> resultSelector)
         {
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
 
-            throw new NotImplementedException();
-            //return source.GroupBy<TSource, TKey, TElement>(keySelector, elementSelector)
-            //    .Select<IGrouping<TKey, TElement>, TResult>(delegate(IGrouping<TKey, TElement> grouping) { return resultSelector(grouping.Key, grouping); });
+            return source.GroupBy<TSource, TKey, TElement>(keySelector, elementSelector)
+                .Select<IGrouping<TKey, TElement>, TResult>(delegate(IGrouping<TKey, TElement> grouping) { return resultSelector(grouping.Key, grouping); });
         }
 
         /// <summary>
@@ -239,14 +238,13 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="elementSelector"/> or <paramref name="resultSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<TResult> GroupBy<TSource, TKey, TElement, TResult>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, Func<TKey, IEnumerable<TElement>, TResult> resultSelector, IEqualityComparer<TKey> comparer)
+        public static DistributedQuery<TResult> GroupBy<TSource, TKey, TElement, TResult>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, Func<TKey, IEnumerable<TElement>, TResult> resultSelector, IEqualityComparer<TKey> comparer)
         {
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
 
-            throw new NotImplementedException();
-            //return source.GroupBy<TSource, TKey, TElement>(keySelector, elementSelector, comparer)
-            //    .Select<IGrouping<TKey, TElement>, TResult>(delegate(IGrouping<TKey, TElement> grouping) { return resultSelector(grouping.Key, grouping); });
+            return source.GroupBy<TSource, TKey, TElement>(keySelector, elementSelector, comparer)
+                .Select<IGrouping<TKey, TElement>, TResult>(delegate(IGrouping<TKey, TElement> grouping) { return resultSelector(grouping.Key, grouping); });
         }
 
         /// <summary>
@@ -267,8 +265,8 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="elementSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<IGrouping<TKey, TElement>> GroupBy<TSource, TKey, TElement>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector)
+        public static DistributedQuery<IGrouping<TKey, TElement>> GroupBy<TSource, TKey, TElement>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector)
         {
             return GroupBy<TSource, TKey, TElement>(source, keySelector, elementSelector, null);
         }
@@ -294,8 +292,8 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="elementSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<IGrouping<TKey, TElement>> GroupBy<TSource, TKey, TElement>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, IEqualityComparer<TKey> comparer)
+        public static DistributedQuery<IGrouping<TKey, TElement>> GroupBy<TSource, TKey, TElement>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, IEqualityComparer<TKey> comparer)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (keySelector == null) throw new ArgumentNullException("keySelector");
@@ -321,14 +319,13 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="resultSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<TResult> GroupBy<TSource, TKey, TResult>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TKey, IEnumerable<TSource>, TResult> resultSelector)
+        public static DistributedQuery<TResult> GroupBy<TSource, TKey, TResult>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TKey, IEnumerable<TSource>, TResult> resultSelector)
         {
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
 
-            throw new NotImplementedException();
-            //return source.GroupBy<TSource, TKey>(keySelector)
-            //    .Select<IGrouping<TKey, TSource>, TResult>(delegate(IGrouping<TKey, TSource> grouping) { return resultSelector(grouping.Key, grouping); });
+            return source.GroupBy<TSource, TKey>(keySelector)
+                .Select<IGrouping<TKey, TSource>, TResult>(delegate(IGrouping<TKey, TSource> grouping) { return resultSelector(grouping.Key, grouping); });
         }
 
         /// <summary>
@@ -353,8 +350,8 @@ namespace Bluepath.DLINQ
         /// <paramref name="source"/> or <paramref name="keySelector"/> or
         /// <paramref name="resultSelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<TResult> GroupBy<TSource, TKey, TResult>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TKey, IEnumerable<TSource>, TResult> resultSelector, IEqualityComparer<TKey> comparer)
+        public static DistributedQuery<TResult> GroupBy<TSource, TKey, TResult>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, Func<TKey, IEnumerable<TSource>, TResult> resultSelector, IEqualityComparer<TKey> comparer)
         {
             if (resultSelector == null) throw new ArgumentNullException("resultSelector");
 
@@ -372,8 +369,8 @@ namespace Bluepath.DLINQ
         /// <param name="keySelector">A function to extract a key from an element.</param>
         /// <returns>An OrderedParallelQuery{TSource}whose elements are sorted 
         /// descending according to a key.</returns>
-        public static ParallelQuery<IGrouping<TKey, TSource>> GroupBy<TSource, TKey>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector)
+        public static DistributedQuery<IGrouping<TKey, TSource>> GroupBy<TSource, TKey>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector)
         {
             return GroupBy<TSource, TKey>(source, keySelector, null);
         }
@@ -392,8 +389,8 @@ namespace Bluepath.DLINQ
         /// <exception cref="T:System.ArgumentNullException">
         /// <paramref name="source"/> or <paramref name="keySelector"/> is a null reference (Nothing in Visual Basic).
         /// </exception>
-        public static ParallelQuery<IGrouping<TKey, TSource>> GroupBy<TSource, TKey>(
-            this ParallelQuery<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer)
+        public static DistributedQuery<IGrouping<TKey, TSource>> GroupBy<TSource, TKey>(
+            this DistributedQuery<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (keySelector == null) throw new ArgumentNullException("keySelector");

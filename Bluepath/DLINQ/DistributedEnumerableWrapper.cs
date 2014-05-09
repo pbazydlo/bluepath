@@ -35,6 +35,22 @@ namespace Bluepath.DLINQ
             this.wrappedEnumerable = distributedList;
         }
 
+        internal DistributedEnumerableWrapper(
+            DistributedList<T> enumerable,
+            IExtendedStorage storage,
+            IConnectionManager connectionManager,
+            IScheduler scheduler
+            )
+            : base(new DistributedQuerySettings())
+        {
+            this.Settings.CollectionKey = enumerable.Key;
+            this.Settings.Storage = storage;
+            this.Settings.DefaultConnectionManager = connectionManager;
+            this.Settings.DefaultScheduler = scheduler;
+
+            this.wrappedEnumerable = enumerable;
+        }
+
         internal IEnumerable<T> WrappedEnumerable
         {
             get { return this.wrappedEnumerable; }

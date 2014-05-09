@@ -1,4 +1,5 @@
 ﻿using Bluepath.DLINQ.Enumerables;
+using Bluepath.Storage.Structures.Collections;
 using Bluepath.Threading;
 using Bluepath.Threading.Schedulers;
 using System;
@@ -53,8 +54,8 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         {
             var threads = this.Execute();
 
-            // TODO: It would be better if we knew what size result would be
-            List<TOutput> temporaryResult = new List<TOutput>();
+            UnaryQueryResultCollectionType? collectionType = null;
+            string resultCollectionKey = string.Empty;
             foreach (var thread in threads)
             {
                 thread.Join();
@@ -62,26 +63,42 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                 // TODO: For some reason thread.Result gets deserialized even though it should stay byte[]
                 // Tried implementing tests covering this case [DistributedThreadRemotelyExecutesStaticMethodTakingArrayAsParameterAndReturningArray],
                 // however they seem to work differently
-                var result = ((UnaryQueryResult<TOutput>)thread.Result).Result;
-                temporaryResult.AddRange(result);
+                var result = (UnaryQueryResult)thread.Result;
+                if(!collectionType.HasValue)
+                {
+                    collectionType = result.CollectionType;
+                }
+
+                if(resultCollectionKey==string.Empty)
+                {
+                    resultCollectionKey = result.CollectionKey;
+                }
             }
 
-            var resultEnumerable
-                = new DistributedEnumerableWrapper<TOutput>(
-                    temporaryResult,
+            if(collectionType.Value==UnaryQueryResultCollectionType.DistributedList)
+            {
+                var result = new DistributedList<TOutput>(this.Settings.Storage, resultCollectionKey);
+                return new DistributedEnumerableWrapper<TOutput>(
+                    result,
                     this.Settings.Storage,
                     this.Settings.DefaultConnectionManager,
                     this.Settings.DefaultScheduler
-                    );
-            return resultEnumerable.GetEnumerator();
+                    ).GetEnumerator();
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         [Serializable]
-        protected class UnaryQueryArguments<TInput, TOutput>
+        protected class UnaryQueryArguments<TIn, TOut>
         {
-            public Func<TInput, TOutput> QueryOperator { get; set; }
+            public Func<TIn, TOut> QueryOperator { get; set; }
 
             public string CollectionKey { get; set; }
+
+            public string ResultCollectionKey { get; set; }
 
             public int StartIndex { get; set; }
 
@@ -93,9 +110,26 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
         [Serializable]
-        protected class UnaryQueryResult<TOutput>
+        protected class UnaryQueryResult
         {
-            public TOutput[] Result { get; set; }
+            /// <summary>
+            /// Specifies type of collection used to store result - needs to be the SAME for all results.
+            /// </summary>
+            public UnaryQueryResultCollectionType CollectionType { get; set; }
+
+            /// <summary>
+            /// Specifies key of collection used to store result - needs to be the SAME for all results.
+            /// </summary>
+            public string CollectionKey { get; set; }
+        }
+
+        /// <summary>
+        /// Specifies collection type used to store result
+        /// </summary>
+        protected enum UnaryQueryResultCollectionType
+        {
+            DistributedList,
+            DistributedDictionary
         }
     }
 }

@@ -79,9 +79,13 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                         }
                     }
 
-                    return new UnaryQueryResult<TOutput>()
+                    DistributedList<TOutput> sharedResult = new DistributedList<TOutput>(storage, args.ResultCollectionKey);
+                    sharedResult.AddRange(result);
+
+                    return new UnaryQueryResult()
                     {
-                        Result = result.ToArray()
+                        CollectionKey = args.ResultCollectionKey,
+                        CollectionType = UnaryQueryResultCollectionType.DistributedList
                     }.Serialize();
                 });
 
@@ -100,6 +104,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
 
             DistributedThread[] threads
                 = new DistributedThread[partitionNum];
+            var resultCollectionKey = string.Format("_selectManyQueryResult_{0}", Guid.NewGuid());
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));
@@ -109,6 +114,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     IndexedRightChildSelector = this.indexedRightChildSelector,
                     ResultSelector = this.resultSelector,
                     CollectionKey = this.Settings.CollectionKey,
+                    ResultCollectionKey = resultCollectionKey,
                     StartIndex = (partNum * partitionSize),
                     StopIndex = isLastPartition ? collectionCount : ((partNum * partitionSize) + partitionSize)
                 };

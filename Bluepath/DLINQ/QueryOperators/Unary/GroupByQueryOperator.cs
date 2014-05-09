@@ -1,4 +1,5 @@
 ﻿using Bluepath.DLINQ.Enumerables;
+using Bluepath.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,6 +37,12 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
 
         protected override Threading.DistributedThread[] Execute()
         {
+            var func = new Func<GroupByQueryArguments<TSource, TGroupKey, TElement>, IBluepathCommunicationFramework, IGrouping<TGroupKey, TElement>>(
+                (args, framework) =>
+                {
+                    return null;
+                });
+                
             return base.Execute();
         }
 

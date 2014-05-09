@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     public class WhereQueryOperator<TInputOutput> : UnaryQueryOperator<TInputOutput>
-        //where TInputOutput : new()
+    //where TInputOutput : new()
     {
         private Func<TInputOutput, bool> predicate;
 
@@ -39,15 +39,19 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     List<TInputOutput> result = new List<TInputOutput>(args.StopIndex - args.StartIndex);
                     for (int i = args.StartIndex; i < args.StopIndex; i++)
                     {
-                        if(args.QueryOperator(initialCollection[i]))
+                        if (args.QueryOperator(initialCollection[i]))
                         {
                             result.Add(initialCollection[i]);
                         }
                     }
 
-                    return new UnaryQueryResult<TInputOutput>()
+                    DistributedList<TInputOutput> sharedResult = new DistributedList<TInputOutput>(storage, args.ResultCollectionKey);
+                    sharedResult.AddRange(result);
+
+                    return new UnaryQueryResult()
                     {
-                        Result = result.ToArray()
+                        CollectionKey = args.ResultCollectionKey,
+                        CollectionType = UnaryQueryResultCollectionType.DistributedList
                     }.Serialize();
                 });
 
@@ -66,6 +70,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
 
             DistributedThread[] threads
                 = new DistributedThread[partitionNum];
+            var resultCollectionKey = string.Format("_whereQueryResult_{0}", Guid.NewGuid());
             for (int partNum = 0; partNum < partitionNum; partNum++)
             {
                 var isLastPartition = (partNum == (partitionNum - 1));
@@ -73,6 +78,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                 {
                     QueryOperator = this.predicate,
                     CollectionKey = this.Settings.CollectionKey,
+                    ResultCollectionKey = resultCollectionKey,
                     StartIndex = (partNum * partitionSize),
                     StopIndex = isLastPartition ? collectionCount : ((partNum * partitionSize) + partitionSize)
                 };

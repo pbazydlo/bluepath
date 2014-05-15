@@ -9,9 +9,12 @@ using Bluepath.Storage.Locks;
 
 namespace Bluepath.Storage.Structures.Collections
 {
+    [Serializable]
     public class DistributedList<T> : IList<T>/* where T : new()*/
     {
         private string key;
+
+        [NonSerialized]
         protected IExtendedStorage storage;
 
         public DistributedList(IExtendedStorage storage, string key)
@@ -19,7 +22,7 @@ namespace Bluepath.Storage.Structures.Collections
             if (!typeof(T).IsSerializable)
                 throw new InvalidOperationException("A serializable Type is required");
 
-            this.storage = storage;
+            this.Storage = storage;
             this.key = key;
             this.Initialize();
         }
@@ -40,6 +43,12 @@ namespace Bluepath.Storage.Structures.Collections
             }
         }
 
+        public IExtendedStorage Storage 
+        {
+            get { return this.storage; }
+            set { this.storage = value; }
+        }
+
         public string Key
         {
             get
@@ -50,7 +59,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public int IndexOf(T item)
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 return this.InternalIndexOf(item, metadata);
@@ -64,7 +73,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void RemoveAt(int index)
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 this.InternalRemoveAt(index, ref metadata);
@@ -77,7 +86,7 @@ namespace Bluepath.Storage.Structures.Collections
             {
                 try
                 {
-                    return this.storage.Retrieve<T>(this.GetItemKey(index));
+                    return this.Storage.Retrieve<T>(this.GetItemKey(index));
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {
@@ -86,7 +95,7 @@ namespace Bluepath.Storage.Structures.Collections
             }
             set
             {
-                using (var @lock = this.storage.AcquireLock(this.LockKey))
+                using (var @lock = this.Storage.AcquireLock(this.LockKey))
                 {
                     this.InternalSet(index, value);
                 }
@@ -100,7 +109,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void AddRange(IEnumerable<T> items)
         {
-            using(var @lock = this.storage.AcquireLock(this.LockKey))
+            using(var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 foreach (var item in items)
@@ -114,12 +123,12 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void Clear()
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 for (int i = 0; i < metadata.Count; i++)
                 {
-                    this.storage.Remove(this.GetItemKey(i));
+                    this.Storage.Remove(this.GetItemKey(i));
                 }
 
                 metadata.Count = 0;
@@ -134,7 +143,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 if ((array.Length - arrayIndex) < metadata.Count)
@@ -159,7 +168,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public bool Remove(T item)
         {
-            using (var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 var index = this.InternalIndexOf(item, metadata);
@@ -204,17 +213,17 @@ namespace Bluepath.Storage.Structures.Collections
         {
             if (initialize)
             {
-                this.storage.Store(this.MetadataKey, metadata);
+                this.Storage.Store(this.MetadataKey, metadata);
             }
             else
             {
-                this.storage.Update(this.MetadataKey, metadata);
+                this.Storage.Update(this.MetadataKey, metadata);
             }
         }
 
         private DistributedListMetadata GetMetadata()
         {
-            return this.storage.Retrieve<DistributedListMetadata>(this.MetadataKey);
+            return this.Storage.Retrieve<DistributedListMetadata>(this.MetadataKey);
         }
 
         private void InternalRemoveAt(int index, ref DistributedListMetadata metadata)
@@ -229,7 +238,7 @@ namespace Bluepath.Storage.Structures.Collections
                 this.InternalSet(index, this[i + 1]);
             }
 
-            this.storage.Remove(this.GetItemKey(metadata.Count - 1));
+            this.Storage.Remove(this.GetItemKey(metadata.Count - 1));
             metadata.Count--;
             this.SetMetadata(metadata);
         }
@@ -250,14 +259,14 @@ namespace Bluepath.Storage.Structures.Collections
 
         private void InternalSet(int index, T value)
         {
-            this.storage.Update(this.GetItemKey(index), value);
+            this.Storage.Update(this.GetItemKey(index), value);
         }
 
         private void InternalAdd(T item, DistributedListMetadata metadata)
         {
             var itemIndex = metadata.Count;
             metadata.Count++;
-            this.storage.Store(this.GetItemKey(itemIndex), item);
+            this.Storage.Store(this.GetItemKey(itemIndex), item);
         }
 
         // TODO: Could contain some kind of index for faster search and index find operations
@@ -276,7 +285,7 @@ namespace Bluepath.Storage.Structures.Collections
 
             public DistributedListEnumerator(DistributedList<X> list)
             {
-                this.listLock = list.storage.AcquireLock(list.LockKey);
+                this.listLock = list.Storage.AcquireLock(list.LockKey);
                 this.list = list;
                 this.currentIndex = -1;
                 this.currentItem = default(X);

@@ -7,15 +7,17 @@ using System.Threading.Tasks;
 
 namespace Bluepath.Storage.Structures.Collections
 {
+    [Serializable]
     public class DistributedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private string key;
-        protected IExtendedStorage storage;
 
+        [NonSerialized]
+        protected IExtendedStorage storage;
 
         public DistributedDictionary(IExtendedStorage storage, string key)
         {
-            this.storage = storage;
+            this.Storage = storage;
             this.key = key;
             this.Initialize();
         }
@@ -36,6 +38,12 @@ namespace Bluepath.Storage.Structures.Collections
             }
         }
 
+        public IExtendedStorage Storage
+        {
+            get { return this.storage; }
+            set { this.storage = value; }
+        }
+
         public string Key
         {
             get
@@ -46,17 +54,17 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void Add(TKey key, TValue value)
         {
-            using(var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
-                if(this.InternalContainsKey(key, metadata))
+                if (this.InternalContainsKey(key, metadata))
                 {
                     throw new ArgumentException("Cannot add duplicate key!", "key");
                 }
 
                 metadata.Count++;
                 metadata.Keys.Add(key);
-                this.storage.Store(this.GetItemStorageKey(key), value);
+                this.Storage.Store(this.GetItemStorageKey(key), value);
                 this.SetMetadata(metadata);
             }
         }
@@ -78,10 +86,10 @@ namespace Bluepath.Storage.Structures.Collections
 
         public bool Remove(TKey key)
         {
-            using(var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
-                this.storage.Remove(this.GetItemStorageKey(key));
+                this.Storage.Remove(this.GetItemStorageKey(key));
                 metadata.Count--;
                 metadata.Keys.Remove(key);
                 this.SetMetadata(metadata);
@@ -106,7 +114,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public ICollection<TValue> Values
         {
-            get 
+            get
             {
                 List<TValue> values = new List<TValue>();
                 foreach (var keyValuePair in this)
@@ -122,11 +130,11 @@ namespace Bluepath.Storage.Structures.Collections
         {
             get
             {
-                return this.storage.Retrieve<TValue>(this.GetItemStorageKey(key));
+                return this.Storage.Retrieve<TValue>(this.GetItemStorageKey(key));
             }
             set
             {
-                this.storage.Update(this.GetItemStorageKey(key), value);
+                this.Storage.Update(this.GetItemStorageKey(key), value);
             }
         }
 
@@ -137,12 +145,12 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void Clear()
         {
-            using(var @lock = this.storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 foreach (var key in metadata.Keys)
                 {
-                    this.storage.Remove(this.GetItemStorageKey(key));
+                    this.Storage.Remove(this.GetItemStorageKey(key));
                 }
 
                 metadata.Count = 0;
@@ -154,9 +162,9 @@ namespace Bluepath.Storage.Structures.Collections
         public bool Contains(KeyValuePair<TKey, TValue> item)
         {
             var metadata = this.GetMetadata();
-            if(this.InternalContainsKey(item.Key, metadata))
+            if (this.InternalContainsKey(item.Key, metadata))
             {
-                return EqualityComparer<TValue>.Default.GetHashCode(this[item.Key]) 
+                return EqualityComparer<TValue>.Default.GetHashCode(this[item.Key])
                     == EqualityComparer<TValue>.Default.GetHashCode(item.Value);
             }
 
@@ -170,7 +178,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public int Count
         {
-            get 
+            get
             {
                 var metadata = this.GetMetadata();
                 return metadata.Count;
@@ -201,7 +209,7 @@ namespace Bluepath.Storage.Structures.Collections
         {
             try
             {
-                this.storage.Store(this.MetadataKey, new DistributedDictionaryMetadata<TKey>());
+                this.Storage.Store(this.MetadataKey, new DistributedDictionaryMetadata<TKey>());
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -211,12 +219,12 @@ namespace Bluepath.Storage.Structures.Collections
 
         private DistributedDictionaryMetadata<TKey> GetMetadata()
         {
-            return this.storage.Retrieve<DistributedDictionaryMetadata<TKey>>(this.MetadataKey);
+            return this.Storage.Retrieve<DistributedDictionaryMetadata<TKey>>(this.MetadataKey);
         }
 
         private void SetMetadata(DistributedDictionaryMetadata<TKey> metadata)
         {
-            this.storage.Update(this.MetadataKey, metadata);
+            this.Storage.Update(this.MetadataKey, metadata);
         }
 
         private bool InternalContainsKey(TKey key, DistributedDictionaryMetadata<TKey> metadata)
@@ -252,7 +260,7 @@ namespace Bluepath.Storage.Structures.Collections
 
             public DistributedDictionaryEnumerator(DistributedDictionary<XKey, XValue> dictionary)
             {
-                this.dictionaryLock = dictionary.storage.AcquireLock(dictionary.LockKey);
+                this.dictionaryLock = dictionary.Storage.AcquireLock(dictionary.LockKey);
                 this.dictionary = dictionary;
                 this.keys = this.dictionary.Keys;
                 this.currentIndex = -1;
@@ -277,7 +285,7 @@ namespace Bluepath.Storage.Structures.Collections
             public bool MoveNext()
             {
                 this.currentIndex++;
-                if(this.currentIndex >= this.keys.Count)
+                if (this.currentIndex >= this.keys.Count)
                 {
                     return false;
                 }

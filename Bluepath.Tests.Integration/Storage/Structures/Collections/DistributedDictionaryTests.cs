@@ -74,5 +74,34 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             dictionary.Values.Count.ShouldBe(3);
             dictionary.Values.ShouldContain("ola");
         }
+
+        [TestMethod]
+        public void DistributedDictionaryHandlesDistributedListAsValue()
+        {
+            var storage = new RedisStorage(Host);
+            var id = Guid.NewGuid().ToString();
+            var dictionary = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, Bluepath.Storage.Structures.Collections.DistributedList<string>>(storage, id);
+            var distributedList1 = new Bluepath.Storage.Structures.Collections.DistributedList<string>(storage, Guid.NewGuid().ToString());
+            var distributedList2 = new Bluepath.Storage.Structures.Collections.DistributedList<string>(storage, Guid.NewGuid().ToString());
+            distributedList1.Add("jack");
+            distributedList1.Add("checked");
+            distributedList1.Add("chicken");
+
+            distributedList2.Add("in");
+            distributedList2.Add("the");
+
+            dictionary.Add(0, distributedList1);
+            dictionary.Add(1, distributedList2);
+
+            var dictionaryCheck = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, Bluepath.Storage.Structures.Collections.DistributedList<string>>(storage, id);
+            dictionaryCheck.Count.ShouldBe(2);
+            var checkList1 = dictionaryCheck[0];
+            checkList1.Storage = storage;
+            var checkList2 = dictionaryCheck[1];
+            checkList2.Storage = storage;
+            checkList1.Count.ShouldBe(3);
+            checkList2.Count.ShouldBe(2);
+            checkList1[0].ShouldBe("jack");
+        }
     }
 }

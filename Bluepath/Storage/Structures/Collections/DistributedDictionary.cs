@@ -15,10 +15,37 @@ namespace Bluepath.Storage.Structures.Collections
         [NonSerialized]
         protected IExtendedStorage storage;
 
-        public DistributedDictionary(IExtendedStorage storage, string key)
+        protected IEqualityComparer<TKey> keyComparer;
+
+        protected IEqualityComparer<TValue> valueComparer;
+
+        public DistributedDictionary(
+            IExtendedStorage storage,
+            string key, 
+            IEqualityComparer<TKey> keyComparer = null,
+            IEqualityComparer<TValue> valueComparer = null
+            )
         {
             this.Storage = storage;
             this.key = key;
+            if(keyComparer==null)
+            {
+                this.keyComparer = EqualityComparer<TKey>.Default;
+            }
+            else
+            {
+                this.keyComparer = keyComparer;
+            }
+
+            if(valueComparer == null)
+            {
+                this.valueComparer = EqualityComparer<TValue>.Default;
+            }
+            else
+            {
+                this.valueComparer = valueComparer;
+            }
+
             this.Initialize();
         }
 
@@ -164,8 +191,8 @@ namespace Bluepath.Storage.Structures.Collections
             var metadata = this.GetMetadata();
             if (this.InternalContainsKey(item.Key, metadata))
             {
-                return EqualityComparer<TValue>.Default.GetHashCode(this[item.Key])
-                    == EqualityComparer<TValue>.Default.GetHashCode(item.Value);
+                return this.valueComparer.GetHashCode(this[item.Key])
+                    == this.valueComparer.GetHashCode(item.Value);
             }
 
             return false;
@@ -234,7 +261,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         private string GetItemStorageKey(TKey key)
         {
-            return string.Format("_ddictItem_{0}_{1}", EqualityComparer<TKey>.Default.GetHashCode(key), this.Key);
+            return string.Format("_ddictItem_{0}_{1}", this.keyComparer.GetHashCode(key), this.Key);
         }
 
         [Serializable]

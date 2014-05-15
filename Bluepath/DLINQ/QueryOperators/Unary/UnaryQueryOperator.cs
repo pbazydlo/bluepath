@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     public class UnaryQueryOperator<TOutput> : DistributedQuery<TOutput>
-        //where TOutput : new()
+    //where TOutput : new()
     {
         protected UnaryQueryOperator(DistributedQuerySettings settings)
             : base(settings)
@@ -64,18 +64,18 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                 // Tried implementing tests covering this case [DistributedThreadRemotelyExecutesStaticMethodTakingArrayAsParameterAndReturningArray],
                 // however they seem to work differently
                 var result = (UnaryQueryResult)thread.Result;
-                if(!collectionType.HasValue)
+                if (!collectionType.HasValue)
                 {
                     collectionType = result.CollectionType;
                 }
 
-                if(resultCollectionKey==string.Empty)
+                if (resultCollectionKey == string.Empty)
                 {
                     resultCollectionKey = result.CollectionKey;
                 }
             }
 
-            if(collectionType.Value==UnaryQueryResultCollectionType.DistributedList)
+            if (collectionType.Value == UnaryQueryResultCollectionType.DistributedList)
             {
                 var result = new DistributedList<TOutput>(this.Settings.Storage, resultCollectionKey);
                 return new DistributedEnumerableWrapper<TOutput>(

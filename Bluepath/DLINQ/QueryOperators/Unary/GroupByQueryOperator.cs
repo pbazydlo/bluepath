@@ -147,6 +147,31 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             return threads;
         }
 
+        public override IEnumerator<IGrouping<TGroupKey, TElement>> GetEnumerator()
+        {
+            UnaryQueryResultCollectionType? collectionType;
+            string resultCollectionKey;
+            ExecuteAndJoin(out collectionType, out resultCollectionKey);
+
+            if (collectionType.Value == UnaryQueryResultCollectionType.DistributedList)
+            {
+                throw new NotSupportedException();
+                //var result = new DistributedList<TOutput>(this.Settings.Storage, resultCollectionKey);
+                //return new DistributedEnumerableWrapper<TOutput>(
+                //    result,
+                //    this.Settings.Storage,
+                //    this.Settings.DefaultConnectionManager,
+                //    this.Settings.DefaultScheduler
+                //    ).GetEnumerator();
+            }
+            else
+            {
+                // TODO: cast might not work, also we should create variation of distributedenumerablewrapper so that after group by we can still use other expressions.
+                var result = new DistributedDictionary<TGroupKey, TElement>(this.Settings.Storage, resultCollectionKey, this.comparer);
+                return result.GetEnumerator() as IEnumerator<IGrouping<TGroupKey, TElement>>;
+            }
+        }
+
         [Serializable]
         private class GroupByQueryArguments<TSo, TGrK, TEl>
             : UnaryQueryArguments<TSo, IGrouping<TGrK, TEl>>

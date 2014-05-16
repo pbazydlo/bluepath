@@ -50,12 +50,12 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             }
         }
 
-        public override IEnumerator<TOutput> GetEnumerator()
+        protected void ExecuteAndJoin(out UnaryQueryResultCollectionType? collectionType, out string resultCollectionKey)
         {
             var threads = this.Execute();
 
-            UnaryQueryResultCollectionType? collectionType = null;
-            string resultCollectionKey = string.Empty;
+            collectionType = null;
+            resultCollectionKey = string.Empty;
             foreach (var thread in threads)
             {
                 thread.Join();
@@ -74,6 +74,13 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                     resultCollectionKey = result.CollectionKey;
                 }
             }
+        }
+
+        public override IEnumerator<TOutput> GetEnumerator()
+        {
+            UnaryQueryResultCollectionType? collectionType;
+            string resultCollectionKey;
+            ExecuteAndJoin(out collectionType, out resultCollectionKey);
 
             if (collectionType.Value == UnaryQueryResultCollectionType.DistributedList)
             {
@@ -87,7 +94,8 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             }
             else
             {
-                throw new NotImplementedException();
+                // as we don't have enough data to create distributed dictionary we can't do this here
+                throw new NotSupportedException();
             }
         }
 

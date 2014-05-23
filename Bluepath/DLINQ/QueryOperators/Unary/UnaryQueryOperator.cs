@@ -120,10 +120,16 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         [Serializable]
         protected class UnaryQueryResult
         {
+            private int collectionType { get; set; }
+
             /// <summary>
             /// Specifies type of collection used to store result - needs to be the SAME for all results.
             /// </summary>
-            public UnaryQueryResultCollectionType CollectionType { get; set; }
+            public UnaryQueryResultCollectionType CollectionType
+            {
+                get { return (UnaryQueryResultCollectionType)this.collectionType; }
+                set { this.collectionType = (int)value; }
+            }
 
             /// <summary>
             /// Specifies key of collection used to store result - needs to be the SAME for all results.
@@ -134,6 +140,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         /// <summary>
         /// Specifies collection type used to store result
         /// </summary>
+        [Serializable]
         protected enum UnaryQueryResultCollectionType
         {
             DistributedList,

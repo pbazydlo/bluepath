@@ -7,12 +7,41 @@
 
     using StackExchange.Redis;
 
+    [Serializable]
     public class RedisStorage : IExtendedStorage, IStorage
     {
-        private readonly ConnectionMultiplexer connection;
+        private const int ConnectRetryCount = 5;
+
+        private string configurationString;
+
+        [NonSerialized]
+        private ConnectionMultiplexer connection;
+        private ConnectionMultiplexer Connection 
+        {
+            get 
+            {
+                int retryNo = 0;
+                while(this.connection == null && retryNo < ConnectRetryCount)
+                {
+                    retryNo++;
+                    try
+                    {
+                        this.connection = ConnectionMultiplexer.Connect(this.configurationString);
+                    }
+                    catch(TimeoutException ex)
+                    {
+                        this.connection = null;
+                        Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo));
+                    }
+                }
+
+                return this.connection;
+            }
+        }
 
         public RedisStorage(string configurationString)
         {
+            this.configurationString = configurationString;
             this.connection = ConnectionMultiplexer.Connect(configurationString);
         }
 
@@ -42,7 +71,7 @@
 
         public T Retrieve<T>(string key)
         {
-            var db = this.connection.GetDatabase();
+            var db = this.Connection.GetDatabase();
             var transaction = db.CreateTransaction();
             transaction.AddCondition(Condition.KeyExists(key));
             var pendingResult = transaction.StringGetAsync(key);
@@ -59,7 +88,7 @@
 
         public void Remove(string key)
         {
-            var db = this.connection.GetDatabase();
+            var db = this.Connection.GetDatabase();
             var transaction = db.CreateTransaction();
             transaction.AddCondition(Condition.KeyExists(key));
             var pendingResult = transaction.KeyDeleteAsync(key);
@@ -92,19 +121,19 @@
 
         public void Subscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
         {
-            var sub = this.connection.GetSubscriber();
+            var sub = this.Connection.GetSubscriber();
             sub.Subscribe(channel, handler);
         }
 
         public void Unsubscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
         {
-            var sub = this.connection.GetSubscriber();
+            var sub = this.Connection.GetSubscriber();
             sub.Unsubscribe(channel, handler);
         }
 
         public void Publish(RedisChannel channel, string message)
         {
-            var sub = this.connection.GetSubscriber();
+            var sub = this.Connection.GetSubscriber();
 
             // TODO: this message could be potentially lost
             sub.Publish(channel, message, CommandFlags.FireAndForget);
@@ -112,12 +141,12 @@
 
         public void Dispose()
         {
-            this.connection.Dispose();
+            this.Connection.Dispose();
         }
 
         private bool InternalStore<T>(string key, T value, When when)
         {
-            var db = this.connection.GetDatabase();
+            var db = this.Connection.GetDatabase();
             return db.StringSet(key, value.Serialize(), null, when);
         }
     }

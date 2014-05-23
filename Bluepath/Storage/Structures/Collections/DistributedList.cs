@@ -14,7 +14,7 @@ namespace Bluepath.Storage.Structures.Collections
     {
         private string key;
 
-        [NonSerialized]
+        //[NonSerialized]
         protected IExtendedStorage storage;
 
         public DistributedList(IExtendedStorage storage, string key)

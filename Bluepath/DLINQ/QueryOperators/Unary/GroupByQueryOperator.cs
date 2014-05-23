@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bluepath.Extensions;
 
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
@@ -41,7 +42,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         protected override Threading.DistributedThread[] Execute()
         {
             // IGrouping<TGroupKey, TElement>
-            var func = new Func<GroupByQueryArguments<TSource, TGroupKey, TElement>, IBluepathCommunicationFramework, UnaryQueryResult>(
+            var func = new Func<GroupByQueryArguments<TSource, TGroupKey, TElement>, IBluepathCommunicationFramework, byte[]>(
                 (args, framework) =>
                 {
                     if (!(framework.Storage is IExtendedStorage))
@@ -107,7 +108,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                         {
                             CollectionKey = args.ResultCollectionKey,
                             CollectionType = UnaryQueryResultCollectionType.DistributedDictionary
-                        };
+                        }.Serialize();
                 });
 
             var collectionToProcess = new DistributedList<TSource>(this.Settings.Storage, this.Settings.CollectionKey);
@@ -151,7 +152,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         {
             UnaryQueryResultCollectionType? collectionType;
             string resultCollectionKey;
-            ExecuteAndJoin(out collectionType, out resultCollectionKey);
+            this.ExecuteAndJoin(out collectionType, out resultCollectionKey);
 
             if (collectionType.Value == UnaryQueryResultCollectionType.DistributedList)
             {
@@ -166,9 +167,9 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             }
             else
             {
-                // TODO: cast might not work, also we should create variation of distributedenumerablewrapper so that after group by we can still use other expressions.
-                var result = new DistributedDictionary<TGroupKey, TElement>(this.Settings.Storage, resultCollectionKey, this.comparer);
-                return result.GetEnumerator() as IEnumerator<IGrouping<TGroupKey, TElement>>;
+                // TODO: maybe we should create variation of distributedenumerablewrapper so that after group by we can still use other expressions.
+                var result = new DistributedDictionary<TGroupKey, DistributedList<TElement>>(this.Settings.Storage, resultCollectionKey, this.comparer);
+                return new GroupingAdapter<TGroupKey, TElement>(result);
             }
         }
 
@@ -181,6 +182,70 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             public Func<TSource, TElement> ElementSelector { get; set; }
 
             public IEqualityComparer<TGroupKey> Comparer { get; set; }
+        }
+
+        [Serializable]
+        private class GroupingAdapter<TGrK, TEl> : IEnumerator<IGrouping<TGrK, TEl>>
+        {
+            private DistributedDictionary<TGrK, DistributedList<TEl>> source;
+            private IEnumerator<KeyValuePair<TGrK, DistributedList<TEl>>> sourceEnumerator;
+
+            public GroupingAdapter(DistributedDictionary<TGrK, DistributedList<TEl>> distributedDictionaryToWrap)
+            {
+                this.source = distributedDictionaryToWrap;
+                this.sourceEnumerator = this.source.GetEnumerator();
+            }
+
+            public IGrouping<TGrK, TEl> Current
+            {
+                get { return new GroupingStub<TGrK, TEl>(this.sourceEnumerator.Current); }
+            }
+
+            public void Dispose()
+            {
+                this.sourceEnumerator.Dispose();
+            }
+
+            object System.Collections.IEnumerator.Current
+            {
+                get { return this.Current; }
+            }
+
+            public bool MoveNext()
+            {
+                return this.sourceEnumerator.MoveNext();
+            }
+
+            public void Reset()
+            {
+                this.sourceEnumerator.Reset();
+            }
+
+            [Serializable]
+            private class GroupingStub<TGK, TE> : IGrouping<TGK, TE>
+            {
+                private KeyValuePair<TGK, DistributedList<TE>> source;
+
+                public GroupingStub(KeyValuePair<TGK, DistributedList<TE>> keyValuePairToWrap)
+                {
+                    this.source = keyValuePairToWrap;
+                }
+
+                public TGK Key
+                {
+                    get { return this.source.Key; }
+                }
+
+                public IEnumerator<TE> GetEnumerator()
+                {
+                    return this.source.Value.GetEnumerator();
+                }
+
+                System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+                {
+                    return this.source.Value.GetEnumerator();
+                }
+            }
         }
     }
 }

@@ -249,5 +249,39 @@ namespace Bluepath.Tests.Integration.DLINQ
                 listener2.Stop();
             }
         }
+
+        [TestMethod]
+        public void DLINQPerformsDistributedGroupBy()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
+            try
+            {
+                var inputCollection = new List<string>();
+                for (int i = 0; i < 100; i++)
+                {
+                    inputCollection.Add(string.Format("{0}{1}", (i % 2 == 0 ? "a" : "b"), i));
+                }
+
+                var locallyGrouped = inputCollection.GroupBy(s => s[0]);
+                var localDict = locallyGrouped.ToDictionary(g => g.Key, g => g);
+
+                var storage = new RedisStorage(Host);
+
+                var groupedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .GroupBy(s => s[0]);
+                var processedCollection = groupedCollection.ToDictionary(g => g.Key, g => g);
+
+                processedCollection.Keys.Count.ShouldBe(2);
+                processedCollection['a'].Count().ShouldBe(localDict['a'].Count());
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
     }
 }

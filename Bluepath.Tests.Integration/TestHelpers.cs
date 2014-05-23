@@ -79,6 +79,7 @@
                                 if (line.Contains("The server is now ready"))
                                 {
                                     isRedisStarted = true;
+                                    break;
                                 }
 
                                 if (line.Contains("system error"))
@@ -93,6 +94,7 @@
                         Debug.WriteLine(string.Format("CONSOLE[{0}]> (EOF)", process.Id));
                     }
                 });
+            t.IsBackground = true;
             t.Start();
 
             Thread.Sleep(1000);

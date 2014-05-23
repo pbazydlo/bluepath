@@ -96,9 +96,9 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             var dictionaryCheck = new Bluepath.Storage.Structures.Collections.DistributedDictionary<int, Bluepath.Storage.Structures.Collections.DistributedList<string>>(storage, id);
             dictionaryCheck.Count.ShouldBe(2);
             var checkList1 = dictionaryCheck[0];
-            checkList1.Storage = storage;
+            //checkList1.Storage = storage;
             var checkList2 = dictionaryCheck[1];
-            checkList2.Storage = storage;
+            //checkList2.Storage = storage;
             checkList1.Count.ShouldBe(3);
             checkList2.Count.ShouldBe(2);
             checkList1[0].ShouldBe("jack");

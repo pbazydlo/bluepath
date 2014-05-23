@@ -301,8 +301,7 @@ namespace Bluepath.DLINQ
             if (keySelector == null) throw new ArgumentNullException("keySelector");
             if (elementSelector == null) throw new ArgumentNullException("elementSelector");
 
-            throw new NotImplementedException();
-            //return new GroupByQueryOperator<TSource, TKey, TElement>(source, keySelector, elementSelector, comparer);
+            return new GroupByQueryOperator<TSource, TKey, TElement>(source, keySelector, elementSelector, comparer);
         }
 
         /// <summary>
@@ -397,8 +396,7 @@ namespace Bluepath.DLINQ
             if (source == null) throw new ArgumentNullException("source");
             if (keySelector == null) throw new ArgumentNullException("keySelector");
 
-            throw new NotImplementedException();
-            //return new GroupByQueryOperator<TSource, TKey, TSource>(source, keySelector, null, comparer);
+            return new GroupByQueryOperator<TSource, TKey, TSource>(source, keySelector, null, comparer);
         }
     }
 }

@@ -182,6 +182,7 @@
                             Error = executor.Exception
                         };
 
+                        // TODO: Serialization of result can fail and we should do something about it (like send an error message back)
                         client.ExecuteCallback(eid, result);
                     }
                 });

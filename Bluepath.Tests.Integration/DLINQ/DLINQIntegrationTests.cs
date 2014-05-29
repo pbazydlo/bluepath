@@ -319,6 +319,7 @@ namespace Bluepath.Tests.Integration.DLINQ
                 Log.TraceMessage("GroupBy processing finished, begin asserts");
                 processedCollection.Keys.Count.ShouldBe(2);
                 processedCollection['a'].Count().ShouldBe(localDict['a'].Count());
+                processedCollection['b'].Count().ShouldBe(localDict['b'].Count());
                 Log.TraceMessage("GroupBy test passed");
             }
             catch (Exception ex)

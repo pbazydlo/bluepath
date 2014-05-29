@@ -57,7 +57,6 @@
         public RedisStorage(string configurationString)
         {
             this.configurationString = configurationString;
-            this.connection = ConnectionMultiplexer.Connect(configurationString);
         }
 
         public void Store<T>(string key, T value)
@@ -134,17 +133,26 @@
 
         public void Remove(string key)
         {
-            var db = this.Connection.GetDatabase();
-            var transaction = db.CreateTransaction();
-            transaction.AddCondition(Condition.KeyExists(key));
-            var pendingResult = transaction.KeyDeleteAsync(key);
-            var transactionSuccess = transaction.Execute();
-            if (!transactionSuccess)
+            bool succededRemoving = false;
+            do
             {
-                throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
-            }
+                var db = this.Connection.GetDatabase();
+                var transaction = db.CreateTransaction();
+                transaction.AddCondition(Condition.KeyExists(key));
+                var pendingResult = transaction.KeyDeleteAsync(key);
+                var transactionSuccess = transaction.Execute();
+                if (!transactionSuccess)
+                {
+                    throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                }
 
-            pendingResult.Wait();
+                pendingResult.Wait();
+                succededRemoving = pendingResult.Result;
+                if(!succededRemoving)
+                {
+                    Log.TraceMessage(string.Format("Removing key failed! [{0}]", key));
+                }
+            } while (!succededRemoving);
         }
 
         public IStorageLock AcquireLock(string key)
@@ -182,7 +190,7 @@
             var sub = this.Connection.GetSubscriber();
 
             // TODO: this message could be potentially lost
-            sub.Publish(channel, message, CommandFlags.FireAndForget);
+            sub.Publish(channel, message, CommandFlags.None);
         }
 
         public void Dispose()
@@ -190,10 +198,18 @@
             this.Connection.Dispose();
         }
 
-        private bool InternalStore<T>(string key, T value, When when)
+        private bool InternalStore<T>(string key, T value, When when, int retry = ConnectRetryCount)
         {
-            var db = this.Connection.GetDatabase();
-            return db.StringSet(key, value.Serialize(), null, when);
+            try
+            {
+                var db = this.Connection.GetDatabase();
+                return db.StringSet(key, value.Serialize(), null, when);
+            }
+            catch(RedisConnectionException ex)
+            {
+                Log.ExceptionMessage(ex, string.Format("InternalStore failed, retry: {0}", retry));
+                return this.InternalStore<T>(key, value, when, retry - 1);
+            }
         }
     }
 }

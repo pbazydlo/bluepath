@@ -163,27 +163,34 @@
             {
                 var t = new Thread(() =>
                 {
-                    using (var client =
-                        new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
-                            callbackUri.Binding,
-                            callbackUri.ToEndpointAddress()))
+                    try
                     {
-                        // Join on local executor doesn't throw exceptions by design
-                        // Exception caused by user code (if any) can be accessed using Exception property
-                        executor.Join();
-
-                        Log.TraceMessage(string.Format("Sending callback with result. State: {0}. Elapsed time: {1}.", executor.ExecutorState, executor.ElapsedTime), keywords: executor.Eid.EidAsLogKeywords());
-
-                        var result = new ServiceReferences.RemoteExecutorServiceResult
+                        using (var client =
+                            new Bluepath.ServiceReferences.RemoteExecutorServiceClient(
+                                callbackUri.Binding,
+                                callbackUri.ToEndpointAddress()))
                         {
-                            Result = executor.IsResultAvailable ? executor.Result : null,
-                            ElapsedTime = executor.ElapsedTime,
-                            ExecutorState = (ServiceReferences.ExecutorState)((int)executor.ExecutorState),
-                            Error = executor.Exception
-                        };
+                            // Join on local executor doesn't throw exceptions by design
+                            // Exception caused by user code (if any) can be accessed using Exception property
+                            executor.Join();
 
-                        // TODO: Serialization of result can fail and we should do something about it (like send an error message back)
-                        client.ExecuteCallback(eid, result);
+                            Log.TraceMessage(string.Format("Sending callback with result. State: {0}. Elapsed time: {1}.", executor.ExecutorState, executor.ElapsedTime), keywords: executor.Eid.EidAsLogKeywords());
+
+                            var result = new ServiceReferences.RemoteExecutorServiceResult
+                            {
+                                Result = executor.IsResultAvailable ? executor.Result : null,
+                                ElapsedTime = executor.ElapsedTime,
+                                ExecutorState = (ServiceReferences.ExecutorState)((int)executor.ExecutorState),
+                                Error = executor.Exception
+                            };
+
+                            // TODO: Serialization of result can fail and we should do something about it (like send an error message back)
+                            client.ExecuteCallback(eid, result);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        Log.ExceptionMessage(ex, "Send callback failed.");
                     }
                 });
 
@@ -199,6 +206,7 @@
         /// <param name="executeResult">Executor processing result.</param>
         public void ExecuteCallback(Guid eid, RemoteExecutorServiceResult executeResult)
         {
+            Log.TraceMessage(string.Format("Received execute callback."), Log.MessageType.Trace, eid.EidAsLogKeywords());
             var executor = GetRemoteExecutor(eid);
             executor.Pulse(executeResult.Convert());
         }

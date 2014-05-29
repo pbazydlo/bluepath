@@ -103,6 +103,7 @@
                     {
                         this.wasPulsed = false;
 
+                        int retryNo = 0;
                         // lock is already acquired
                         while (!this.wasPulsed)
                         {
@@ -123,15 +124,12 @@
                             else
                             {
                                 Monitor.Wait(this.acquireLock, timeout ?? TimeSpan.FromMilliseconds(1000));
-                                try
-                                {
-                                    var lll = this.redisStorage.Retrieve<int>(this.LockKey);
-                                    var lll2 = this.redisStorage.Retrieve<string>(this.PulseFile);
-                                }
-                                catch(Exception ex)
-                                {
-                                    Log.ExceptionMessage(ex);
-                                }
+                            }
+
+                            retryNo++;
+                            if(retryNo > 5)
+                            {
+                                break;
                             }
                         }
                     }

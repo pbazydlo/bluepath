@@ -6,6 +6,7 @@
     using Bluepath.Storage.Locks;
 
     using StackExchange.Redis;
+    using Bluepath.Exceptions;
 
     [Serializable]
     public class RedisStorage : IExtendedStorage, IStorage
@@ -16,22 +17,36 @@
 
         [NonSerialized]
         private ConnectionMultiplexer connection;
+
+        private object connectionLock = new object();
+
         private ConnectionMultiplexer Connection 
         {
             get 
             {
-                int retryNo = 0;
-                while(this.connection == null && retryNo < ConnectRetryCount)
+                lock (this.connectionLock)
                 {
-                    retryNo++;
-                    try
+                    int retryNo = 0;
+                    if (this.connection != null && this.connection.IsConnected == false)
                     {
-                        this.connection = ConnectionMultiplexer.Connect(this.configurationString);
-                    }
-                    catch(TimeoutException ex)
-                    {
+                        Log.TraceMessage("There seems to be Redis connection failure, reseting connection.");
+                        this.connection.Close();
                         this.connection = null;
-                        Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo));
+                    }
+
+                    while (this.connection == null && retryNo < ConnectRetryCount)
+                    {
+                        retryNo++;
+                        try
+                        {
+                            Log.TraceMessage("There is no Redis connection available - establishing connection.");
+                            this.connection = ConnectionMultiplexer.Connect(this.configurationString);
+                        }
+                        catch (TimeoutException ex)
+                        {
+                            this.connection = null;
+                            Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo));
+                        }
                     }
                 }
 
@@ -49,7 +64,7 @@
         {
             if (!this.InternalStore(key, value, When.NotExists))
             {
-                throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] already exists!", key));
+                throw new StorageKeyAlreadyExistsException("key", string.Format("Such key[{0}] already exists!", key));
             }
         }
 
@@ -57,7 +72,7 @@
         {
             if (!this.InternalStore(key, value, When.Always))
             {
-                throw new Exception("Operation failed");
+                throw new StorageOperationException("Operation failed");
             }
         }
 
@@ -65,25 +80,50 @@
         {
             if (!this.InternalStore(key, newValue, When.Exists))
             {
-                throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
             }
         }
 
         public T Retrieve<T>(string key)
         {
+            var pendingResult = InternalRetrieve(key, ConnectRetryCount);
+
+            return ((byte[])pendingResult.Result).Deserialize<T>();
+        }
+
+        private System.Threading.Tasks.Task<RedisValue> InternalRetrieve(string key, int retry)
+        {
             var db = this.Connection.GetDatabase();
             var transaction = db.CreateTransaction();
             transaction.AddCondition(Condition.KeyExists(key));
             var pendingResult = transaction.StringGetAsync(key);
-            var transactionSuccess = transaction.Execute();
-            if (!transactionSuccess)
+            try
             {
-                throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                var transactionSuccess = transaction.Execute();
+                if (!transactionSuccess)
+                {
+                    throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                }
+            }
+            catch (RedisConnectionException ex)
+            {
+                Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key));
+                if (ex.InnerException != null && ex.InnerException is OverflowException)
+                {
+                    // pendingResult.Dispose();
+                    if(retry <= 0)
+                    {
+                        throw new StorageOperationException("InternalRetrieve failed", ex);
+                    }
+
+                    return this.InternalRetrieve(key, retry - 1);
+                }
             }
 
+            Log.TraceMessage("InternalRetrieve waits for result...");
             pendingResult.Wait();
-
-            return ((byte[])pendingResult.Result).Deserialize<T>();
+            Log.TraceMessage("InternalRetrieve got result.");
+            return pendingResult;
         }
 
         public void Remove(string key)
@@ -95,7 +135,7 @@
             var transactionSuccess = transaction.Execute();
             if (!transactionSuccess)
             {
-                throw new ArgumentOutOfRangeException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
             }
 
             pendingResult.Wait();

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Bluepath.Extensions;
 using Bluepath.Storage.Locks;
+using Bluepath.Exceptions;
 
 namespace Bluepath.Storage.Structures.Collections
 {
@@ -88,7 +89,7 @@ namespace Bluepath.Storage.Structures.Collections
                 {
                     return this.Storage.Retrieve<T>(this.GetItemKey(index));
                 }
-                catch (ArgumentOutOfRangeException ex)
+                catch (StorageKeyDoesntExistException ex)
                 {
                     throw new IndexOutOfRangeException("It seems that index was out of range, check inner exception for details.", ex);
                 }
@@ -197,7 +198,7 @@ namespace Bluepath.Storage.Structures.Collections
                         Count = 0
                     }, initialize: true);
             }
-            catch (ArgumentOutOfRangeException)
+            catch (StorageKeyAlreadyExistsException)
             {
                 // if already exists, read metadata (for type checking)
                 this.GetMetadata();

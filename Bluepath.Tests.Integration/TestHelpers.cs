@@ -88,10 +88,10 @@
                                 }
                             }
 
-                            Debug.WriteLine(string.Format("CONSOLE[{1}]> {0}", line, process.Id));
+                            Log.TraceMessage(string.Format("CONSOLE[{1}]> {0}", line, process.Id));
                         }
 
-                        Debug.WriteLine(string.Format("CONSOLE[{0}]> (EOF)", process.Id));
+                        Log.TraceMessage(string.Format("CONSOLE[{0}]> (EOF)", process.Id));
                     }
                 });
             t.IsBackground = true;

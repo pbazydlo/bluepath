@@ -57,10 +57,15 @@
     <Compile Include="DLINQ\QueryOperators\Unary\WhereQueryOperator.cs" />
     <Compile Include="Exceptions\CannotInitializeDefaultConnectionManagerException.cs" />
     <Compile Include="Exceptions\DelegateExpectedException.cs" />
+    <Compile Include="Exceptions\DistributedDictionaryKeyAlreadyExistsException.cs" />
+    <Compile Include="Exceptions\ExecutorDoesntExistException.cs" />
     <Compile Include="Exceptions\MissingRemoteServiceReferenceException.cs" />
     <Compile Include="Exceptions\RemoteException.cs" />
     <Compile Include="Exceptions\RemoteJoinAbortedException.cs" />
     <Compile Include="Exceptions\ResultNotAvailableException.cs" />
+    <Compile Include="Exceptions\StorageKeyAlreadyExistsException.cs" />
+    <Compile Include="Exceptions\StorageKeyDoesntExistException.cs" />
+    <Compile Include="Exceptions\StorageOperationException.cs" />
     <Compile Include="Executor\Executor.cs" />
     <Compile Include="Executor\ExecutorState.cs" />
     <Compile Include="Executor\ILocalExecutor.cs" />

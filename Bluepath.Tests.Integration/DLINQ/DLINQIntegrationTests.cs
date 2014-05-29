@@ -134,6 +134,46 @@ namespace Bluepath.Tests.Integration.DLINQ
         }
 
         [TestMethod]
+        public void DLINQPerformsStackedWhereAndSelect()
+        {
+            BluepathListener listener1;
+            BluepathListener listener2;
+            ConnectionManager connectionManager;
+            PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
+
+            try
+            {
+                var inputCollection = new List<string>(100);
+                for (int i = 0; i < 100; i++)
+                {
+                    inputCollection.Add(i.ToString());
+                }
+
+                var expectedResult = (from val in inputCollection
+                                      where val.Length > 1
+                                      select string.Format("a{0}", val)).ToArray().OrderBy(x => x).ToArray();
+
+                var storage = new RedisStorage(Host);
+
+                var processedCollection = inputCollection.AsDistributed(storage, connectionManager)
+                    .Where(val => val.Length > 1)
+                    .ToList().AsDistributed(storage, connectionManager)
+                    .Select(val => string.Format("a{0}", val)).ToList().OrderBy(x => x).ToList();
+
+                processedCollection.Count.ShouldBe(expectedResult.Length);
+                for (int i = 0; i < processedCollection.Count; i++)
+                {
+                    processedCollection[i].ShouldBe(expectedResult[i]);
+                }
+            }
+            finally
+            {
+                listener1.Stop();
+                listener2.Stop();
+            }
+        }
+
+        [TestMethod]
         public void DLINQPerformsDistributedSelectMany()
         {
             BluepathListener listener1;
@@ -253,9 +293,11 @@ namespace Bluepath.Tests.Integration.DLINQ
         [TestMethod]
         public void DLINQPerformsDistributedGroupBy()
         {
+            bool isFailed = false;
             BluepathListener listener1;
             BluepathListener listener2;
             ConnectionManager connectionManager;
+            Log.TraceMessage(string.Format("GroupBy test lift off! {0}", DateTime.Now));
             PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
             try
             {
@@ -272,15 +314,27 @@ namespace Bluepath.Tests.Integration.DLINQ
 
                 var groupedCollection = inputCollection.AsDistributed(storage, connectionManager)
                     .GroupBy(s => s[0]);
+                Log.TraceMessage("GroupBy Begin actual processing");
                 var processedCollection = groupedCollection.ToDictionary(g => g.Key, g => g);
-
+                Log.TraceMessage("GroupBy processing finished, begin asserts");
                 processedCollection.Keys.Count.ShouldBe(2);
                 processedCollection['a'].Count().ShouldBe(localDict['a'].Count());
+                Log.TraceMessage("GroupBy test passed");
+            }
+            catch (Exception ex)
+            {
+                Log.ExceptionMessage(ex);
+                isFailed = true;
             }
             finally
             {
                 listener1.Stop();
                 listener2.Stop();
+                Log.TraceMessage(string.Format("GroupBy test finished, isFailed: {0}", isFailed));
+                if(isFailed)
+                {
+                    Assert.Fail();
+                }
             }
         }
     }

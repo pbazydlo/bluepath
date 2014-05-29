@@ -1,4 +1,5 @@
-﻿using Bluepath.Storage.Locks;
+﻿using Bluepath.Exceptions;
+using Bluepath.Storage.Locks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,7 +87,7 @@ namespace Bluepath.Storage.Structures.Collections
                 var metadata = this.GetMetadata();
                 if (this.InternalContainsKey(key, metadata))
                 {
-                    throw new ArgumentException("Cannot add duplicate key!", "key");
+                    throw new DistributedDictionaryKeyAlreadyExistsException("Cannot add duplicate key!", "key");
                 }
 
                 metadata.Count++;
@@ -238,7 +239,7 @@ namespace Bluepath.Storage.Structures.Collections
             {
                 this.Storage.Store(this.MetadataKey, new DistributedDictionaryMetadata<TKey>());
             }
-            catch (ArgumentOutOfRangeException)
+            catch (StorageKeyAlreadyExistsException)
             {
                 this.GetMetadata();
             }

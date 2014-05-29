@@ -80,7 +80,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         {
             UnaryQueryResultCollectionType? collectionType;
             string resultCollectionKey;
-            ExecuteAndJoin(out collectionType, out resultCollectionKey);
+            this.ExecuteAndJoin(out collectionType, out resultCollectionKey);
 
             if (collectionType.Value == UnaryQueryResultCollectionType.DistributedList)
             {

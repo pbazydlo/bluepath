@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Bluepath.Extensions;
+using Bluepath.Exceptions;
 
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
@@ -57,8 +58,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                         args.ResultCollectionKey,
                         args.Comparer
                         );
-                    Dictionary<TGroupKey, DistributedList<TElement>> localResult
-                        = new Dictionary<TGroupKey, DistributedList<TElement>>(args.Comparer);
+                    var localResult = new Dictionary<TGroupKey, DistributedList<TElement>>(args.Comparer);
                     int index = 0;
                     for (int i = args.StartIndex; i < args.StopIndex; i++)
                     {
@@ -75,7 +75,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                                 sharedResult.Add(key, keyList);
                                 localResult[key] = keyList;
                             }
-                            catch (ArgumentException)
+                            catch (DistributedDictionaryKeyAlreadyExistsException)
                             {
                                 // specified key already exists - just fetch the list
                                 keyList = sharedResult[key];

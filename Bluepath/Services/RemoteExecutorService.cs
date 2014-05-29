@@ -9,6 +9,7 @@
     using Bluepath.Executor;
     using Bluepath.Extensions;
     using Bluepath.Framework;
+    using Bluepath.Exceptions;
 
     /// <summary>
     /// Represents endpoint, runs thread using local executor on the remote machine.
@@ -26,7 +27,7 @@
         /// </summary>
         /// <param name="eid">Identifier of the executor.</param>
         /// <returns>Local executor.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
+        /// <exception cref="ExecutorDoesntExistException">Thrown if executor with given id doesn't exist.</exception>
         public static ILocalExecutor GetExecutor(Guid eid)
         {
             var sourcePort = RemoteExecutorService.GetPortNumberFromRequest();
@@ -41,7 +42,7 @@
             {
                 if (!Executors[sourcePort].ContainsKey(eid))
                 {
-                    throw new ArgumentOutOfRangeException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
+                    throw new ExecutorDoesntExistException("eid", string.Format("Executor with eid '{0}' doesn't exist.", eid));
                 }
 
                 getSuccess = Executors[sourcePort].TryGetValue(eid, out executor);
@@ -56,7 +57,7 @@
         /// </summary>
         /// <param name="eid">Executor identifier</param>
         /// <returns>Remote executor.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if executor with given id doesn't exist.</exception>
+        /// <exception cref="ExecutorDoesntExistException">Thrown if executor with given id doesn't exist.</exception>
         public static IRemoteExecutor GetRemoteExecutor(Guid eid)
         {
             IRemoteExecutor executor;
@@ -65,7 +66,7 @@
             {
                 if (!RemoteExecutors.ContainsKey(eid))
                 {
-                    throw new ArgumentOutOfRangeException("eid", string.Format("RemoteExecutor with eid '{0}' doesn't exist.", eid));
+                    throw new ExecutorDoesntExistException("eid", string.Format("RemoteExecutor with eid '{0}' doesn't exist.", eid));
                 }
 
                 getSuccess = RemoteExecutors.TryGetValue(eid, out executor);
@@ -130,7 +131,6 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
                 Log.ExceptionMessage(ex);
                 throw;
             }

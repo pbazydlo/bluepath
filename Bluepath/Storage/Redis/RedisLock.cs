@@ -6,6 +6,7 @@
     using Bluepath.Storage.Locks;
 
     using StackExchange.Redis;
+    using Bluepath.Exceptions;
 
     public class RedisLock : IStorageLock
     {
@@ -98,7 +99,7 @@
                         this.redisStorage.Store(this.LockKey, 1);
                         wasLockAcquired = true;
                     }
-                    catch (ArgumentOutOfRangeException)
+                    catch (StorageKeyAlreadyExistsException)
                     {
                         this.wasPulsed = false;
 
@@ -179,7 +180,7 @@
                         {
                             this.redisStorage.Remove(this.PulseFile);
                         }
-                        catch (ArgumentOutOfRangeException)
+                        catch (StorageKeyDoesntExistException)
                         {
                             // failed - need to sleep longer
                             return;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bluepath.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -102,7 +103,7 @@ namespace Bluepath.Storage.Structures
             {
                 this.storage.Store(this.Key, value);
             }
-            catch (ArgumentOutOfRangeException)
+            catch (StorageKeyAlreadyExistsException)
             {
                 // if already exists, ignore
             }

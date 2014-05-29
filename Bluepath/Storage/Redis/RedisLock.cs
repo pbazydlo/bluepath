@@ -123,6 +123,15 @@
                             else
                             {
                                 Monitor.Wait(this.acquireLock, timeout ?? TimeSpan.FromMilliseconds(1000));
+                                try
+                                {
+                                    var lll = this.redisStorage.Retrieve<int>(this.LockKey);
+                                    var lll2 = this.redisStorage.Retrieve<string>(this.PulseFile);
+                                }
+                                catch(Exception ex)
+                                {
+                                    Log.ExceptionMessage(ex);
+                                }
                             }
                         }
                     }
@@ -132,6 +141,7 @@
 
             this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
             this.isAcquired = true;
+            Log.TraceMessage(string.Format("Lock acquired key: '{0}'", this.LockKey));
             return true;
         }
 
@@ -139,7 +149,18 @@
         {
             this.isAcquired = false;
             this.redisStorage.Remove(this.LockKey);
+            try
+            {
+                this.redisStorage.Retrieve<int>(this.LockKey);
+                Log.TraceMessage(string.Format("Key wasn't removed [{0}]", this.LockKey));
+            }
+            catch(StorageKeyDoesntExistException)
+            {
+
+            }
+
             this.redisStorage.Publish(this.LockChannel, "release");
+            Log.TraceMessage(string.Format("Lock released key: '{0}'", this.LockKey));
         }
 
         public void Dispose()

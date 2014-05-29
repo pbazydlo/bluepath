@@ -105,19 +105,25 @@
                     throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
                 }
             }
-            catch (RedisConnectionException ex)
+            catch (Exception ex)
             {
-                Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key));
-                if (ex.InnerException != null && ex.InnerException is OverflowException)
+                if (ex is RedisConnectionException || ex is TimeoutException)
                 {
-                    // pendingResult.Dispose();
-                    if(retry <= 0)
+                    Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key));
+                    if ((ex.InnerException != null && ex.InnerException is OverflowException)
+                        || ex is TimeoutException)
                     {
-                        throw new StorageOperationException("InternalRetrieve failed", ex);
-                    }
+                        // pendingResult.Dispose();
+                        if (retry <= 0)
+                        {
+                            throw new StorageOperationException("InternalRetrieve failed", ex);
+                        }
 
-                    return this.InternalRetrieve(key, retry - 1);
+                        return this.InternalRetrieve(key, retry - 1);
+                    }
                 }
+
+                throw;
             }
 
             Log.TraceMessage("InternalRetrieve waits for result...");

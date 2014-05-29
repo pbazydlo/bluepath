@@ -17,6 +17,7 @@
         private readonly object waitForCallbackLock = new object();
         private readonly TimeSpan repeatedTryJoinDelayTime = new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 1, milliseconds: 0);
         private RemoteExecutorServiceResult callbackResult;
+        private bool callbackReceived = false;
         private object result;
         private Thread joinThread;
         private ServiceUri callbackUri;
@@ -100,7 +101,7 @@
                                 lock (this.waitForCallbackLock)
                                 {
                                     // Check for buffered callbacks that we may have missed before RemoteExecutor.Join was called
-                                    if (this.callbackResult == null)
+                                    if (!this.callbackReceived)
                                     {
                                         // TODO: What if remote executor fails and we never receive callback
                                         // (not necessarily to be solved here, maybe in 'node discovery' layer)
@@ -234,6 +235,7 @@
         {
             lock (this.waitForCallbackLock)
             {
+                this.callbackReceived = true;
                 // TODO: what do we do in case of second (possibly repeated due to network fault) Pulse?
                 // if(this.callbackResult != null)
                 // {

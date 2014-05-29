@@ -53,6 +53,7 @@
                     keywords.ToLogString(),
                     exception.Message,
                     memberName);
+            // TODO aggregate exceptions
 
             if ((type & MessageType.UserCodeException) == MessageType.UserCodeException)
             {

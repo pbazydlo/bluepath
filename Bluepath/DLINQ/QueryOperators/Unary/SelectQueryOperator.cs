@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 namespace Bluepath.DLINQ.QueryOperators.Unary
 {
     internal class SelectQueryOperator<TInput, TOutput> : UnaryQueryOperator<TOutput>
-        //where TInput : new()
-        //where TOutput : new()
+    //where TInput : new()
+    //where TOutput : new()
     {
         private Func<TInput, TOutput> selector;
 
         internal SelectQueryOperator(DistributedQuery<TInput> query, Func<TInput, TOutput> selector)
-            : base(query.Settings)
+            : base(query)
         {
             this.selector = selector;
         }
@@ -62,7 +62,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             // TODO: Partition size should be calculated!
             var partitionSize = DistributedEnumerable.PartitionSize;
             var partitionNum = collectionCount / partitionSize;
-            if(partitionNum==0)
+            if (partitionNum == 0)
             {
                 partitionNum = 1;
             }

@@ -22,7 +22,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
                                          Func<TLeftInput, IEnumerable<TRightInput>> rightChildSelector,
                                          Func<TLeftInput, int, IEnumerable<TRightInput>> indexedRightChildSelector,
                                          Func<TLeftInput, TRightInput, TOutput> resultSelector)
-            : base(leftChild.Settings)
+            : base(leftChild)
         {
             this.rightChildSelector = rightChildSelector;
             this.indexedRightChildSelector = indexedRightChildSelector;

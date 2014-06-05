@@ -102,6 +102,17 @@
 
             return xml;
         }
+
+        public void Serialize(Stream stream)
+        {
+            var xml = default(string);
+            var xmlSerializer = new XmlSerializer(typeof(LogType), Constants.Namespace);
+
+            using (var xmlWriter = XmlWriter.Create(stream))
+            {
+                xmlSerializer.Serialize(xmlWriter, this);
+            }
+        }
     }
 
     public partial class TraceType

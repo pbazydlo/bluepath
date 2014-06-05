@@ -1,16 +1,24 @@
 ﻿namespace Bluepath
 {
     using Bluepath.DLINQ;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
+    using Bluepath.Reporting.OpenXes;
+    using Bluepath.Services;
+    using Bluepath.Storage.Redis;
+    using Bluepath.Storage.Structures.Collections;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
+    using System.IO;
+    using System.Runtime.CompilerServices;
+    using System.Text;
 
     public class Log
     {
+        private const string RedisHost = "localhost";
+        private const string RedisXesLogKey = "BluepathReportingOpenXes";
+        private static bool pauseLogging = false;
+
         private Log()
         {
         }
@@ -93,10 +101,46 @@ using System.Text;
             var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
+            // Log.WriteToStorageList(message);
         }
 
-        private static WriteToStorage() {
-            new 
+        private static void WriteToStorageList(string activity) 
+        {
+            if (pauseLogging)
+            {
+                return;
+            }
+
+            pauseLogging = true;
+            
+            var resource = BluepathListener.NodeGuid.ToString().Substring(6);
+            var storage = new RedisStorage(RedisHost);
+            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+            list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Start));
+            list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
+
+            pauseLogging = false;
+        }
+
+        public static void SaveXes(string fileName, string caseName = null)
+        {
+            var storage = new RedisStorage(RedisHost);
+            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+
+            var @case = new TraceType(caseName ?? Guid.NewGuid().ToString(), list);
+            var log = LogType.Create(new[] { @case });
+
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
+            {
+                log.Serialize(file.BaseStream);
+            }
+        }
+
+        public static void ClearXes()
+        {
+            var storage = new RedisStorage(RedisHost);
+            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+            list.Clear();
         }
     }
 

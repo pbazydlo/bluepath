@@ -105,7 +105,7 @@
                 this.storage.Clean();
             }
 
-            //Bluepath.Log.SaveXes(@"c:\temp\bluepath.xes");
+            Bluepath.Log.SaveXes(@"c:\temp\bluepath.xes");
             //Bluepath.Log.ClearXes();
         }
 

@@ -70,6 +70,7 @@
     <Compile Include="DistributedThread\ComplexParameter.cs" />
     <Compile Include="DistributedThread\DistributedThreadTests.cs" />
     <Compile Include="DLINQ\DLINQIntegrationTests.cs" />
+    <Compile Include="DLINQ\OpenXesTests.cs" />
     <Compile Include="FSharpInterop.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ConnectionManager\ConnectionManagerTests.cs" />

@@ -16,7 +16,7 @@
     public class Log
     {
         private const string RedisHost = "localhost";
-        private const string RedisXesLogKey = "BluepathReportingOpenXes";
+        private const string RedisXesLogKey = "BluepathReportingOpenXes2";
         private static bool pauseLogging = false;
 
         private Log()
@@ -47,6 +47,7 @@
             string message = null,
             MessageType type = MessageType.Exception,
             IDictionary<string, string> keywords = null,
+            bool logLocallyOnly = false,
             [CallerMemberName] string memberName = "")
         {
             // TODO: Implement logging
@@ -78,6 +79,11 @@
 
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
+
+            if (!logLocallyOnly)
+            {
+                Log.WriteToStorageList(message);
+            }
         }
 
         [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
@@ -85,7 +91,8 @@
         public static void TraceMessage(
             string message,
             MessageType type = MessageType.Trace,
-            IDictionary<string, string> keywords = null
+            IDictionary<string, string> keywords = null,
+            bool logLocallyOnly = false
 #if TRACE
           , [CallerMemberName] string memberName = "",
             [CallerFilePath] string sourceFilePath = "",
@@ -101,25 +108,20 @@
             var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
-            // Log.WriteToStorageList(message);
+
+            if (!logLocallyOnly)
+            {
+                Log.WriteToStorageList(message);
+            }
         }
 
         private static void WriteToStorageList(string activity) 
         {
-            if (pauseLogging)
-            {
-                return;
-            }
-
-            pauseLogging = true;
-            
             var resource = BluepathListener.NodeGuid.ToString().Substring(6);
             var storage = new RedisStorage(RedisHost);
             var list = new DistributedList<EventType>(storage, RedisXesLogKey);
             list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Start));
             list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
-
-            pauseLogging = false;
         }
 
         public static void SaveXes(string fileName, string caseName = null)

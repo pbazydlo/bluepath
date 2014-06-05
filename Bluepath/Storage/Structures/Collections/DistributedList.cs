@@ -147,7 +147,7 @@ namespace Bluepath.Storage.Structures.Collections
             using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
-                if ((array.Length - arrayIndex) < metadata.Count)
+                if ((array.Length - arrayIndex) >= metadata.Count)
                 {
                     for (int i = 0; i < metadata.Count; i++)
                     {

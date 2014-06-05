@@ -163,5 +163,27 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
                 list2[i].AnotherProperty.ShouldBe(i);
             }
         }
+
+        [TestMethod]
+        public void DistributedListsPerformsCopyToArray()
+        {
+            var storage = new RedisStorage(Host);
+            var key = Guid.NewGuid().ToString();
+            var list1 = new DistributedList<int>(storage, key);
+            int elementCount = 10;
+
+            for (int i = 0; i < elementCount; i++)
+            {
+                list1.Add(i);
+            }
+
+            list1.Count.ShouldBe(elementCount);
+            var destinationArray = new int[elementCount];
+            list1.CopyTo(destinationArray, 0);
+            for(int i=0;i<elementCount;i++)
+            {
+                destinationArray[i].ShouldBe(i);
+            }
+        }
     }
 }

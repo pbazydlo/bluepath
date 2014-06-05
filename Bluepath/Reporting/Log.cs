@@ -1,12 +1,13 @@
 ﻿namespace Bluepath
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Diagnostics.CodeAnalysis;
-    using System.IO;
-    using System.Runtime.CompilerServices;
-    using System.Text;
+    using Bluepath.DLINQ;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Text;
 
     public class Log
     {
@@ -92,6 +93,10 @@
             var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
             Debug.WriteLine(formattedMessage);
             Console.WriteLine(formattedMessage);
+        }
+
+        private static WriteToStorage() {
+            new 
         }
     }
 

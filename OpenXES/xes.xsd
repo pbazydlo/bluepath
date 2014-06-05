@@ -27,6 +27,9 @@
   
   <!-- Attributables -->
   <xs:complexType name="AttributableType">
+    <!-- How to fix StackOverflowException thrown in xsd.exe:
+         http://connect.microsoft.com/VisualStudio/feedback/details/602824/stackoverflowexception-in-xsd-exe -->
+    <xs:sequence>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:element name="string" minOccurs="0" maxOccurs="unbounded" type="AttributeStringType"/>
       <xs:element name="date" minOccurs="0" maxOccurs="unbounded" type="AttributeDateType"/>
@@ -37,6 +40,7 @@
       <xs:element name="list" minOccurs="0" maxOccurs="unbounded" type="AttributeListType"/>
       <xs:element name="container" minOccurs="0" maxOccurs="unbounded" type="AttributeContainerType"/>
     </xs:choice>
+  </xs:sequence>
   </xs:complexType>
 
   <!-- String attribute -->
@@ -155,7 +159,7 @@
 	      <xs:element name="extension" minOccurs="0" maxOccurs="unbounded" type="ExtensionType"/>
 	      <xs:element name="global" minOccurs="0" maxOccurs="2" type="GlobalsType"/>
 	      <xs:element name="classifier" minOccurs="0" maxOccurs="unbounded" type="ClassifierType"/>
-	      <xs:element name="trace"  minOccurs="0"maxOccurs="unbounded" type="TraceType"/>
+	      <xs:element name="trace"  minOccurs="0" maxOccurs="unbounded" type="TraceType"/>
 	    </xs:sequence>
 	    <xs:attribute name="xes.version" type="xs:decimal" use="required"/>
 	    <xs:attribute name="xes.features" type="xs:token"/>

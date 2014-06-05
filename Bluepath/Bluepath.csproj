@@ -77,7 +77,9 @@
     <Compile Include="Extensions\ServiceUriExtensions.cs" />
     <Compile Include="Framework\BluepathCommunicationFramework.cs" />
     <Compile Include="Framework\IBluepathCommunicationFramework.cs" />
-    <Compile Include="Log.cs" />
+    <Compile Include="Reporting\Log.cs" />
+    <Compile Include="Reporting\Xes.cs" />
+    <Compile Include="Reporting\XesExtensions.cs" />
     <Compile Include="Security\UserAccountControlHelper.cs" />
     <Compile Include="Services\BindingType.cs" />
     <Compile Include="Services\BluepathListener.cs" />

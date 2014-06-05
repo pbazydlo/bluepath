@@ -139,7 +139,7 @@
 
             this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
             this.isAcquired = true;
-            Log.TraceMessage(string.Format("Lock acquired key: '{0}'", this.LockKey));
+            Log.TraceMessage(string.Format("Lock acquired key: '{0}'", this.LockKey), logLocallyOnly: true);
             return true;
         }
 
@@ -150,7 +150,7 @@
             try
             {
                 this.redisStorage.Retrieve<int>(this.LockKey);
-                Log.TraceMessage(string.Format("Key wasn't removed [{0}]", this.LockKey));
+                Log.TraceMessage(string.Format("Key wasn't removed [{0}]", this.LockKey), logLocallyOnly: true);
             }
             catch(StorageKeyDoesntExistException)
             {
@@ -158,7 +158,7 @@
             }
 
             this.redisStorage.Publish(this.LockChannel, "release");
-            Log.TraceMessage(string.Format("Lock released key: '{0}'", this.LockKey));
+            Log.TraceMessage(string.Format("Lock released key: '{0}'", this.LockKey), logLocallyOnly: true);
         }
 
         public void Dispose()

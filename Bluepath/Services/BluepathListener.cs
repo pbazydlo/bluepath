@@ -12,6 +12,7 @@
         private static readonly object DefaultPropertyLock = new object();
         private static BluepathListener defaultListener;
         private readonly ServiceHost host;
+        private static readonly Guid nodeGuid = Guid.NewGuid();
 
         public BluepathListener(string ip, int? port = null)
         {
@@ -74,6 +75,14 @@
 
                     BluepathListener.defaultListener = value;
                 }
+            }
+        }
+
+        public static Guid NodeGuid
+        {
+            get
+            {
+                return BluepathListener.nodeGuid;
             }
         }
 

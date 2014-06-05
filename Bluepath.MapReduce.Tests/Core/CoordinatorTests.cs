@@ -52,6 +52,8 @@
         [TestMethod]
         public void CoordinatorWorks()
         {
+            //Bluepath.Log.ClearXes();
+
             using (var redisStorage = new RedisStorage(Host))
             {
                 this.storage = new BluepathStorage(redisStorage);
@@ -102,6 +104,9 @@
 
                 this.storage.Clean();
             }
+
+            Bluepath.Log.SaveXes(@"c:\temp\bluepath.xes");
+            //Bluepath.Log.ClearXes();
         }
 
         /*[TestMethod]

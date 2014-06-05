@@ -29,7 +29,7 @@
                     int retryNo = 0;
                     if (this.connection != null && this.connection.IsConnected == false)
                     {
-                        Log.TraceMessage("There seems to be Redis connection failure, reseting connection.");
+                        Log.TraceMessage("There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
                         this.connection.Close();
                         this.connection = null;
                     }
@@ -39,13 +39,13 @@
                         retryNo++;
                         try
                         {
-                            Log.TraceMessage("There is no Redis connection available - establishing connection.");
+                            Log.TraceMessage("There is no Redis connection available - establishing connection.", logLocallyOnly: true);
                             this.connection = ConnectionMultiplexer.Connect(this.configurationString);
                         }
                         catch (TimeoutException ex)
                         {
                             this.connection = null;
-                            Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo));
+                            Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo), logLocallyOnly: true);
                         }
                     }
                 }
@@ -108,7 +108,7 @@
             {
                 if (ex is RedisConnectionException || ex is TimeoutException)
                 {
-                    Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key));
+                    Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key), logLocallyOnly: true);
                     if ((ex.InnerException != null && ex.InnerException is OverflowException)
                         || ex is TimeoutException)
                     {
@@ -125,9 +125,9 @@
                 throw;
             }
 
-            Log.TraceMessage("InternalRetrieve waits for result...");
+            Log.TraceMessage("InternalRetrieve waits for result...", logLocallyOnly: true);
             pendingResult.Wait();
-            Log.TraceMessage("InternalRetrieve got result.");
+            Log.TraceMessage("InternalRetrieve got result.", logLocallyOnly: true);
             return pendingResult;
         }
 
@@ -150,7 +150,7 @@
                 succededRemoving = pendingResult.Result;
                 if(!succededRemoving)
                 {
-                    Log.TraceMessage(string.Format("Removing key failed! [{0}]", key));
+                    Log.TraceMessage(string.Format("Removing key failed! [{0}]", key), logLocallyOnly: true);
                 }
             } while (!succededRemoving);
         }
@@ -207,7 +207,7 @@
             }
             catch(RedisConnectionException ex)
             {
-                Log.ExceptionMessage(ex, string.Format("InternalStore failed, retry: {0}", retry));
+                Log.ExceptionMessage(ex, string.Format("InternalStore failed, retry: {0}", retry), logLocallyOnly: true);
                 return this.InternalStore<T>(key, value, when, retry - 1);
             }
         }

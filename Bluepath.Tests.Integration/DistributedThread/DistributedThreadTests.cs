@@ -24,7 +24,7 @@
 
         private static object LastUsedPortNumberLock = new object();
 
-        private const int JoinWaitTime = 3000;
+        private const int JoinWaitTime = 6000;
 
         private Process executorHostProcess;
 

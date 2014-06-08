@@ -40,7 +40,7 @@
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
-            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
+            executor.ElapsedTime.Value.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
         }
 
         [TestMethod]
@@ -102,7 +102,7 @@
 
             var result = executor.GetResult();
             result.ShouldBe(3); // (1 + 2)
-            executor.ElapsedTime.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
+            executor.ElapsedTime.Value.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(DelayMilliseconds));
         }
 
         [TestMethod]

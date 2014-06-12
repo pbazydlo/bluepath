@@ -266,7 +266,8 @@ namespace Bluepath.Tests.Integration.Storage
             joinThread.Name = string.Format("RedisLockStressTest join thread");
             joinThread.Start();
 
-            while (!joinThread.Join(threadCount * sleepMiliseconds * shouldFinishModifier)) ;
+            //while (!joinThread.Join(threadCount * sleepMiliseconds * shouldFinishModifier)) ;
+            joinThread.Join();
             //joined.ShouldBe(true);
             noFinished.ShouldBe(threadCount);
         }

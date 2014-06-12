@@ -12,6 +12,7 @@
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
+    using System.Linq;
 
     public class Log
     {
@@ -124,17 +125,37 @@
             list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
         }
 
-        public static void SaveXes(string fileName, string caseName = null)
+        public static void SaveXes(string fileName, string caseName = null, bool clearListAfterSave = false)
         {
             var storage = new RedisStorage(RedisHost);
             var list = new DistributedList<EventType>(storage, RedisXesLogKey);
 
             var @case = new TraceType(caseName ?? Guid.NewGuid().ToString(), list);
-            var log = LogType.Create(new[] { @case });
+            LogType log = null;
+            if (!File.Exists(fileName))
+            {
+                log = LogType.Create(new[] { @case });
+            }
+            else
+            {
+                using(StreamReader reader = new StreamReader(fileName))
+                {
+                    log = LogType.Deserialize(reader.BaseStream);
+                }
 
+                var tracesList = log.trace.ToList();
+                tracesList.Add(@case);
+                log.trace = tracesList.ToArray();
+            }
+            
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
             {
                 log.Serialize(file.BaseStream);
+            }
+
+            if(clearListAfterSave)
+            {
+                list.Clear();
             }
         }
 

@@ -24,7 +24,7 @@
 
         private static object LastUsedPortNumberLock = new object();
 
-        private const int JoinWaitTime = 6000;
+        private const int JoinWaitTime = 24000;
 
         private Process executorHostProcess;
 
@@ -183,12 +183,12 @@
                 }
             });
             joinThread.Start();
-            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime);
+            /*var joinCompletedBeforeTimeout = */joinThread.Join(/*JoinWaitTime*/);/*
 
             if (!joinCompletedBeforeTimeout)
             {
                 Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime);
-            }
+            }*/
 
             if (myThread.State == ExecutorState.Running)
             {
@@ -221,11 +221,11 @@
                 }
             });
             joinThread.Start();
-            var joinCompletedBeforeTimeout = joinThread.Join(JoinWaitTime * 2);
+            /*var joinCompletedBeforeTimeout = */joinThread.Join(/*JoinWaitTime * 2*/);/*
             if (!joinCompletedBeforeTimeout)
             {
                 Assert.Inconclusive("Join takes longer than {0} ms. Test aborted.", JoinWaitTime * 2);
-            }
+            }*/
 
             if (myThread.State == ExecutorState.Running)
             {

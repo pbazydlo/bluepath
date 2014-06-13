@@ -119,10 +119,20 @@
         private static void WriteToStorageList(string activity) 
         {
             var resource = BluepathListener.NodeGuid.ToString().Substring(6);
-            var storage = new RedisStorage(RedisHost);
-            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
-            list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Start));
-            list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
+            try
+            {
+                System.Threading.ThreadPool.QueueUserWorkItem((context) =>
+                    {
+                        var storage = new RedisStorage(RedisHost);
+                        var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+                        list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Start));
+                        list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
+                    });
+            }
+            catch(NotSupportedException ex)
+            {
+                ExceptionMessage(ex, "Exception on saving log to DistributedList", logLocallyOnly: true);
+            }
         }
 
         public static void SaveXes(string fileName, string caseName = null, bool clearListAfterSave = false)

@@ -105,6 +105,7 @@
                 this.storage.Clean();
             }
 
+            System.Threading.Thread.Sleep(3000);
             //Bluepath.Log.SaveXes(@"c:\temp\bluepath.xes", clearListAfterSave: true);
             //Bluepath.Log.ClearXes();
         }

@@ -47,6 +47,22 @@ namespace Bluepath.Storage.Structures
         /// Reads counter value from the storage (value can be outdated by the time it is returned!).
         /// </summary>
         /// <returns>Counter value read from the storage.</returns>
+        public int GetAndIncrease(int amount=1)
+        {
+            int tmpValue = 0;
+            using(var @lock = this.storage.AcquireLock(this.LockId))
+            {
+                tmpValue = this.GetValue();
+                this.InternalSet(tmpValue + amount);
+            }
+
+            return tmpValue;
+        }
+
+        /// <summary>
+        /// Reads counter value from the storage (value can be outdated by the time it is returned!).
+        /// </summary>
+        /// <returns>Counter value read from the storage.</returns>
         public int GetValue()
         {
             return this.storage.Retrieve<int>(this.Key);

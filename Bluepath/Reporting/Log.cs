@@ -28,19 +28,19 @@
         public enum MessageType
         {
             // General
-            Unspecified             = 0,
-            Exception               = 1,
-            Fatal                   = 1 << 1,
-            Trace                   = 1 << 2,
-            Info                    = 1 << 3,
+            Unspecified = 0,
+            Exception = 1,
+            Fatal = 1 << 1,
+            Trace = 1 << 2,
+            Info = 1 << 3,
 
-            ServiceStarted          = 1 << 6,
-            ServiceStopped          = 1 << 7,
+            ServiceStarted = 1 << 6,
+            ServiceStopped = 1 << 7,
 
             // User code execution
-            UserCodeExecution       = 1 << 8,
-            UserCodeException       = UserCodeExecution << 1,
-            UserTaskStateChanged    = UserCodeExecution << 2,
+            UserCodeExecution = 1 << 8,
+            UserCodeException = UserCodeExecution << 1,
+            UserTaskStateChanged = UserCodeExecution << 2,
         }
 
         public enum Activity
@@ -125,11 +125,11 @@
             IDictionary<string, string> keywords = null,
             bool logLocallyOnly = false
 #if TRACE
-          , [CallerMemberName] string memberName = "",
-            [CallerFilePath] string sourceFilePath = "",
-            [CallerLineNumber] int sourceLineNumber = 0
+, [CallerMemberName] string memberName = "",
+  [CallerFilePath] string sourceFilePath = "",
+  [CallerLineNumber] int sourceLineNumber = 0
 #endif
-            )
+)
         {
             // TODO: Implement logging
             var traceInfo = default(string);
@@ -146,7 +146,7 @@
             }
         }
 
-        private static void WriteToStorageList(Activity activity, string message) 
+        private static void WriteToStorageList(Activity activity, string message)
         {
             var resource = BluepathListener.NodeGuid.ToString().Substring(6);
 
@@ -157,15 +157,48 @@
 
             try
             {
-                System.Threading.ThreadPool.QueueUserWorkItem((context) =>
+                var logThread = new System.Threading.Thread(()=>
                     {
+                        int retryCount = 5;
+                        int retryNo = 0;
                         var storage = new RedisStorage(RedisHost);
+                        var counter = new Bluepath.Storage.Structures.DistributedCounter(storage, string.Format("{0}_counter", RedisXesLogKey));
+                        var tmpDateTime = DateTime.Now;
+                        var dateTime = new DateTime(tmpDateTime.Year, tmpDateTime.Month, tmpDateTime.Day, tmpDateTime.Hour, tmpDateTime.Minute, tmpDateTime.Second, counter.GetAndIncrease() % 1000);
                         var list = new DistributedList<EventType>(storage, RedisXesLogKey);
-                        list.Add(new EventType(message, resource, DateTime.Now, EventType.Transition.Start));
-                        list.Add(new EventType(message, resource, DateTime.Now, EventType.Transition.Complete));
+                        while (retryNo < retryCount)
+                        {
+                            try
+                            {
+                                list.Add(new EventType(message, resource, dateTime, EventType.Transition.Start));
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
+                                retryNo++;
+                            }
+                        }
+
+                        retryNo = 0;
+                        while (retryNo < retryCount)
+                        {
+                            try
+                            {
+                                list.Add(new EventType(message, resource, dateTime, EventType.Transition.Complete));
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
+                                retryNo++;
+                            }
+                        }
                     });
+                logThread.IsBackground = false;
+                logThread.Start();
             }
-            catch(NotSupportedException ex)
+            catch (NotSupportedException ex)
             {
                 ExceptionMessage(ex, Log.Activity.Info, "Exception on saving log to DistributedList", logLocallyOnly: true);
             }
@@ -184,7 +217,7 @@
             }
             else
             {
-                using(StreamReader reader = new StreamReader(fileName))
+                using (StreamReader reader = new StreamReader(fileName))
                 {
                     log = LogType.Deserialize(reader.BaseStream);
                 }
@@ -193,13 +226,13 @@
                 tracesList.Add(@case);
                 log.trace = tracesList.ToArray();
             }
-            
+
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
             {
                 log.Serialize(file.BaseStream);
             }
 
-            if(clearListAfterSave)
+            if (clearListAfterSave)
             {
                 list.Clear();
             }

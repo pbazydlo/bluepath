@@ -139,7 +139,7 @@ using Bluepath.Threading.Schedulers;
                 throw new ThreadStateException("Distributed thread has not been started yet.");
             }
 
-            Log.TraceMessage("Distributed thread is calling Join on underlying executor...", keywords: this.Executor.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Distributed_thread_is_calling_Join_on_executor, "Distributed thread is calling Join on underlying executor...", keywords: this.Executor.Eid.EidAsLogKeywords());
             this.Executor.Join();
         }
     }

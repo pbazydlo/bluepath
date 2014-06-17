@@ -43,8 +43,37 @@
             UserTaskStateChanged    = UserCodeExecution << 2,
         }
 
+        public enum Activity
+        {
+            Info,
+            Custom,
+            Service_is_ready,
+            Callback_URI_set,
+            Calling_initialize_on_remote_executor,
+            Calling_remote_TryJoin,
+            Distributed_thread_is_calling_Join_on_executor,
+            Local_executor_caught_exception_in_user_code,
+            Local_executor_created,
+            Local_executor_initialized,
+            Local_executor_started_running_user_code,
+            Local_executor_finished_running_user_code,
+            Local_executor_joins_thread_running_user_code,
+            Local_executor_is_being_disposed,
+            Local_executor_returns_processing_result,
+            Queueing_user_task,
+            Received_execute_callback,
+            Remote_TryJoin_failed_because_remote_thread_is_still_running,
+            Remote_TryJoin_timed_out,
+            Remote_TryJoin_failed_with_exception,
+            Starting_local_executor_with_callback,
+            Starting_local_executor_without_callback,
+            Sending_callback_with_result,
+            Send_callback_failed
+        }
+
         public static void ExceptionMessage(
             Exception exception,
+            Activity activity,
             string message = null,
             MessageType type = MessageType.Exception,
             IDictionary<string, string> keywords = null,
@@ -83,13 +112,14 @@
 
             if (!logLocallyOnly)
             {
-                Log.WriteToStorageList(message);
+                Log.WriteToStorageList(activity, message);
             }
         }
 
         [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1001:CommasMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:ParameterMustNotSpanMultipleLines", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1111:ClosingParenthesisMustBeOnLineOfLastParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1113:CommaMustBeOnSameLineAsPreviousParameter", Justification = "Reviewed. Suppression is OK here."), SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:ClosingParenthesisMustBeSpacedCorrectly", Justification = "Reviewed. Suppression is OK here.")]
         [Conditional("DEBUG")]
         public static void TraceMessage(
+            Activity activity,
             string message,
             MessageType type = MessageType.Trace,
             IDictionary<string, string> keywords = null,
@@ -112,26 +142,32 @@
 
             if (!logLocallyOnly)
             {
-                Log.WriteToStorageList(message);
+                Log.WriteToStorageList(activity, message);
             }
         }
 
-        private static void WriteToStorageList(string activity) 
+        private static void WriteToStorageList(Activity activity, string message) 
         {
             var resource = BluepathListener.NodeGuid.ToString().Substring(6);
+
+            if (activity != Activity.Custom)
+            {
+                message = activity.ToString().Replace('_', ' ');
+            }
+
             try
             {
                 System.Threading.ThreadPool.QueueUserWorkItem((context) =>
                     {
                         var storage = new RedisStorage(RedisHost);
                         var list = new DistributedList<EventType>(storage, RedisXesLogKey);
-                        list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Start));
-                        list.Add(new EventType(activity, resource, DateTime.Now, EventType.Transition.Complete));
+                        list.Add(new EventType(message, resource, DateTime.Now, EventType.Transition.Start));
+                        list.Add(new EventType(message, resource, DateTime.Now, EventType.Transition.Complete));
                     });
             }
             catch(NotSupportedException ex)
             {
-                ExceptionMessage(ex, "Exception on saving log to DistributedList", logLocallyOnly: true);
+                ExceptionMessage(ex, Log.Activity.Info, "Exception on saving log to DistributedList", logLocallyOnly: true);
             }
         }
 

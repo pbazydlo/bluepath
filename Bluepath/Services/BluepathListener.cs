@@ -18,7 +18,7 @@
         {
             if (!UserAccountControlHelper.IsUserAdministrator)
             {
-                Log.TraceMessage("This service requires administrative privileges. Exiting.", Log.MessageType.Fatal);
+                Log.TraceMessage(Log.Activity.Custom,"This service requires administrative privileges. Exiting.", Log.MessageType.Fatal);
             }
 
             var random = new Random();
@@ -52,9 +52,9 @@
 
             this.CallbackUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), this.host.Description.Endpoints[0].Binding);
 
-            Log.TraceMessage(string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
-            Log.TraceMessage(string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
-            Log.TraceMessage(string.Format("Callback URI seems to be {0}.", this.CallbackUri.Address), Log.MessageType.Info);
+            Log.TraceMessage(Log.Activity.Service_is_ready,string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
+            Log.TraceMessage(Log.Activity.Info,string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
+            Log.TraceMessage(Log.Activity.Callback_URI_set,string.Format("Callback URI seems to be {0}.", this.CallbackUri.Address), Log.MessageType.Info);
         }
 
         public static BluepathListener Default

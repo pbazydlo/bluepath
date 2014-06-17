@@ -88,10 +88,10 @@
                                 }
                             }
 
-                            Log.TraceMessage(string.Format("CONSOLE[{1}]> {0}", line, process.Id), logLocallyOnly: true);
+                            Log.TraceMessage(Log.Activity.Info,string.Format("CONSOLE[{1}]> {0}", line, process.Id), logLocallyOnly: true);
                         }
 
-                        Log.TraceMessage(string.Format("CONSOLE[{0}]> (EOF)", process.Id), logLocallyOnly: true);
+                        Log.TraceMessage(Log.Activity.Info,string.Format("CONSOLE[{0}]> (EOF)", process.Id), logLocallyOnly: true);
                     }
                 });
             t.IsBackground = true;

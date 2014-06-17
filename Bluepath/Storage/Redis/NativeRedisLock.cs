@@ -107,7 +107,7 @@ namespace Bluepath.Storage.Redis
             // TODO we need to start lock renew thread (lock is taken for 1s by default) - if we lose lock we need to throw exception on main thread
             
             this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
-            Log.TraceMessage(string.Format("Lock '{1}' acquired key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
+            Log.TraceMessage(Log.Activity.Info, string.Format("Lock '{1}' acquired key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
             return this.IsAcquired;
         }
 
@@ -116,7 +116,7 @@ namespace Bluepath.Storage.Redis
             this.IsAcquired = false;
             this.redisStorage.LockRelease(this.LockKey, this.localLockIdentifier);
             this.redisStorage.Publish(this.LockChannel, "release");
-            Log.TraceMessage(string.Format("Lock '{1}' released key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
+            Log.TraceMessage(Log.Activity.Info ,string.Format("Lock '{1}' released key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
         }
 
         private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)

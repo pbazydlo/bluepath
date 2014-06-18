@@ -16,9 +16,9 @@
 
     public class Log
     {
-        private const string RedisHost = "localhost";
         private const string RedisXesLogKey = "BluepathReportingOpenXes2";
         private static bool pauseLogging = false;
+        public static string RedisHost = "localhost";
 
         private Log()
         {

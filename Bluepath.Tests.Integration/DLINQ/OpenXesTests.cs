@@ -55,5 +55,11 @@
 
             Assert.IsTrue(xml.Contains("Phone Call"));
         }
+
+        [TestMethod]
+        public void SaveToXES()
+        {
+            Bluepath.Log.SaveXes(@"c:\temp\bluepath_deb.xes", clearListAfterSave: true);
+        }
     }
 }

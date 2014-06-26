@@ -24,7 +24,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             Func<TSource, TGroupKey> keySelector,
             Func<TSource, TElement> elementSelector,
             IEqualityComparer<TGroupKey> comparer)
-            : base(source.Settings)
+            : base(source)
         {
             this.keySelector = keySelector;
             this.elementSelector = elementSelector;

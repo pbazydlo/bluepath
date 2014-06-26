@@ -118,7 +118,7 @@
 
                             var attemptsCounter = 0;
 
-                            Log.TraceMessage(string.Format("Calling remote TryJoin..."), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                            Log.TraceMessage(Log.Activity.Calling_remote_TryJoin, string.Format("Calling remote TryJoin..."), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
 
                             // Get the processing result
                             // I would leave this loop to allow testing without communication (callbacks)
@@ -132,19 +132,19 @@
                                 }
                                 catch (TimeoutException)
                                 {
-                                    Log.TraceMessage(string.Format("Remote TryJoin timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                                    Log.TraceMessage(Log.Activity.Remote_TryJoin_timed_out, string.Format("Remote TryJoin timed out for {0} time. Trying again...", attemptsCounter), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
                                 }
                                 catch (Exception ex)
                                 {
                                     joinThreadException = ex;
-                                    Log.TraceMessage(string.Format("Executor failed on remote TryJoin with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                                    Log.TraceMessage(Log.Activity.Remote_TryJoin_failed_with_exception, string.Format("Executor failed on remote TryJoin with exception '{0}'. RemoteJoinAbortedException will be thrown with this exception inside.", ex.Message), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
 
                                     break;
                                 }
 
                                 if (joinResult != null && joinResult.ExecutorState == ServiceReferences.ExecutorState.Running)
                                 {
-                                    Log.TraceMessage(string.Format("Remote TryJoin failed for {0} time, because remote thread is still running. Waiting {1} and trying again...", attemptsCounter, this.repeatedTryJoinDelayTime), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
+                                    Log.TraceMessage(Log.Activity.Remote_TryJoin_failed_because_remote_thread_is_still_running, string.Format("Remote TryJoin failed for {0} time, because remote thread is still running. Waiting {1} and trying again...", attemptsCounter, this.repeatedTryJoinDelayTime), Log.MessageType.Trace, this.Eid.EidAsLogKeywords());
 
                                     // TryJoin is non-blocking, wait some time before checking again.
                                     Thread.Sleep(this.repeatedTryJoinDelayTime);
@@ -322,7 +322,7 @@
 
             var methodHandle = method.SerializeMethodHandle();
 
-            Log.TraceMessage(string.Format("Calling initialize on remote executor. Method handle: '{0}'.", methodHandle.ToReadableString()));
+            Log.TraceMessage(Log.Activity.Calling_initialize_on_remote_executor, string.Format("Calling initialize on remote executor. Method handle: '{0}'.", methodHandle.ToReadableString()));
 
             this.Eid = this.Client.Initialize(methodHandle);
         }

@@ -18,7 +18,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         private Func<TInputOutput, bool> predicate;
 
         public WhereQueryOperator(DistributedQuery<TInputOutput> query, Func<TInputOutput, bool> predicate)
-            : base(query.Settings)
+            : base(query)
         {
             this.predicate = predicate;
         }

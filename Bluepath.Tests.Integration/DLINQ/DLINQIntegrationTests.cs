@@ -297,7 +297,7 @@ namespace Bluepath.Tests.Integration.DLINQ
             BluepathListener listener1;
             BluepathListener listener2;
             ConnectionManager connectionManager;
-            Log.TraceMessage(string.Format("GroupBy test lift off! {0}", DateTime.Now));
+            Log.TraceMessage(Log.Activity.Custom,string.Format("GroupBy test lift off!"));
             PrepareDLINQEnviroment(out listener1, out listener2, out connectionManager);
             try
             {
@@ -314,24 +314,24 @@ namespace Bluepath.Tests.Integration.DLINQ
 
                 var groupedCollection = inputCollection.AsDistributed(storage, connectionManager)
                     .GroupBy(s => s[0]);
-                Log.TraceMessage("GroupBy Begin actual processing");
+                Log.TraceMessage(Log.Activity.Custom,"GroupBy Begin actual processing");
                 var processedCollection = groupedCollection.ToDictionary(g => g.Key, g => g);
-                Log.TraceMessage("GroupBy processing finished, begin asserts");
+                Log.TraceMessage(Log.Activity.Custom,"GroupBy processing finished, begin asserts");
                 processedCollection.Keys.Count.ShouldBe(2);
                 processedCollection['a'].Count().ShouldBe(localDict['a'].Count());
                 processedCollection['b'].Count().ShouldBe(localDict['b'].Count());
-                Log.TraceMessage("GroupBy test passed");
+                Log.TraceMessage(Log.Activity.Custom,"GroupBy test passed");
             }
             catch (Exception ex)
             {
-                Log.ExceptionMessage(ex);
+                Log.ExceptionMessage(ex, Log.Activity.Info);
                 isFailed = true;
             }
             finally
             {
                 listener1.Stop();
                 listener2.Stop();
-                Log.TraceMessage(string.Format("GroupBy test finished, isFailed: {0}", isFailed));
+                Log.TraceMessage(Log.Activity.Custom, string.Format("GroupBy test finished, isFailed: {0}", isFailed));
                 if(isFailed)
                 {
                     Assert.Fail();

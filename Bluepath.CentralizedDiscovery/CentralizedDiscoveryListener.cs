@@ -18,7 +18,7 @@ namespace Bluepath.CentralizedDiscovery
         {
             if (!UserAccountControlHelper.IsUserAdministrator)
             {
-                Log.TraceMessage("This service requires administrative privileges. Exiting.", Log.MessageType.Fatal);
+                Log.TraceMessage(Log.Activity.Info, "This service requires administrative privileges. Exiting.", Log.MessageType.Fatal);
             }
 
             var random = new Random();
@@ -52,8 +52,8 @@ namespace Bluepath.CentralizedDiscovery
 
             this.MasterUri = ServiceUri.FromEndpointAddress(new EndpointAddress(callbackUri), this.host.Description.Endpoints[0].Binding);
 
-            Log.TraceMessage(string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
-            Log.TraceMessage(string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
+            Log.TraceMessage(Log.Activity.Service_is_ready, string.Format("The service is ready at {0}.", listenUri), Log.MessageType.ServiceStarted);
+            Log.TraceMessage(Log.Activity.Info, string.Format("First of service bindings is of type {0}.", this.host.Description.Endpoints[0].Binding.GetType().FullName), Log.MessageType.Trace);
         }
 
         public void Stop()

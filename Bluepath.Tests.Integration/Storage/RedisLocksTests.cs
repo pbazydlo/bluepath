@@ -6,6 +6,7 @@ using Throws = NUnit.Framework.Throws;
 using Shouldly;
 using Bluepath.Storage.Locks;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Bluepath.Tests.Integration.Storage
 {
@@ -24,10 +25,10 @@ namespace Bluepath.Tests.Integration.Storage
         [TestMethod]
         public void RedisLockCannotBeAcquiredTwice()
         {
-            using(var storage = new RedisStorage(Host))
+            using (var storage = new RedisStorage(Host))
             {
                 var lockKey = Guid.NewGuid().ToString();
-                using(var @lock = storage.AcquireLock(lockKey))
+                using (var @lock = storage.AcquireLock(lockKey))
                 {
                     Assert.That(() => @lock.Acquire(), Throws.Exception);
                 }
@@ -37,10 +38,10 @@ namespace Bluepath.Tests.Integration.Storage
         [TestMethod]
         public void RedisLockCannotBeAcquiredWhenKeyIsLocked()
         {
-            using(var storage = new RedisStorage(Host))
+            using (var storage = new RedisStorage(Host))
             {
                 var lockKey = Guid.NewGuid().ToString();
-                using(var @lock = storage.AcquireLock(lockKey))
+                using (var @lock = storage.AcquireLock(lockKey))
                 {
                     bool isAnotherLockAcquired = false;
                     var acquireThread = new System.Threading.Thread(() =>
@@ -86,7 +87,7 @@ namespace Bluepath.Tests.Integration.Storage
                 using (var @lock = storage.AcquireLock(lockKey))
                 {
                     IStorageLock anotherLock;
-                    var acquireResult = 
+                    var acquireResult =
                         storage.AcquireLock(lockKey, TimeSpan.FromMilliseconds(10), out anotherLock);
                     acquireResult.ShouldBe(false);
                     anotherLock.IsAcquired.ShouldBe(false);
@@ -120,7 +121,7 @@ namespace Bluepath.Tests.Integration.Storage
                 bool isFinished = false;
                 var waitingThread = new Thread(() =>
                 {
-                    using(var @lock = storage.AcquireLock(lockKey))
+                    using (var @lock = storage.AcquireLock(lockKey))
                     {
                         isWaiting = true;
                         @lock.Wait();
@@ -132,7 +133,7 @@ namespace Bluepath.Tests.Integration.Storage
                 TestHelpers.RepeatUntilTrue(() => isWaiting, times: 5);
                 isWaiting.ShouldBe(true);
                 isFinished.ShouldBe(false);
-                using(var anotherLock = storage.AcquireLock(lockKey))
+                using (var anotherLock = storage.AcquireLock(lockKey))
                 {
                     anotherLock.PulseAll();
                 }
@@ -161,7 +162,7 @@ namespace Bluepath.Tests.Integration.Storage
                     isFinished = true;
                 });
                 waitingThread.Start();
-                Thread.Sleep(200);
+                Thread.Sleep(300);
                 isWaiting.ShouldBe(true);
                 isFinished.ShouldBe(true);
             }
@@ -220,6 +221,55 @@ namespace Bluepath.Tests.Integration.Storage
                 isFinished1.ShouldBe(true);
                 isFinished2.ShouldBe(true);
             }
+        }
+
+        [TestMethod]
+        public void RedisLockStressTest()
+        {
+            var lockKey = Guid.NewGuid().ToString();
+            int noFinished = 0;
+            int threadCount = 100;
+            int sleepMiliseconds = 1;
+            int shouldFinishModifier = 3;
+            List<Thread> threads = new List<Thread>();
+            for (int i = 0; i < threadCount; i++)
+            {
+                var waitingThread = new Thread(() =>
+                    {
+                        using (var storage = new RedisStorage(Host))
+                        {
+
+                            using (var @lock = storage.AcquireLock(lockKey))
+                            {
+                                noFinished++;
+                                Thread.Sleep(sleepMiliseconds);
+                            }
+
+                        }
+                    });
+                waitingThread.Name = string.Format("RedisLockStressTest thread no {0}/{1}", i, threadCount);
+                threads.Add(waitingThread);
+            }
+
+            foreach (var thread in threads)
+            {
+                thread.Start();
+            }
+
+            var joinThread = new Thread(() =>
+            {
+                foreach (var thread in threads)
+                {
+                    thread.Join();
+                }
+            });
+            joinThread.Name = string.Format("RedisLockStressTest join thread");
+            joinThread.Start();
+
+            //while (!joinThread.Join(threadCount * sleepMiliseconds * shouldFinishModifier)) ;
+            joinThread.Join();
+            //joined.ShouldBe(true);
+            noFinished.ShouldBe(threadCount);
         }
     }
 }

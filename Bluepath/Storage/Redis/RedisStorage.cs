@@ -12,45 +12,53 @@
     public class RedisStorage : IExtendedStorage, IStorage
     {
         private const int ConnectRetryCount = 5;
+        private static TimeSpan LockTimespan = TimeSpan.FromSeconds(10);
 
         private string configurationString;
 
         [NonSerialized]
-        private ConnectionMultiplexer connection;
+        private static ConnectionMultiplexer connection;
 
-        private object connectionLock = new object();
+        private static object connectionLock = new object();
 
-        private ConnectionMultiplexer Connection 
+        private ConnectionMultiplexer Connection
         {
-            get 
+            get
             {
-                lock (this.connectionLock)
+                lock (connectionLock)
                 {
                     int retryNo = 0;
-                    if (this.connection != null && this.connection.IsConnected == false)
+                    if (connection != null && connection.IsConnected == false)
                     {
-                        Log.TraceMessage("There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
-                        this.connection.Close();
-                        this.connection = null;
+                        Log.TraceMessage(Log.Activity.Info,"There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
+                        connection.Close();
+                        connection = null;
                     }
 
-                    while (this.connection == null && retryNo < ConnectRetryCount)
+                    while (connection == null && retryNo < ConnectRetryCount)
                     {
                         retryNo++;
                         try
                         {
-                            Log.TraceMessage("There is no Redis connection available - establishing connection.", logLocallyOnly: true);
-                            this.connection = ConnectionMultiplexer.Connect(this.configurationString);
+                            Log.TraceMessage(Log.Activity.Info, "There is no Redis connection available - establishing connection.", logLocallyOnly: true);
+                            var config = ConfigurationOptions.Parse(this.configurationString);
+                            config.ConnectTimeout = 5000;
+                            config.KeepAlive = 1;
+                            config.SyncTimeout = 30000;
+                            config.ConnectRetry = 5;
+                            config.AbortOnConnectFail = true;
+                            config.ResolveDns = true;
+                            connection = ConnectionMultiplexer.Connect(config);
                         }
                         catch (TimeoutException ex)
                         {
-                            this.connection = null;
-                            Log.ExceptionMessage(ex, string.Format("Timeout retry no {0}", retryNo), logLocallyOnly: true);
+                            connection = null;
+                            Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("Timeout retry no {0}", retryNo), logLocallyOnly: true);
                         }
                     }
                 }
 
-                return this.connection;
+                return connection;
             }
         }
 
@@ -108,26 +116,26 @@
             {
                 if (ex is RedisConnectionException || ex is TimeoutException)
                 {
-                    Log.ExceptionMessage(ex, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key), logLocallyOnly: true);
-                    if ((ex.InnerException != null && ex.InnerException is OverflowException)
-                        || ex is TimeoutException)
+                    Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key), logLocallyOnly: true);
+                    //if ((ex.InnerException != null && ex.InnerException is OverflowException)
+                    //    || ex is TimeoutException)
+                    //{
+                    // pendingResult.Dispose();
+                    if (retry <= 0)
                     {
-                        // pendingResult.Dispose();
-                        if (retry <= 0)
-                        {
-                            throw new StorageOperationException("InternalRetrieve failed", ex);
-                        }
-
-                        return this.InternalRetrieve(key, retry - 1);
+                        throw new StorageOperationException("InternalRetrieve failed", ex);
                     }
+
+                    return this.InternalRetrieve(key, retry - 1);
+                    //}
                 }
 
                 throw;
             }
 
-            Log.TraceMessage("InternalRetrieve waits for result...", logLocallyOnly: true);
+            Log.TraceMessage(Log.Activity.Info, "InternalRetrieve waits for result...", logLocallyOnly: true);
             pendingResult.Wait();
-            Log.TraceMessage("InternalRetrieve got result.", logLocallyOnly: true);
+            Log.TraceMessage(Log.Activity.Info, "InternalRetrieve got result.", logLocallyOnly: true);
             return pendingResult;
         }
 
@@ -148,23 +156,25 @@
 
                 pendingResult.Wait();
                 succededRemoving = pendingResult.Result;
-                if(!succededRemoving)
+                if (!succededRemoving)
                 {
-                    Log.TraceMessage(string.Format("Removing key failed! [{0}]", key), logLocallyOnly: true);
+                    Log.TraceMessage(Log.Activity.Info,string.Format("Removing key failed! [{0}]", key), logLocallyOnly: true);
                 }
             } while (!succededRemoving);
+
+            Log.TraceMessage(Log.Activity.Info,string.Format("Removed key '{0}'", key), logLocallyOnly: true);
         }
 
         public IStorageLock AcquireLock(string key)
         {
-            var storageLock = new RedisLock(this, key);
+            var storageLock = new NativeRedisLock(this, key);
             storageLock.Acquire();
             return storageLock;
         }
 
         public bool AcquireLock(string key, TimeSpan timeout, out IStorageLock storageLock)
         {
-            storageLock = new RedisLock(this, key);
+            storageLock = new NativeRedisLock(this, key);
             return storageLock.Acquire(timeout);
         }
 
@@ -175,14 +185,28 @@
 
         public void Subscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
         {
-            var sub = this.Connection.GetSubscriber();
-            sub.Subscribe(channel, handler);
+            try
+            {
+                var sub = this.Connection.GetSubscriber();
+                sub.Subscribe(channel, handler);
+            }
+            catch (TimeoutException)
+            {
+                this.Subscribe(channel, handler);
+            }
         }
 
         public void Unsubscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
         {
-            var sub = this.Connection.GetSubscriber();
-            sub.Unsubscribe(channel, handler);
+            try
+            {
+                var sub = this.Connection.GetSubscriber();
+                sub.Unsubscribe(channel, handler);
+            }
+            catch (TimeoutException)
+            {
+                this.Unsubscribe(channel, handler);
+            }
         }
 
         public void Publish(RedisChannel channel, string message)
@@ -191,6 +215,30 @@
 
             // TODO: this message could be potentially lost
             sub.Publish(channel, message, CommandFlags.None);
+        }
+
+        public bool LockTake(string key, string value)
+        {
+            var db = this.Connection.GetDatabase();
+            return db.LockTake(key, value, LockTimespan);
+        }
+
+        public bool LockExtend(string key, string value)
+        {
+            var db = this.Connection.GetDatabase();
+            return db.LockExtend(key, value, LockTimespan);
+        }
+
+        public bool LockRelease(string key, string value)
+        {
+            var db = this.Connection.GetDatabase();
+            return db.LockRelease(key, value);
+        }
+
+        public RedisValue LockQuery(string key)
+        {
+            var db = this.Connection.GetDatabase();
+            return db.LockQuery(key);
         }
 
         public void Dispose()
@@ -205,10 +253,15 @@
                 var db = this.Connection.GetDatabase();
                 return db.StringSet(key, value.Serialize(), null, when);
             }
-            catch(RedisConnectionException ex)
+            catch (RedisConnectionException ex)
             {
-                Log.ExceptionMessage(ex, string.Format("InternalStore failed, retry: {0}", retry), logLocallyOnly: true);
-                return this.InternalStore<T>(key, value, when, retry - 1);
+                Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("InternalStore failed, retry: {0}", retry), logLocallyOnly: true);
+                if (retry >= 0)
+                {
+                    return this.InternalStore<T>(key, value, when, retry - 1);
+                }
+
+                throw;
             }
         }
     }

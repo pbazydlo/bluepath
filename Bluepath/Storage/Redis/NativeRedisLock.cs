@@ -1,14 +1,16 @@
-﻿namespace Bluepath.Storage.Redis
+﻿using Bluepath.Exceptions;
+using Bluepath.Storage.Locks;
+using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Bluepath.Storage.Redis
 {
-    using System;
-    using System.Threading;
-
-    using Bluepath.Storage.Locks;
-
-    using StackExchange.Redis;
-    using Bluepath.Exceptions;
-
-    public class RedisLock : IStorageLock
+    public class NativeRedisLock : IStorageLock
     {
         private const string LockKeyPrefix = "_lock_";
         private const string LockChannelPrefix = "_lockChannel_";
@@ -16,39 +18,26 @@
         private const string PulseFilePrefix = "_lockPulseFile_";
         private readonly object acquireLock = new object();
         private readonly object waitLock = new object();
-        private readonly string key;
-        private readonly RedisStorage redisStorage;
-        private bool isAcquired;
-        private bool wasPulsed;
+        private RedisStorage redisStorage;
+        private string localLockIdentifier;
         private bool wasWaitPulsed;
 
-        public RedisLock(RedisStorage redisStorage, string key)
+        public NativeRedisLock(RedisStorage redisStorage, string key)
         {
+            this.localLockIdentifier = Guid.NewGuid().ToString();
             this.redisStorage = redisStorage;
-            this.key = key;
+            this.Key = key;
         }
 
         public string Key
         {
-            get { return this.key; }
+            get;
+            private set;
         }
 
-        public bool IsAcquired
+        public string LockKey
         {
-            get { return this.isAcquired; }
-        }
-
-        public bool Acquire()
-        {
-            return this.Acquire(null);
-        }
-
-        private string LockKey
-        {
-            get
-            {
-                return this.ApplyPrefix(LockKeyPrefix);
-            }
+            get { return this.ApplyPrefix(LockKeyPrefix); }
         }
 
         private string LockChannel
@@ -78,6 +67,17 @@
             }
         }
 
+        public bool IsAcquired
+        {
+            get;
+            private set;
+        }
+
+        public bool Acquire()
+        {
+            return this.Acquire(null);
+        }
+
         public bool Acquire(TimeSpan? timeout)
         {
             if (this.IsAcquired)
@@ -85,95 +85,44 @@
                 throw new InvalidOperationException(string.Format("This lock[{0}] is alreay acquired!", this.Key));
             }
 
-            var start = DateTime.Now;
-            bool isFirstWait = true;
-            this.wasPulsed = false;
-            bool wasLockAcquired = false;
             this.redisStorage.Subscribe(this.LockChannel, this.ChannelPulse);
-            lock (this.acquireLock)
+            var start = DateTime.Now;
+            while(!this.IsAcquired)
             {
-                do
+                lock (this.acquireLock)
                 {
-                    try
+                    if (timeout.HasValue && (DateTime.Now - start) > timeout.Value)
                     {
-                        this.redisStorage.Store(this.LockKey, 1);
-                        wasLockAcquired = true;
+                        return false;
                     }
-                    catch (StorageKeyAlreadyExistsException)
+
+                    this.IsAcquired = this.redisStorage.LockTake(this.LockKey, this.localLockIdentifier);
+                    if (!this.IsAcquired)
                     {
-                        this.wasPulsed = false;
-
-                        int retryNo = 0;
-                        // lock is already acquired
-                        while (!this.wasPulsed)
-                        {
-                            if (timeout.HasValue)
-                            {
-                                if ((DateTime.Now - start) > timeout.Value)
-                                {
-                                    this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
-                                    return false;
-                                }
-                            }
-
-                            if (isFirstWait)
-                            {
-                                isFirstWait = false;
-                                Monitor.Wait(this.acquireLock, 10);
-                            }
-                            else
-                            {
-                                Monitor.Wait(this.acquireLock, timeout ?? TimeSpan.FromMilliseconds(1000));
-                            }
-
-                            retryNo++;
-                            if(retryNo > 5)
-                            {
-                                break;
-                            }
-                        }
+                        Monitor.Wait(this.acquireLock, timeout.HasValue ? timeout.Value : TimeSpan.FromMilliseconds(100));
                     }
                 }
-                while (!wasLockAcquired);
             }
 
+            // TODO we need to start lock renew thread (lock is taken for 1s by default) - if we lose lock we need to throw exception on main thread
+            
             this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
-            this.isAcquired = true;
-            Log.TraceMessage(Log.Activity.Info,string.Format("Lock acquired key: '{0}'", this.LockKey), logLocallyOnly: true);
-            return true;
+            Log.TraceMessage(Log.Activity.Info, string.Format("Lock '{1}' acquired key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
+            return this.IsAcquired;
         }
 
         public void Release()
         {
-            this.isAcquired = false;
-            this.redisStorage.Remove(this.LockKey);
-            try
-            {
-                this.redisStorage.Retrieve<int>(this.LockKey);
-                Log.TraceMessage(Log.Activity.Info,string.Format("Key wasn't removed [{0}]", this.LockKey), logLocallyOnly: true);
-            }
-            catch(StorageKeyDoesntExistException)
-            {
-
-            }
-
+            this.IsAcquired = false;
+            this.redisStorage.LockRelease(this.LockKey, this.localLockIdentifier);
             this.redisStorage.Publish(this.LockChannel, "release");
-            Log.TraceMessage(Log.Activity.Info,string.Format("Lock released key: '{0}'", this.LockKey), logLocallyOnly: true);
-        }
-
-        public void Dispose()
-        {
-            if (this.IsAcquired)
-            {
-                this.Release();
-            }
+            Log.TraceMessage(Log.Activity.Info ,string.Format("Lock '{1}' released key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
         }
 
         private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
         {
             lock (this.acquireLock)
             {
-                this.wasPulsed = true;
                 Monitor.Pulse(this.acquireLock);
             }
         }
@@ -241,7 +190,7 @@
                 }
             });
             waitThread.Start();
-            
+
             this.Release();
             waitThread.Join();
             this.Acquire();
@@ -263,9 +212,17 @@
             this.redisStorage.Publish(this.WaitChannel, ((int)pulseType).ToString());
         }
 
+        public void Dispose()
+        {
+            if (this.IsAcquired)
+            {
+                this.Release();
+            }
+        }
+
         private string ApplyPrefix(string prefix)
         {
-            return string.Format("{0}{1}", prefix, this.key);
+            return string.Format("{0}{1}", prefix, this.Key);
         }
 
         private enum PulseType

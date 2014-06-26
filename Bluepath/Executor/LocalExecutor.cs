@@ -28,7 +28,7 @@
         {
             this.Eid = Guid.NewGuid();
             this.executorState = ExecutorState.NotStarted;
-            Log.TraceMessage("Local executor created.", keywords: this.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Local_executor_created, "Local executor created.", keywords: this.Eid.EidAsLogKeywords());
         }
 
         public override TimeSpan? ElapsedTime
@@ -73,7 +73,7 @@
                         throw new ResultNotAvailableException("Cannot fetch results before starting and finishing Execute.");
                     }
 
-                    Log.TraceMessage("Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
+                    Log.TraceMessage(Log.Activity.Local_executor_returns_processing_result,"Local executor returns processing result.", keywords: this.Eid.EidAsLogKeywords());
                     return this.result;
                 }
             }
@@ -144,12 +144,13 @@
             ThreadPool.GetAvailableThreads(out availableWorkerThreads, out availableCompletionPortThreads);
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
 
-            Log.TraceMessage(string.Format("Queueing user task. Available worker threads: {0}/{1}, available completion port threads: {2}/{3}.", availableWorkerThreads, maxWorkerThreads, availableCompletionPortThreads, maxCompletionPortThreads), Log.MessageType.Trace, keywords: this.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Queueing_user_task, string.Format("Queueing user task. Available worker threads: {0}/{1}, available completion port threads: {2}/{3}.", availableWorkerThreads, maxWorkerThreads, availableCompletionPortThreads, maxCompletionPortThreads), Log.MessageType.Trace, keywords: this.Eid.EidAsLogKeywords());
 
             ThreadPool.QueueUserWorkItem(
                 (threadContext) =>
                 {
                     Log.TraceMessage(
+                        Log.Activity.Local_executor_started_running_user_code,
                         "Local executor has started thread running user code.",
                         Log.MessageType.UserTaskStateChanged,
                         keywords: this.Eid.EidAsLogKeywords());
@@ -165,6 +166,7 @@
                         this.Exception = ex;
                         Log.ExceptionMessage(
                             ex,
+                            Log.Activity.Local_executor_caught_exception_in_user_code,
                             "Local executor caught exception in user code.",
                             Log.MessageType.UserCodeException | Log.MessageType.UserTaskStateChanged,
                             this.Eid.EidAsLogKeywords());
@@ -177,6 +179,7 @@
                     }
 
                     Log.TraceMessage(
+                        Log.Activity.Local_executor_finished_running_user_code,
                         "Local executor finished running user code.",
                         Log.MessageType.UserTaskStateChanged,
                         keywords: this.Eid.EidAsLogKeywords());
@@ -191,7 +194,7 @@
 
         public override void Join()
         {
-            Log.TraceMessage("Local executor joins thread running user code...", keywords: this.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Local_executor_joins_thread_running_user_code, "Local executor joins thread running user code...", keywords: this.Eid.EidAsLogKeywords());
             this.doneEvent.WaitOne();
         }
 
@@ -230,13 +233,13 @@
                 }
             }
 
-            Log.TraceMessage("Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Local_executor_initialized,"Local executor initialized.", keywords: this.Eid.EidAsLogKeywords());
         }
 
         public override void Dispose()
         {
             // TODO: Add executor dispose logic here
-            Log.TraceMessage("Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Local_executor_is_being_disposed,"Local executor is being disposed.", keywords: this.Eid.EidAsLogKeywords());
         }
 
         protected override void InitializeFromMethod(MethodBase method)

@@ -30,7 +30,7 @@
             executor.Execute(null);
             executor.Join(timeout: new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 30));
 
-            executor.ElapsedTime.ShouldBeLessThan(new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 3, milliseconds: 0));
+            executor.ElapsedTime.Value.ShouldBeLessThan(new TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 3, milliseconds: 0));
             
             // join with timeout shouldn't abort thread
             // executor.Exception.GetType().ShouldBe(typeof(ThreadAbortException));

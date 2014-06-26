@@ -72,7 +72,7 @@
                     service.Binding,
                     service.ToEndpointAddress()))
                 {
-                    Log.TraceMessage(string.Format("[PerfStat] Getting performance statistics from '{0}'.", service.Address));
+                    Log.TraceMessage(Log.Activity.Info,string.Format("[PerfStat] Getting performance statistics from '{0}'.", service.Address));
                     performanceStatistics.Add(service, (await client.GetPerformanceStatisticsAsync()).FromServiceReference());
                 }
             }

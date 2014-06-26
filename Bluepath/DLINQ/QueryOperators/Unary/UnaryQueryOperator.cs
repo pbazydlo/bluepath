@@ -13,10 +13,17 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
     public class UnaryQueryOperator<TOutput> : DistributedQuery<TOutput>
     //where TOutput : new()
     {
-        protected UnaryQueryOperator(DistributedQuerySettings settings)
-            : base(settings)
-        {
+        protected Func<string> parentAction;
 
+        protected UnaryQueryOperator(DistributedQuery parentQuery)
+            : base(parentQuery.Settings)
+        {
+            /*if (parentQuery is UnaryQueryOperator<TInput>)
+            {
+                UnaryQueryOperator<TInput>.UnaryQueryResultCollectionType? collectionType;
+                string resultCollectionKey;
+                (parentQuery as UnaryQueryOperator<TInput>).ExecuteAndJoin(out collectionType, out resultCollectionKey);
+            }*/
         }
 
         protected virtual DistributedThread[] Execute()
@@ -50,7 +57,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
             }
         }
 
-        protected void ExecuteAndJoin(out UnaryQueryResultCollectionType? collectionType, out string resultCollectionKey)
+        internal void ExecuteAndJoin(out UnaryQueryResultCollectionType? collectionType, out string resultCollectionKey)
         {
             var threads = this.Execute();
 
@@ -118,7 +125,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         /// </summary>
         /// <typeparam name="TOutput"></typeparam>
         [Serializable]
-        protected class UnaryQueryResult
+        internal class UnaryQueryResult
         {
             private int collectionType { get; set; }
 
@@ -141,7 +148,7 @@ namespace Bluepath.DLINQ.QueryOperators.Unary
         /// Specifies collection type used to store result
         /// </summary>
         [Serializable]
-        protected enum UnaryQueryResultCollectionType
+        internal enum UnaryQueryResultCollectionType
         {
             DistributedList,
             DistributedDictionary

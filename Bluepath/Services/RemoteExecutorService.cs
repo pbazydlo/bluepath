@@ -131,7 +131,7 @@
             }
             catch (Exception ex)
             {
-                Log.ExceptionMessage(ex);
+                Log.ExceptionMessage(ex, Log.Activity.Info);
                 throw;
             }
         }
@@ -150,6 +150,7 @@
             var executor = GetExecutor(eid);
 
             Log.TraceMessage(
+                callbackUri != null ? Log.Activity.Starting_local_executor_with_callback : Log.Activity.Starting_local_executor_without_callback,
                 string.Format(
                         "Starting local executor. Upon completion callback will{0} be sent{1}{2}.",
                         callbackUri != null ? string.Empty : " not",
@@ -174,7 +175,7 @@
                             // Exception caused by user code (if any) can be accessed using Exception property
                             executor.Join();
 
-                            Log.TraceMessage(string.Format("Sending callback with result. State: {0}. Elapsed time: {1}.", executor.ExecutorState, executor.ElapsedTime), keywords: executor.Eid.EidAsLogKeywords());
+                            Log.TraceMessage(Log.Activity.Sending_callback_with_result, string.Format("Sending callback with result. State: {0}. Elapsed time: {1}.", executor.ExecutorState, executor.ElapsedTime), keywords: executor.Eid.EidAsLogKeywords());
 
                             var result = new ServiceReferences.RemoteExecutorServiceResult
                             {
@@ -190,7 +191,7 @@
                     }
                     catch(Exception ex)
                     {
-                        Log.ExceptionMessage(ex, "Send callback failed.");
+                        Log.ExceptionMessage(ex, Log.Activity.Send_callback_failed, "Send callback failed.");
                     }
                 });
 
@@ -206,7 +207,7 @@
         /// <param name="executeResult">Executor processing result.</param>
         public void ExecuteCallback(Guid eid, RemoteExecutorServiceResult executeResult)
         {
-            Log.TraceMessage(string.Format("Received execute callback."), Log.MessageType.Trace, eid.EidAsLogKeywords());
+            Log.TraceMessage(Log.Activity.Received_execute_callback,string.Format("Received execute callback."), Log.MessageType.Trace, eid.EidAsLogKeywords());
             var executor = GetRemoteExecutor(eid);
             executor.Pulse(executeResult.Convert());
         }
@@ -260,6 +261,7 @@
                 foreach (var executor in RemoteExecutorService.Executors[sourcePort])
                 {
                     Log.TraceMessage(
+                        Log.Activity.Info, 
                         string.Format("[PerfStat] Executor is in '{0}' state.", executor.Value.ExecutorState),
                         keywords: executor.Value.Eid.EidAsLogKeywords());
                     numberOfTasks[executor.Value.ExecutorState]++;

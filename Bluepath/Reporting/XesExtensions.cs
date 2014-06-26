@@ -85,6 +85,16 @@
             return logType;
         }
 
+        public static LogType Deserialize(Stream stream)
+        {
+            var xmlSerializer = new XmlSerializer(typeof(LogType), Constants.Namespace);
+
+            using (var xmlReader = XmlReader.Create(stream))
+            {
+                return xmlSerializer.Deserialize(xmlReader) as LogType;
+            }
+        }
+
         public string Serialize()
         {
             var xml = default(string);

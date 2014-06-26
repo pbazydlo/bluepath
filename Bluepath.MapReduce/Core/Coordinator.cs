@@ -63,7 +63,7 @@
                     var i = 0;
                     foreach (var res in mapResult)
                     {
-                        Log.TraceMessage(string.Format("[Map] Storing key '{0}', value '{1}'", res.Key, res.Value));
+                        Log.TraceMessage(Log.Activity.Custom,string.Format("[Map] Storing key '{0}', value '{1}'", res.Key, res.Value));
                         storage.Store(string.Format(Properties.Settings.Default.MapOutputFileName, res.Key, bluepath.ProcessEid, i++), res.Value);
                     }
 
@@ -88,7 +88,7 @@
                 var reducer = new Reducer(filePath.ToString(), reduceProvider.Reduce, storage);
                 var reduceResult = reducer.PerformReduce();
 
-                Log.TraceMessage(string.Format("[Reduce] Storing key '{0}', value '{1}'", reduceResult.Key, reduceResult.Value));
+                Log.TraceMessage(Log.Activity.Custom,string.Format("[Reduce] Storing key '{0}', value '{1}'", reduceResult.Key, reduceResult.Value));
                 storage.Store(string.Format(Properties.Settings.Default.ReduceOutputFileName, reduceResult.Key, bluepath.ProcessEid, 0), reduceResult.Value);
 
                 return new List<string>() { reduceResult.Key };

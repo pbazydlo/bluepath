@@ -21,6 +21,12 @@ namespace Bluepath.Threading.Schedulers
             var remoteServices = this.connectionManager.RemoteServices;
             var minNumberOfTasks = remoteServices.Min( rs => CountTasks(rs));
             var serviceData = remoteServices.Where(rs => CountTasks(rs) == minNumberOfTasks).First();
+            if (!serviceData.Value.NumberOfTasks.ContainsKey(Executor.ExecutorState.Running))
+            {
+                serviceData.Value.NumberOfTasks.Add(Executor.ExecutorState.Running, 0);
+            }
+
+            serviceData.Value.NumberOfTasks[Executor.ExecutorState.Running] += 1;
             return serviceData.Key;
         }
 

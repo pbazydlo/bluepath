@@ -7,7 +7,7 @@
     using Bluepath.Exceptions;
     using Bluepath.Services.Discovery;
 
-    public class ConnectionManager : IConnectionManager
+    public class ConnectionManager : IConnectionManager, IDisposable
     {
         private static readonly object DefaultLock = new object();
 
@@ -22,6 +22,8 @@
         private readonly TimeSpan serviceDiscoveryPeriod;
 
         private readonly Thread serviceDiscoveryThread;
+
+        private bool shouldStop = false;
 
         public ConnectionManager(
             KeyValuePair<ServiceUri,PerformanceStatistics>? remoteService,
@@ -68,7 +70,7 @@
                 this.serviceDiscoveryPeriod = serviceDiscoveryPeriod ?? new TimeSpan(hours: 0, minutes: 0, seconds: 5);
                 this.serviceDiscoveryThread = new Thread(() =>
                 {
-                    while (true)
+                    while (!this.shouldStop)
                     {
                         var availableServices = this.serviceDiscovery.GetPerformanceStatistics();
                         lock (this.remoteServicesLock)
@@ -124,5 +126,13 @@
         }
 
         public IListener Listener { get; private set; }
+
+        public void Dispose()
+        {
+            this.serviceDiscoveryThread.Abort();
+            this.shouldStop = true;
+            this.serviceDiscoveryThread.Join();
+            
+        }
     }
 }

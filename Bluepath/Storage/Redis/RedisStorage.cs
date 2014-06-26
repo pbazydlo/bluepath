@@ -11,7 +11,7 @@
     [Serializable]
     public class RedisStorage : IExtendedStorage, IStorage
     {
-        private const int ConnectRetryCount = 5;
+        private const int ConnectRetryCount = 15;
         private static TimeSpan LockTimespan = TimeSpan.FromSeconds(10);
 
         private string configurationString;
@@ -42,7 +42,7 @@
                         {
                             Log.TraceMessage(Log.Activity.Info, "There is no Redis connection available - establishing connection.", logLocallyOnly: true);
                             var config = ConfigurationOptions.Parse(this.configurationString);
-                            config.ConnectTimeout = 5000;
+                            config.ConnectTimeout = 1000;
                             config.KeepAlive = 1;
                             config.SyncTimeout = 30000;
                             config.ConnectRetry = 5;
@@ -50,7 +50,7 @@
                             config.ResolveDns = true;
                             connection = ConnectionMultiplexer.Connect(config);
                         }
-                        catch (TimeoutException ex)
+                        catch (Exception ex)
                         {
                             connection = null;
                             Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("Timeout retry no {0}", retryNo), logLocallyOnly: true);
@@ -219,8 +219,16 @@
 
         public bool LockTake(string key, string value)
         {
-            var db = this.Connection.GetDatabase();
-            return db.LockTake(key, value, LockTimespan);
+            try
+            {
+                var db = this.Connection.GetDatabase();
+                return db.LockTake(key, value, LockTimespan);
+            }
+            catch(Exception ex)
+            {
+                Log.ExceptionMessage(ex, Log.Activity.Info);
+                return false;
+            }
         }
 
         public bool LockExtend(string key, string value)
@@ -231,8 +239,16 @@
 
         public bool LockRelease(string key, string value)
         {
-            var db = this.Connection.GetDatabase();
-            return db.LockRelease(key, value);
+            try
+            {
+                var db = this.Connection.GetDatabase();
+                return db.LockRelease(key, value);
+            }
+            catch (Exception ex)
+            {
+                Log.ExceptionMessage(ex, Log.Activity.Info);
+                return false;
+            }
         }
 
         public RedisValue LockQuery(string key)

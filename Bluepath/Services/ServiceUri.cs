@@ -1,5 +1,6 @@
 ﻿namespace Bluepath.Services
 {
+    using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
     using System.ServiceModel;
@@ -31,7 +32,13 @@
                 switch (this.BindingType)
                 {
                     case Services.BindingType.BasicHttpBinding:
-                        return new BasicHttpBinding();
+                        return new BasicHttpBinding()
+                            {
+                                CloseTimeout = TimeSpan.FromMilliseconds(10000),
+                                OpenTimeout = TimeSpan.FromMilliseconds(10000),
+                                SendTimeout = TimeSpan.FromMilliseconds(10000),
+                                ReceiveTimeout = TimeSpan.FromMilliseconds(10000),
+                            };
                     case Services.BindingType.BasicHttpContextBinding:
                         return new BasicHttpContextBinding();
                     case Services.BindingType.BasicHttpsBinding:

@@ -19,6 +19,7 @@
         private const string RedisXesLogKey = "BluepathReportingOpenXes2";
         private static bool pauseLogging = false;
         public static string RedisHost = "localhost";
+        public static bool WriteInfoToConsole = true;
 
         private Log()
         {
@@ -107,8 +108,14 @@
                     exception.ToString());
             }
 
-            Debug.WriteLine(formattedMessage);
-            Console.WriteLine(formattedMessage);
+            if (activity != Activity.Info || WriteInfoToConsole)
+            {
+                Debug.WriteLine(formattedMessage);
+                var oldColor = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine(formattedMessage);
+                Console.ForegroundColor = oldColor;
+            }
 
             if (!logLocallyOnly)
             {
@@ -137,8 +144,11 @@
             traceInfo = string.Format("[caller: {2} in {0}, line {1}]", Path.GetFileName(sourceFilePath), sourceLineNumber, memberName);
 #endif
             var formattedMessage = string.Format("[LOG][{1}] {0} {2}{3}", message, type, keywords.ToLogString(), traceInfo);
-            Debug.WriteLine(formattedMessage);
-            Console.WriteLine(formattedMessage);
+            if (activity != Activity.Info || WriteInfoToConsole)
+            {
+                Debug.WriteLine(formattedMessage);
+                Console.WriteLine(formattedMessage);
+            }
 
             if (!logLocallyOnly)
             {
@@ -157,42 +167,49 @@
 
             try
             {
-                var logThread = new System.Threading.Thread(()=>
+                var logThread = new System.Threading.Thread(() =>
                     {
-                        int retryCount = 5;
-                        int retryNo = 0;
-                        var storage = new RedisStorage(RedisHost);
-                        var counter = new Bluepath.Storage.Structures.DistributedCounter(storage, string.Format("{0}_counter", RedisXesLogKey));
-                        var tmpDateTime = DateTime.Now;
-                        var dateTime = new DateTime(tmpDateTime.Year, tmpDateTime.Month, tmpDateTime.Day, tmpDateTime.Hour, tmpDateTime.Minute, tmpDateTime.Second, counter.GetAndIncrease() % 1000);
-                        var list = new DistributedList<EventType>(storage, RedisXesLogKey);
-                        while (retryNo < retryCount)
+                        try
                         {
-                            try
+                            int retryCount = 5;
+                            int retryNo = 0;
+                            var storage = new RedisStorage(RedisHost);
+                            var counter = new Bluepath.Storage.Structures.DistributedCounter(storage, string.Format("{0}_counter", RedisXesLogKey));
+                            var tmpDateTime = DateTime.Now;
+                            var dateTime = new DateTime(tmpDateTime.Year, tmpDateTime.Month, tmpDateTime.Day, tmpDateTime.Hour, tmpDateTime.Minute, tmpDateTime.Second, counter.GetAndIncrease() % 1000);
+                            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+                            while (retryNo < retryCount)
                             {
-                                list.Add(new EventType(message, resource, dateTime, EventType.Transition.Start));
-                                break;
+                                try
+                                {
+                                    list.Add(new EventType(message, resource, dateTime, EventType.Transition.Start));
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
+                                    retryNo++;
+                                }
                             }
-                            catch (Exception ex)
+
+                            retryNo = 0;
+                            while (retryNo < retryCount)
                             {
-                                ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
-                                retryNo++;
+                                try
+                                {
+                                    list.Add(new EventType(message, resource, dateTime, EventType.Transition.Complete));
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
+                                    retryNo++;
+                                }
                             }
                         }
-
-                        retryNo = 0;
-                        while (retryNo < retryCount)
+                        catch
                         {
-                            try
-                            {
-                                list.Add(new EventType(message, resource, dateTime, EventType.Transition.Complete));
-                                break;
-                            }
-                            catch (Exception ex)
-                            {
-                                ExceptionMessage(ex, Log.Activity.Info, string.Format("Error on saving log to Redis[{0}]. {1}", retryNo, ex.StackTrace), logLocallyOnly: true);
-                                retryNo++;
-                            }
+
                         }
                     });
                 logThread.IsBackground = false;

@@ -27,6 +27,7 @@
         {
             lock (AvailableServicesLock)
             {
+                Log.TraceMessage(Log.Activity.Custom, string.Format("Uri registered: {0}", uri.Address));
                 if (AvailableServices.FirstOrDefault(s => s.Equals(uri)) != null)
                 {
                     throw new ArgumentException("Service with such uri already exists!", "uri");
@@ -40,6 +41,7 @@
         {
             lock (AvailableServicesLock)
             {
+                Log.TraceMessage(Log.Activity.Custom, string.Format("Uri unregistered: {0}", uri.Address));
                 if (AvailableServices.FirstOrDefault(s => s.Equals(uri)) == null)
                 {
                     throw new ArgumentException("Service with such uri doesn't exist!", "uri");
@@ -72,8 +74,15 @@
                     service.Binding,
                     service.ToEndpointAddress()))
                 {
-                    Log.TraceMessage(Log.Activity.Info,string.Format("[PerfStat] Getting performance statistics from '{0}'.", service.Address));
-                    performanceStatistics.Add(service, (await client.GetPerformanceStatisticsAsync()).FromServiceReference());
+                    try
+                    {
+                        Log.TraceMessage(Log.Activity.Info, string.Format("[PerfStat] Getting performance statistics from '{0}'.", service.Address));
+                        performanceStatistics.Add(service, (await client.GetPerformanceStatisticsAsync()).FromServiceReference());
+                    }
+                    catch(Exception ex)
+                    {
+                        Log.ExceptionMessage(ex, Log.Activity.Info, "Failed getting performance stats - ignoring.");
+                    }
                 }
             }
 

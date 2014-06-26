@@ -23,7 +23,13 @@ namespace Bluepath.DistributedSum
         public string RedisHost { get; set; }
 
         [Option('s', "isSlave", Required = true)]
-        public bool IsSlave { get; set; }
+        public int IsSlave { get; set; }
+
+        [Option('n', "no", Required = true)]
+        public int NoOfElements { get; set; }
+
+        [Option('a', "shards", Required = false)]
+        public int NoOfShards { get; set; }
 
         [HelpOption]
         public string GetUsage()

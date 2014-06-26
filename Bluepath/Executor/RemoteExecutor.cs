@@ -110,7 +110,6 @@
                                         Monitor.Wait(this.waitForCallbackLock);
                                     }
 
-                                    this.CleanUpJoinThread();
                                     joinResult = this.callbackResult;
                                     return;
                                 }
@@ -151,16 +150,15 @@
                                 }
                             }
                             while (joinResult == null || joinResult.ExecutorState == ServiceReferences.ExecutorState.Running || joinResult.ExecutorState == ServiceReferences.ExecutorState.NotStarted);
-
-                            this.CleanUpJoinThread();
                         });
 
                     this.joinThread.Name = string.Format("Join thread on remote executor '{0}'", this.Eid);
                     this.joinThread.Start();
                 }
-            }
 
-            this.joinThread.Join();
+                this.joinThread.Join();
+                this.CleanUpJoinThread();
+            }
 
             if (joinResult == null)
             {

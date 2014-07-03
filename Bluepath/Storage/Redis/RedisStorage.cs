@@ -32,6 +32,7 @@
                     {
                         Log.TraceMessage(Log.Activity.Info,"There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
                         connection.Close();
+                        connection.Dispose();
                         connection = null;
                     }
 
@@ -42,13 +43,17 @@
                         {
                             Log.TraceMessage(Log.Activity.Info, "There is no Redis connection available - establishing connection.", logLocallyOnly: true);
                             var config = ConfigurationOptions.Parse(this.configurationString);
-                            config.ConnectTimeout = 1000;
+                            config.ConnectTimeout = 10000;
                             config.KeepAlive = 1;
                             config.SyncTimeout = 30000;
                             config.ConnectRetry = 5;
                             config.AbortOnConnectFail = true;
                             config.ResolveDns = true;
                             connection = ConnectionMultiplexer.Connect(config);
+                            while(!connection.IsConnected)
+                            {
+                                System.Threading.Thread.Sleep(100);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -259,7 +264,7 @@
 
         public void Dispose()
         {
-            this.Connection.Dispose();
+            // this.Connection.Dispose();
         }
 
         private bool InternalStore<T>(string key, T value, When when, int retry = ConnectRetryCount)

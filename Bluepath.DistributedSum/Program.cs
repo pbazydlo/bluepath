@@ -135,6 +135,17 @@ namespace Bluepath.DistributedSum
             }
 
             sw.Stop();
+            var clearDataThread = DistributedThread.Create(
+                new Func<string, IBluepathCommunicationFramework, int>(
+                    (key, bluepath) =>
+                    {
+                        var list = new DistributedList<int>(bluepath.Storage as IExtendedStorage, key);
+                        list.Clear();
+                        return 0;
+                    }),
+                    connectionManager, scheduler, DistributedThread.ExecutorSelectionMode.LocalOnly);
+            clearDataThread.Start(inputDataKey);
+            clearDataThread.Join();
             Console.WriteLine(overallSum);
             Console.WriteLine(sw.ElapsedMilliseconds);
         }

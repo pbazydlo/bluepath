@@ -15,6 +15,7 @@ namespace Bluepath.CentralizedDiscovery.Runner
             {
                 Bluepath.Log.RedisHost = options.RedisConf;
                 Bluepath.Log.WriteInfoToConsole = false;
+                //Bluepath.Log.WriteInfoToConsole = true;
                 var listener = new Bluepath.CentralizedDiscovery.CentralizedDiscoveryListener(options.Ip, options.Port);
                 Console.WriteLine("MasterURI: {0}", listener.MasterUri);
                 Console.WriteLine("Press ENTER to stop");

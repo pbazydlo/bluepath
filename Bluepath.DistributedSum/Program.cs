@@ -43,30 +43,8 @@ namespace Bluepath.DistributedSum
                         if (options.IsSlave == 0)
                         {
                             Log.TraceMessage(Log.Activity.Custom, "Running master");
-                            var storage = new Bluepath.Storage.Redis.RedisStorage(options.RedisHost);
-                            var list = new DistributedList<int>(storage, Guid.NewGuid().ToString());
-                            var localList = new List<int>();
-                            var rSw = new Stopwatch();
-                            int amount = 1000;
-                            rSw.Start();
-                            for (int i = 0; i < amount; i++)
-                            {
-                                localList.Add(1);
-                            }
-
-                            list.AddRange(localList);
-                            rSw.Stop();
-                            var wSw = new Stopwatch();
-                            int aa = 0;
-                            wSw.Start();
-                            for (int i = 0; i < amount; i++)
-                            {
-                                aa = list[i];
-                            }
-
-                            wSw.Stop();
-                            Log.TraceMessage(Log.Activity.Custom, string.Format("Write: {0}; Read: {1}; Value {2}; Amount: {3}", rSw.ElapsedMilliseconds, wSw.ElapsedMilliseconds, aa, amount));
-                            //RunTest(connectionManager, scheduler, options);
+                            //RunRedisTest(options);
+                            RunTest(connectionManager, scheduler, options);
                         }
                         else
                         {
@@ -80,6 +58,33 @@ namespace Bluepath.DistributedSum
             }
         }
 
+        private static void RunRedisTest(Options options)
+        {
+            var storage = new Bluepath.Storage.Redis.RedisStorage(options.RedisHost);
+            var list = new DistributedList<int>(storage, Guid.NewGuid().ToString());
+            var localList = new List<int>();
+            var rSw = new Stopwatch();
+            int amount = 1000;
+            rSw.Start();
+            for (int i = 0; i < amount; i++)
+            {
+                localList.Add(1);
+            }
+
+            list.AddRange(localList);
+            rSw.Stop();
+            var wSw = new Stopwatch();
+            int aa = 0;
+            wSw.Start();
+            for (int i = 0; i < amount; i++)
+            {
+                aa = list[i];
+            }
+
+            wSw.Stop();
+            Log.TraceMessage(Log.Activity.Custom, string.Format("Write: {0}; Read: {1}; Value {2}; Amount: {3}", rSw.ElapsedMilliseconds, wSw.ElapsedMilliseconds, aa, amount));
+        }
+
         private static void RunTest(ConnectionManager connectionManager, ThreadNumberScheduler scheduler, Options options)
         {
             Log.TraceMessage(Log.Activity.Custom, "Creating data");
@@ -87,18 +92,18 @@ namespace Bluepath.DistributedSum
                 new Func<int, string, IBluepathCommunicationFramework, int>(
                     (dataSize, key, bluepath) =>
                     {
-                        //var data = new List<int>(dataSize);
-                        //for (int i = 0; i < dataSize; i++)
-                        //{
-                        //    data.Add(1);
-                        //}
+                        var data = new List<int>(dataSize);
+                        for (int i = 0; i < dataSize; i++)
+                        {
+                            data.Add(1);
+                        }
 
-                        //var list = new DistributedList<int>(bluepath.Storage as IExtendedStorage, key);
-                        //if (list.Count != dataSize)
-                        //{
-                        //    list.Clear();
-                        //    list.AddRange(data);
-                        //}
+                        var list = new DistributedList<int>(bluepath.Storage as IExtendedStorage, key);
+                        if (list.Count != dataSize)
+                        {
+                            list.Clear();
+                            list.AddRange(data);
+                        }
 
                         return dataSize;
                     }),
@@ -133,12 +138,12 @@ namespace Bluepath.DistributedSum
                     (inputKey, indexStart, indexEnd, bluepath)
                         =>
                     {
-                        //var inputList = new DistributedList<int>(bluepath.Storage as IExtendedStorage, inputKey);
+                        var inputList = new DistributedList<int>(bluepath.Storage as IExtendedStorage, inputKey);
                         int partialSum = 0;
                         for (int x = indexStart; x < indexEnd; x++)
                         {
-                            //partialSum += inputList[x];
-                            System.Threading.Thread.Sleep(1000);
+                            partialSum += inputList[x];
+                            //System.Threading.Thread.Sleep(1000);
                         }
 
                         return partialSum;

@@ -98,50 +98,59 @@
 
         public T Retrieve<T>(string key)
         {
-            var pendingResult = InternalRetrieve(key, ConnectRetryCount);
+            //var pendingResult = InternalRetrieve(key, ConnectRetryCount);
 
-            return ((byte[])pendingResult.Result).Deserialize<T>();
+            //return ((byte[])pendingResult.Result).Deserialize<T>();
+            return ((byte[])this.InternalRetrieve(key, ConnectRetryCount)).Deserialize<T>();
         }
 
-        private System.Threading.Tasks.Task<RedisValue> InternalRetrieve(string key, int retry)
+        private RedisValue InternalRetrieve(string key, int retry)
         {
             var db = this.Connection.GetDatabase();
-            var transaction = db.CreateTransaction();
-            transaction.AddCondition(Condition.KeyExists(key));
-            var pendingResult = transaction.StringGetAsync(key);
-            try
+            var value = db.StringGet(key);
+            if(value.IsNull)
             {
-                var transactionSuccess = transaction.Execute();
-                if (!transactionSuccess)
-                {
-                    throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is RedisConnectionException || ex is TimeoutException)
-                {
-                    Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key), logLocallyOnly: true);
-                    //if ((ex.InnerException != null && ex.InnerException is OverflowException)
-                    //    || ex is TimeoutException)
-                    //{
-                    // pendingResult.Dispose();
-                    if (retry <= 0)
-                    {
-                        throw new StorageOperationException("InternalRetrieve failed", ex);
-                    }
-
-                    return this.InternalRetrieve(key, retry - 1);
-                    //}
-                }
-
-                throw;
+                throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
             }
 
-            Log.TraceMessage(Log.Activity.Info, "InternalRetrieve waits for result...", logLocallyOnly: true);
-            pendingResult.Wait();
-            Log.TraceMessage(Log.Activity.Info, "InternalRetrieve got result.", logLocallyOnly: true);
-            return pendingResult;
+            return value;
+            //var db = this.Connection.GetDatabase();
+            //var transaction = db.CreateTransaction();
+            //transaction.AddCondition(Condition.KeyExists(key));
+            //var pendingResult = transaction.StringGetAsync(key);
+            //try
+            //{
+            //    var transactionSuccess = transaction.Execute();
+            //    if (!transactionSuccess)
+            //    {
+            //        throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    if (ex is RedisConnectionException || ex is TimeoutException)
+            //    {
+            //        Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("Retrieve attempt no {0} for key '{1}' failed.", retry, key), logLocallyOnly: true);
+            //        //if ((ex.InnerException != null && ex.InnerException is OverflowException)
+            //        //    || ex is TimeoutException)
+            //        //{
+            //        // pendingResult.Dispose();
+            //        if (retry <= 0)
+            //        {
+            //            throw new StorageOperationException("InternalRetrieve failed", ex);
+            //        }
+
+            //        return this.InternalRetrieve(key, retry - 1);
+            //        //}
+            //    }
+
+            //    throw;
+            //}
+
+            //Log.TraceMessage(Log.Activity.Info, "InternalRetrieve waits for result...", logLocallyOnly: true);
+            //pendingResult.Wait();
+            //Log.TraceMessage(Log.Activity.Info, "InternalRetrieve got result.", logLocallyOnly: true);
+            //return pendingResult;
         }
 
         public void Remove(string key)

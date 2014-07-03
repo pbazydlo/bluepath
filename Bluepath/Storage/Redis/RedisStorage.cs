@@ -44,7 +44,7 @@
                             Log.TraceMessage(Log.Activity.Info, "There is no Redis connection available - establishing connection.", logLocallyOnly: true);
                             var config = ConfigurationOptions.Parse(this.configurationString);
                             config.ConnectTimeout = 10000;
-                            config.KeepAlive = 1;
+                            //config.KeepAlive = 1;
                             config.SyncTimeout = 30000;
                             config.ConnectRetry = 5;
                             config.AbortOnConnectFail = true;

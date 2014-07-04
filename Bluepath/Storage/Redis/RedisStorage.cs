@@ -1,12 +1,14 @@
 ﻿namespace Bluepath.Storage.Redis
 {
     using System;
+    using System.Linq;
 
     using Bluepath.Extensions;
     using Bluepath.Storage.Locks;
 
     using StackExchange.Redis;
     using Bluepath.Exceptions;
+    using System.Collections.Generic;
 
     [Serializable]
     public class RedisStorage : IExtendedStorage, IStorage
@@ -30,7 +32,7 @@
                     int retryNo = 0;
                     if (connection != null && connection.IsConnected == false)
                     {
-                        Log.TraceMessage(Log.Activity.Info,"There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
+                        Log.TraceMessage(Log.Activity.Info, "There seems to be Redis connection failure, reseting connection.", logLocallyOnly: true);
                         connection.Close();
                         connection.Dispose();
                         connection = null;
@@ -50,7 +52,7 @@
                             config.AbortOnConnectFail = true;
                             config.ResolveDns = true;
                             connection = ConnectionMultiplexer.Connect(config);
-                            while(!connection.IsConnected)
+                            while (!connection.IsConnected)
                             {
                                 System.Threading.Thread.Sleep(100);
                             }
@@ -74,7 +76,8 @@
 
         public void Store<T>(string key, T value)
         {
-            if (!this.InternalStore(key, value, When.NotExists))
+            var keyAndValue = new KeyValuePair<string, T>[] { new KeyValuePair<string, T>(key, value) };
+            if (!this.InternalStore(keyAndValue, When.NotExists))
             {
                 throw new StorageKeyAlreadyExistsException("key", string.Format("Such key[{0}] already exists!", key));
             }
@@ -82,7 +85,8 @@
 
         public void StoreOrUpdate<T>(string key, T value)
         {
-            if (!this.InternalStore(key, value, When.Always))
+            var keyAndValue = new KeyValuePair<string, T>[] { new KeyValuePair<string, T>(key, value) };
+            if (!this.InternalStore(keyAndValue, When.Always))
             {
                 throw new StorageOperationException("Operation failed");
             }
@@ -90,7 +94,8 @@
 
         public void Update<T>(string key, T newValue)
         {
-            if (!this.InternalStore(key, newValue, When.Exists))
+            var keyAndValue = new KeyValuePair<string, T>[] { new KeyValuePair<string, T>(key, newValue) };
+            if (!this.InternalStore(keyAndValue, When.Exists))
             {
                 throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
             }
@@ -98,48 +103,55 @@
 
         public T Retrieve<T>(string key)
         {
-            //var pendingResult = InternalRetrieve(key, ConnectRetryCount);
-
-            //return ((byte[])pendingResult.Result).Deserialize<T>();
-            return ((byte[])this.InternalRetrieve(key, ConnectRetryCount)).Deserialize<T>();
+            return ((byte[])this.InternalRetrieve(new string[] { key }, ConnectRetryCount)[0]).Deserialize<T>();
         }
 
-        private RedisValue InternalRetrieve(string key, int retry)
+        private RedisValue[] InternalRetrieve(string[] keys, int retry)
         {
             var db = this.Connection.GetDatabase();
-            var value = db.StringGet(key);
-            if(value.IsNull)
+            var values = db.StringGet(keys.Select(k => (RedisKey)k).ToArray());
+            if (values.Any(v => v.IsNull))
             {
-                throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                var wrongKeys = keys.Where(k => values[Array.IndexOf(keys, k)].IsNull).ToArray();
+                throw new StorageKeyDoesntExistException("key", string.Format("Such keys[{0}] don't exist!", string.Join(";", wrongKeys)));
             }
 
-            return value;
+            return values;
         }
 
         public void Remove(string key)
         {
-            bool succededRemoving = false;
-            do
+            this.InternalRemove(new string[] { key });
+
+            Log.TraceMessage(Log.Activity.Info, string.Format("Removed key '{0}'", key), logLocallyOnly: true);
+        }
+
+        private void InternalRemove(string[] keys)
+        {
+            // TODO implement as bulk operation
+            foreach (var key in keys)
             {
-                var db = this.Connection.GetDatabase();
-                var transaction = db.CreateTransaction();
-                transaction.AddCondition(Condition.KeyExists(key));
-                var pendingResult = transaction.KeyDeleteAsync(key);
-                var transactionSuccess = transaction.Execute();
-                if (!transactionSuccess)
+                bool succededRemoving = false;
+                do
                 {
-                    throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
-                }
+                    var db = this.Connection.GetDatabase();
+                    var transaction = db.CreateTransaction();
+                    transaction.AddCondition(Condition.KeyExists(key));
+                    var pendingResult = transaction.KeyDeleteAsync(key);
+                    var transactionSuccess = transaction.Execute();
+                    if (!transactionSuccess)
+                    {
+                        throw new StorageKeyDoesntExistException("key", string.Format("Such key[{0}] doesn't exist!", key));
+                    }
 
-                pendingResult.Wait();
-                succededRemoving = pendingResult.Result;
-                if (!succededRemoving)
-                {
-                    Log.TraceMessage(Log.Activity.Info,string.Format("Removing key failed! [{0}]", key), logLocallyOnly: true);
-                }
-            } while (!succededRemoving);
-
-            Log.TraceMessage(Log.Activity.Info,string.Format("Removed key '{0}'", key), logLocallyOnly: true);
+                    pendingResult.Wait();
+                    succededRemoving = pendingResult.Result;
+                    if (!succededRemoving)
+                    {
+                        Log.TraceMessage(Log.Activity.Info, string.Format("Removing key failed! [{0}]", key), logLocallyOnly: true);
+                    }
+                } while (!succededRemoving);
+            }
         }
 
         public IStorageLock AcquireLock(string key)
@@ -201,7 +213,7 @@
                 var db = this.Connection.GetDatabase();
                 return db.LockTake(key, value, LockTimespan);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.ExceptionMessage(ex, Log.Activity.Info);
                 return false;
@@ -239,23 +251,61 @@
             // this.Connection.Dispose();
         }
 
-        private bool InternalStore<T>(string key, T value, When when, int retry = ConnectRetryCount)
+        private bool InternalStore<T>(KeyValuePair<string, T>[] keysAndValues, When when, int retry = ConnectRetryCount)
         {
             try
             {
                 var db = this.Connection.GetDatabase();
-                return db.StringSet(key, value.Serialize(), null, when);
+                var redisKeysAndValues = keysAndValues.Select(kv => new KeyValuePair<RedisKey, RedisValue>(kv.Key, kv.Value.Serialize())).ToArray();
+                return db.StringSet(redisKeysAndValues, when);
             }
             catch (RedisConnectionException ex)
             {
                 Log.ExceptionMessage(ex, Log.Activity.Info, string.Format("InternalStore failed, retry: {0}", retry), logLocallyOnly: true);
                 if (retry >= 0)
                 {
-                    return this.InternalStore<T>(key, value, when, retry - 1);
+                    return this.InternalStore<T>(keysAndValues, when, retry - 1);
                 }
 
                 throw;
             }
+        }
+
+
+        public void BulkStore<T>(KeyValuePair<string, T>[] keysAndValues)
+        {
+            if (!this.InternalStore(keysAndValues, When.NotExists))
+            {
+                throw new StorageKeyAlreadyExistsException("keysAndValues", "Some keys already exist.");
+            }
+        }
+
+        public void BulkStoreOrUpdate<T>(KeyValuePair<string, T>[] keysAndValues)
+        {
+            if (!this.InternalStore(keysAndValues, When.Always))
+            {
+                throw new StorageOperationException("Operation failed");
+            }
+        }
+
+        public void BulkUpdate<T>(KeyValuePair<string, T>[] keysAndNewValues)
+        {
+            if (!this.InternalStore(keysAndNewValues, When.Exists))
+            {
+                throw new StorageKeyDoesntExistException("keysAndNewValues", "Some of keys dosn't exist.");
+            }
+        }
+
+        public T[] BulkRetrieve<T>(string[] keys)
+        {
+            return this.InternalRetrieve(keys, ConnectRetryCount).Select(v => ((byte[])v).Deserialize<T>()).ToArray();
+        }
+
+        public void BulkRemove(string[] keys)
+        {
+            this.InternalRemove(keys);
+
+            Log.TraceMessage(Log.Activity.Info, string.Format("Removed keys '{0}'", string.Join(";", keys)), logLocallyOnly: true);
         }
     }
 }

@@ -113,10 +113,7 @@ namespace Bluepath.Storage.Structures.Collections
             using(var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
-                foreach (var item in items)
-                {
-                    this.InternalAdd(item, metadata);
-                }
+                this.InternalAddRange(items.ToArray(), metadata);
 
                 this.SetMetadata(metadata);
             }
@@ -127,11 +124,13 @@ namespace Bluepath.Storage.Structures.Collections
             using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
+                string[] keysToRemove = new string[metadata.Count];
                 for (int i = 0; i < metadata.Count; i++)
                 {
-                    this.Storage.Remove(this.GetItemKey(i));
+                    keysToRemove[i] = this.GetItemKey(i);
                 }
 
+                this.Storage.BulkRemove(keysToRemove);
                 metadata.Count = 0;
                 this.SetMetadata(metadata);
             }
@@ -149,9 +148,16 @@ namespace Bluepath.Storage.Structures.Collections
                 var metadata = this.GetMetadata();
                 if ((array.Length - arrayIndex) >= metadata.Count)
                 {
+                    var keysToRead = new string[metadata.Count];
                     for (int i = 0; i < metadata.Count; i++)
                     {
-                        array[i + arrayIndex] = this[i];
+                        keysToRead[i] = this.GetItemKey(i);
+                    }
+
+                    var values = this.Storage.BulkRetrieve<T>(keysToRead);
+                    for (int i = 0; i < metadata.Count; i++)
+                    {
+                        array[i + arrayIndex] = values[i];
                     }
                 }
             }
@@ -263,11 +269,16 @@ namespace Bluepath.Storage.Structures.Collections
             this.Storage.Update(this.GetItemKey(index), value);
         }
 
-        private void InternalAdd(T item, DistributedListMetadata metadata)
+        private void InternalAddRange(T[] items, DistributedListMetadata metadata)
         {
-            var itemIndex = metadata.Count;
-            metadata.Count++;
-            this.Storage.Store(this.GetItemKey(itemIndex), item);
+            var itemsWithKeys = items.Select(i =>
+                {
+                    var itemIndex = metadata.Count;
+                    metadata.Count++;
+                    return new KeyValuePair<string, T>(this.GetItemKey(itemIndex), i);
+                }).ToArray();
+
+            this.Storage.BulkStore(itemsWithKeys);
         }
 
         // TODO: Could contain some kind of index for faster search and index find operations

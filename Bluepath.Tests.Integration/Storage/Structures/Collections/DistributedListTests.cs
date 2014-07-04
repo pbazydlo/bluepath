@@ -27,7 +27,7 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             var key = Guid.NewGuid().ToString();
             var list = new DistributedList<int>(storage, key);
 
-            for(int i=0;i<10;i++)
+            for (int i = 0; i < 10; i++)
             {
                 list.Add(i);
             }
@@ -102,10 +102,10 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
                 {
                     localCount++;
                     isEnumerating = true;
-                    if(isFirstTurn)
+                    if (isFirstTurn)
                     {
                         isFirstTurn = false;
-                        lock(synchLock)
+                        lock (synchLock)
                         {
                             Monitor.Wait(synchLock);
                         }
@@ -128,7 +128,7 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             Thread.Sleep(10);
             list1.Count.ShouldBe(10);
             finishedRemoving.ShouldBe(false);
-            lock(synchLock)
+            lock (synchLock)
             {
                 Monitor.Pulse(synchLock);
             }
@@ -158,7 +158,7 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
 
             list1.Count.ShouldBe(10);
             var list2 = new DistributedList<Bluepath.Tests.Integration.DistributedThread.ComplexParameter>(storage, key);
-            for(int i=0;i<list2.Count;i++)
+            for (int i = 0; i < list2.Count; i++)
             {
                 list2[i].AnotherProperty.ShouldBe(i);
             }
@@ -180,9 +180,33 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
             list1.Count.ShouldBe(elementCount);
             var destinationArray = new int[elementCount];
             list1.CopyTo(destinationArray, 0);
-            for(int i=0;i<elementCount;i++)
+            for (int i = 0; i < elementCount; i++)
             {
                 destinationArray[i].ShouldBe(i);
+            }
+        }
+
+        [TestMethod]
+        public void DistributedListsPerformsCopyPartToArray()
+        {
+            var storage = new RedisStorage(Host);
+            var key = Guid.NewGuid().ToString();
+            var list1 = new DistributedList<int>(storage, key);
+            int elementCount = 10;
+
+            for (int i = 0; i < elementCount; i++)
+            {
+                list1.Add(i);
+            }
+
+            list1.Count.ShouldBe(elementCount);
+            int startIndex = 3;
+            int count = 3;
+            var destinationArray = new int[count];
+            list1.CopyPartTo(startIndex, count, destinationArray);
+            for (int i = 0; i < destinationArray.Length; i++)
+            {
+                destinationArray[i].ShouldBe(i + startIndex);
             }
         }
     }

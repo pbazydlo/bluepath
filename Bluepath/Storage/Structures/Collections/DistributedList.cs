@@ -44,7 +44,7 @@ namespace Bluepath.Storage.Structures.Collections
             }
         }
 
-        public IExtendedStorage Storage 
+        public IExtendedStorage Storage
         {
             get { return this.storage; }
             set { this.storage = value; }
@@ -110,7 +110,7 @@ namespace Bluepath.Storage.Structures.Collections
 
         public void AddRange(IEnumerable<T> items)
         {
-            using(var @lock = this.Storage.AcquireLock(this.LockKey))
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
             {
                 var metadata = this.GetMetadata();
                 this.InternalAddRange(items.ToArray(), metadata);
@@ -160,6 +160,27 @@ namespace Bluepath.Storage.Structures.Collections
                         array[i + arrayIndex] = values[i];
                     }
                 }
+            }
+        }
+
+        public void CopyPartTo(int startIndex, int count, T[] array)
+        {
+            using (var @lock = this.Storage.AcquireLock(this.LockKey))
+            {
+                var metadata = this.GetMetadata();
+                if ((startIndex + count) > metadata.Count)
+                {
+                    throw new IndexOutOfRangeException(string.Format("End index must not exceed element Count."));
+                }
+
+                var keysToRead = new string[count];
+                for (int i = startIndex; i < startIndex + count; i++)
+                {
+                    keysToRead[i - startIndex] = this.GetItemKey(i);
+                }
+
+                var values = this.Storage.BulkRetrieve<T>(keysToRead);
+                values.CopyTo(array, 0);
             }
         }
 
@@ -322,7 +343,7 @@ namespace Bluepath.Storage.Structures.Collections
             {
                 var cc = this.list.Count;
                 this.currentIndex++;
-                if(this.currentIndex >= this.list.Count)
+                if (this.currentIndex >= this.list.Count)
                 {
                     return false;
                 }

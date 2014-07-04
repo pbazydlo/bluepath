@@ -34,10 +34,10 @@
                     case Services.BindingType.BasicHttpBinding:
                         return new BasicHttpBinding()
                             {
-                                CloseTimeout = TimeSpan.FromMilliseconds(10000),
-                                OpenTimeout = TimeSpan.FromMilliseconds(10000),
-                                SendTimeout = TimeSpan.FromMilliseconds(10000),
-                                ReceiveTimeout = TimeSpan.FromMilliseconds(10000),
+                                CloseTimeout = TimeSpan.FromMilliseconds(1000000),
+                                OpenTimeout = TimeSpan.FromMilliseconds(1000000),
+                                SendTimeout = TimeSpan.FromMilliseconds(1000000),
+                                ReceiveTimeout = TimeSpan.FromMilliseconds(1000000),
                             };
                     case Services.BindingType.BasicHttpContextBinding:
                         return new BasicHttpContextBinding();

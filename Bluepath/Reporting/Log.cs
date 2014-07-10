@@ -20,6 +20,7 @@
         private static bool pauseLogging = false;
         public static string RedisHost = "localhost";
         public static bool WriteInfoToConsole = true;
+        public static bool WriteToRedis = true;
 
         private Log()
         {
@@ -158,6 +159,11 @@
 
         private static void WriteToStorageList(Activity activity, string message)
         {
+            if(!Log.WriteToRedis)
+            {
+                return;
+            }
+
             var resource = BluepathListener.NodeGuid.ToString().Substring(6);
 
             if (activity != Activity.Custom)

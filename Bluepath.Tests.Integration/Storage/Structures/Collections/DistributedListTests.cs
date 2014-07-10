@@ -43,6 +43,26 @@ namespace Bluepath.Tests.Integration.Storage.Structures.Collections
         }
 
         [TestMethod]
+        public void DistributedListHandlesBigCollections()
+        {
+            var storage = new RedisStorage(Host);
+            var key = Guid.NewGuid().ToString();
+            var list = new DistributedList<int>(storage, key);
+            int amount = 100000;
+            var localList = new List<int>(amount);
+            for (int i = 0; i < amount;i++ )
+            {
+                localList.Add(i);
+            }
+
+            list.AddRange(localList);
+
+            list.Count.ShouldBe(amount);
+            list.Clear();
+            list.Count.ShouldBe(0);
+        }
+
+        [TestMethod]
         public void DistributedListAllowsAddingEnumerablesInOneStep()
         {
             var storage = new RedisStorage(Host);

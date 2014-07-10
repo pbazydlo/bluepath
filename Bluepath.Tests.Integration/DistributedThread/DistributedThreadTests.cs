@@ -439,7 +439,7 @@
         {
             Func<object[], object> testFunc = (parameters) =>
             {
-                throw new Exception("test");
+                throw new IndexOutOfRangeException("Whateva");
             };
 
             if (!externalRunner)

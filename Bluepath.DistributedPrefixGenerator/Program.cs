@@ -65,19 +65,24 @@ namespace Bluepath.DistributedPrefixGenerator
                     (dataSize, key, bluepath) =>
                     {
                         var data = new List<string>(dataSize);
+                        var list = new DistributedList<string>(bluepath.Storage as IExtendedStorage, key);
+                        if (list.Count != dataSize)
+                        {
+                            list.Clear();
+                        }
+                        else
+                        {
+                            return dataSize;
+                        }
+
                         for (int i = 0; i < dataSize; i++)
                         {
                             int nextSourceDocument = i % SourceDocuments.Documents.Count;
                             data.Add(SourceDocuments.Documents[nextSourceDocument]);
                         }
 
-                        var list = new DistributedList<string>(bluepath.Storage as IExtendedStorage, key);
-                        if (list.Count != dataSize)
-                        {
-                            list.Clear();
-                            list.AddRange(data);
-                        }
-
+                        Console.WriteLine("Start saving data to redis");
+                        list.AddRange(data);
                         return dataSize;
                     }),
                     connectionManager, scheduler, DistributedThread.ExecutorSelectionMode.LocalOnly);
@@ -112,10 +117,13 @@ namespace Bluepath.DistributedPrefixGenerator
                         =>
                     {
                         var inputList = new DistributedList<string>(bluepath.Storage as IExtendedStorage, inputKey);
+                        var inputToProcess = new string[indexEnd - indexStart];
+                        inputList.CopyPartTo(indexStart, inputToProcess.Length, inputToProcess);
+
                         List<string> results = new List<string>();
                         for (int x = indexStart; x < indexEnd; x++)
                         {
-                            var documentLine = inputList[x];
+                            var documentLine = inputToProcess[x - indexStart];
                             var words = documentLine.Split(' ');
                             var partialResult = new List<string>();
                             foreach (var word in words)

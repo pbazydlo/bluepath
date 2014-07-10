@@ -108,8 +108,24 @@
 
         private RedisValue[] InternalRetrieve(string[] keys, int retry)
         {
+            if(keys.Length==0)
+            {
+                return new RedisValue[0];
+            }
+
             var db = this.Connection.GetDatabase();
-            var values = db.StringGet(keys.Select(k => (RedisKey)k).ToArray());
+            RedisValue[] values = null;
+            var stringGetTask = db.StringGetAsync(keys.Select(k => (RedisKey)k).ToArray());
+            try
+            {
+                stringGetTask.Wait();
+                values = stringGetTask.Result;
+            }
+            catch (AggregateException agEx)
+            {
+                throw agEx.InnerExceptions.FirstOrDefault();
+            }
+
             if (values.Any(v => v.IsNull))
             {
                 var wrongKeys = keys.Where(k => values[Array.IndexOf(keys, k)].IsNull).ToArray();
@@ -253,11 +269,25 @@
 
         private bool InternalStore<T>(KeyValuePair<string, T>[] keysAndValues, When when, int retry = ConnectRetryCount)
         {
+            if(keysAndValues.Length==0)
+            {
+                return true;
+            }
+
             try
             {
                 var db = this.Connection.GetDatabase();
                 var redisKeysAndValues = keysAndValues.Select(kv => new KeyValuePair<RedisKey, RedisValue>(kv.Key, kv.Value.Serialize())).ToArray();
-                return db.StringSet(redisKeysAndValues, when);
+                var stringSetTask = db.StringSetAsync(redisKeysAndValues, when);
+                try
+                {
+                    stringSetTask.Wait();
+                    return stringSetTask.Result;
+                }
+                catch(AggregateException agEx)
+                {
+                    throw agEx.InnerExceptions.FirstOrDefault();
+                }
             }
             catch (RedisConnectionException ex)
             {
@@ -270,7 +300,6 @@
                 throw;
             }
         }
-
 
         public void BulkStore<T>(KeyValuePair<string, T>[] keysAndValues)
         {

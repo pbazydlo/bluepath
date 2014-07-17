@@ -18,7 +18,7 @@ Write-Output "Sending files..."
 Get-ChildItem -Path $source -File | Foreach-Object {
 	if ($_.Extension -ne ".pdb") {
 		$target = $destination + $_.Name
-		.\Transfer-File.ps1 $_.FullName $target $session
+		.\Send-File.ps1 $_.FullName $target $session
 	}
 }
 

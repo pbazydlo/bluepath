@@ -16,8 +16,10 @@ $session = New-PSSession -ConnectionUri $uri -Credential $credential -SessionOpt
 
 Write-Output "Sending files..."
 Get-ChildItem -Path $source -File | Foreach-Object {
-$target = $destination + $_.Name
-.\Transfer-File.ps1 $_.FullName $target $session
+	if ($_.Extension -ne ".pdb") {
+		$target = $destination + $_.Name
+		.\Send-File.ps1 $_.FullName $target $session
+	}
 }
 
 Disconnect-PSSession $session

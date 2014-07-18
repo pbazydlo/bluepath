@@ -1,6 +1,8 @@
 ﻿namespace Bluepath.Threading
 {
+    using System.IO;
     using System.Linq;
+    using System.Runtime.Serialization.Formatters.Binary;
 
     using Bluepath.Exceptions;
     using Bluepath.Executor;
@@ -103,6 +105,9 @@ using Bluepath.Threading.Schedulers;
                     var localExecutor = new LocalExecutor();
                     localExecutor.Initialize(this.function);
                     this.Executor = localExecutor;
+
+                    parameters = this.DeepCopy(parameters);
+
                     break;
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
@@ -122,6 +127,17 @@ using Bluepath.Threading.Schedulers;
             }
 
             this.Executor.Execute(parameters);
+        }
+
+        public object[] DeepCopy(object objectToCopy)
+        {
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                BinaryFormatter binaryFormatter = new BinaryFormatter();
+                binaryFormatter.Serialize(memoryStream, objectToCopy);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                return (object[])binaryFormatter.Deserialize(memoryStream);
+            }
         }
     }
 }

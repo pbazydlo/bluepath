@@ -94,6 +94,41 @@
             Convert.ToInt32(dt1.Result).ShouldBe(6);
         }
 
+        [TestMethod]
+        public void ExecutorShouldAlwaysGetDeepCopiedParameters()
+        {
+            Func<TestInteger, TestInteger, int> function = (__a, __b) =>
+                {
+                    var sum = __a.Value + __b.Value;
+                    __a.Value++;
+                    return sum;
+                };
+
+            var connectionManager = new FakeConnectionManager();
+            var dt1 = Bluepath.Threading.DistributedThread<Func<TestInteger, TestInteger, int>>.Create(
+                function,
+                connectionManager,
+                null,
+                Threading.DistributedThread.ExecutorSelectionMode.LocalOnly);
+
+            var a = new TestInteger() { Value = 2 };
+            var b = new TestInteger() { Value = 5 };
+
+            dt1.Start(a, b);
+            dt1.Join();
+
+            Convert.ToInt32(dt1.Result).ShouldBe(7);
+            a.Value.ShouldBe(2);
+            b.Value.ShouldBe(5);
+        }
+
+        [Serializable]
+        public class TestInteger
+        {
+            public int Value { get; set; }
+        }
+
+
         public class FakeConnectionManager : IConnectionManager
         {
             public IListener Listener { get; private set; }

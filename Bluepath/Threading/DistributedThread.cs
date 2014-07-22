@@ -30,9 +30,14 @@ using Bluepath.Threading.Schedulers;
             LocalOnly = 0,
 
             /// <summary>
-            /// Run on remote executor.
+            /// Run on remote executor - if none available throws MissingRemoteServiceReferenceException.
             /// </summary>
-            RemoteOnly = 1
+            RemoteOnly = 1,
+
+            /// <summary>
+            /// Tries to run on remote executor - if none available reverts to local.
+            /// </summary>
+            LocalOrRemote = 2,
         }
 
         /// <summary>

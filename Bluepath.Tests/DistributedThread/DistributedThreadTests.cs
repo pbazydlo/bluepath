@@ -122,6 +122,39 @@
             b.Value.ShouldBe(5);
         }
 
+        [TestMethod]
+        public void DistributedThreadFallbacksToLocalExecutionIfNoRemoteServiceIsAvailable()
+        {
+            var listToProcess = new List<int>()
+            {
+                1, 2, 3, 4, 5, 6, 7, 8, 9
+            };
+
+            Func<List<int>, int, int, int, int?> function = (list, start, stop, threshold) =>
+            {
+                for (var i = start; i < stop; i++)
+                {
+                    if (list[i] > threshold)
+                    {
+                        return list[i];
+                    }
+                }
+
+                return null;
+            };
+
+            var connectionManager = new FakeConnectionManager();
+            var dt1 = Bluepath.Threading.DistributedThread<Func<List<int>, int, int, int, int?>>.Create(
+                function,
+                null,
+                new RoundRobinLocalScheduler(new ServiceUri[0]),
+                Threading.DistributedThread.ExecutorSelectionMode.LocalOrRemote);
+            dt1.Start(listToProcess, 0, listToProcess.Count, 5);
+            dt1.Join();
+
+            Convert.ToInt32(dt1.Result).ShouldBe(6);
+        }
+
         [Serializable]
         public class TestInteger
         {

@@ -19,7 +19,12 @@ namespace Bluepath.Threading.Schedulers
         public ServiceUri GetRemoteServiceUri()
         {
             var remoteServices = this.connectionManager.RemoteServices;
-            var minNumberOfTasks = remoteServices.Min( rs => CountTasks(rs));
+            if(remoteServices.Count==0)
+            {
+                return null;
+            }
+
+            var minNumberOfTasks = remoteServices.Min(rs => CountTasks(rs));
             var serviceData = remoteServices.Where(rs => CountTasks(rs) == minNumberOfTasks).First();
             if (!serviceData.Value.NumberOfTasks.ContainsKey(Executor.ExecutorState.Running))
             {
@@ -44,6 +49,11 @@ namespace Bluepath.Threading.Schedulers
         public ServiceReferences.IRemoteExecutorService GetRemoteService()
         {
             var serviceUri = this.GetRemoteServiceUri();
+            if (serviceUri == null)
+            {
+                return null;
+            }
+
             return new Bluepath.ServiceReferences.RemoteExecutorServiceClient(serviceUri.Binding, serviceUri.ToEndpointAddress());
         }
     }

@@ -80,7 +80,7 @@ using Bluepath.Threading.Schedulers;
             TFunc function,
             IConnectionManager connectionManager, 
             IScheduler scheduler,
-            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOnly
+            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.LocalOrRemote
             )
         {
             return new DistributedThread<TFunc>(connectionManager, scheduler)
@@ -109,12 +109,23 @@ using Bluepath.Threading.Schedulers;
                     parameters = this.DeepCopy(parameters);
 
                     break;
+                case DistributedThread.ExecutorSelectionMode.LocalOrRemote:
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
                     var service = this.Scheduler.GetRemoteService();
                     if (service == null)
                     {
-                        throw new MissingRemoteServiceReferenceException("No remote service was specified in DistributedThread.RemoteServices.");
+                        if (this.Mode == DistributedThread.ExecutorSelectionMode.RemoteOnly)
+                        {
+                            throw new MissingRemoteServiceReferenceException("No remote service was specified in DistributedThread.RemoteServices.");
+                        }
+                        else
+                        {
+                            // No remote services available - switching to local only mode
+                            this.Mode = DistributedThread.ExecutorSelectionMode.LocalOnly;
+                            this.Start(parameters);
+                            return;
+                        }
                     }
 
                     var callbackUri = this.ConnectionManager.Listener != null ? this.ConnectionManager.Listener.CallbackUri.Convert() : null;

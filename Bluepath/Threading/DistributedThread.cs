@@ -37,7 +37,7 @@ using Bluepath.Threading.Schedulers;
             /// <summary>
             /// Tries to run on remote executor - if none available reverts to local.
             /// </summary>
-            LocalOrRemote = 2,
+            RemoteOrLocal = 2,
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ using Bluepath.Threading.Schedulers;
         /// <exception cref="CannotInitializeDefaultConnectionManagerException">Indicates that default connection manager couldn't be retrieved.</exception>
         public static DistributedThread<TFunc> Create<TFunc>(
             TFunc function,
-            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOrLocal
             )
         {
             return DistributedThread<TFunc>.Create(function, mode);
@@ -99,7 +99,7 @@ using Bluepath.Threading.Schedulers;
         public static DistributedThread<TFunc> Create<TFunc>(
             TFunc function,
             IScheduler scheduler,
-            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOrLocal
             )
         {
             return DistributedThread<TFunc>.Create(function, scheduler, mode);
@@ -118,7 +118,7 @@ using Bluepath.Threading.Schedulers;
             TFunc function, 
             IConnectionManager connectionManager, 
             IScheduler scheduler,
-            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOnly
+            ExecutorSelectionMode mode = ExecutorSelectionMode.RemoteOrLocal
             )
         {
             return DistributedThread<TFunc>.Create(function, connectionManager, scheduler, mode);

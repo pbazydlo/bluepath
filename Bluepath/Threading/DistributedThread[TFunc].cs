@@ -80,7 +80,7 @@ using Bluepath.Threading.Schedulers;
             TFunc function,
             IConnectionManager connectionManager, 
             IScheduler scheduler,
-            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.LocalOrRemote
+            DistributedThread.ExecutorSelectionMode mode = DistributedThread.ExecutorSelectionMode.RemoteOrLocal
             )
         {
             return new DistributedThread<TFunc>(connectionManager, scheduler)
@@ -109,7 +109,7 @@ using Bluepath.Threading.Schedulers;
                     parameters = this.DeepCopy(parameters);
 
                     break;
-                case DistributedThread.ExecutorSelectionMode.LocalOrRemote:
+                case DistributedThread.ExecutorSelectionMode.RemoteOrLocal:
                 case DistributedThread.ExecutorSelectionMode.RemoteOnly:
                     var remoteExecutor = new RemoteExecutor();
                     var service = this.Scheduler.GetRemoteService();

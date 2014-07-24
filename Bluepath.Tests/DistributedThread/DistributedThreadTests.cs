@@ -148,7 +148,7 @@
                 function,
                 null,
                 new RoundRobinLocalScheduler(new ServiceUri[0]),
-                Threading.DistributedThread.ExecutorSelectionMode.LocalOrRemote);
+                Threading.DistributedThread.ExecutorSelectionMode.RemoteOrLocal);
             dt1.Start(listToProcess, 0, listToProcess.Count, 5);
             dt1.Join();
 

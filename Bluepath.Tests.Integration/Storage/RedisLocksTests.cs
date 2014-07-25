@@ -276,14 +276,14 @@ namespace Bluepath.Tests.Integration.Storage
         public void RedisLockLongDurationLockShouldPrevail()
         {
             var lockKey = Guid.NewGuid().ToString();
-            int sleepMiliseconds = 2000;
+            int sleepMiliseconds = 5500;
             using (var storage = new RedisStorage(Host))
             {
                 using (var @lock = storage.AcquireLock(lockKey))
                 {
                     Thread.Sleep(sleepMiliseconds);
                     IStorageLock anotherLock;
-                    var isSecondLockTaken = storage.AcquireLock(lockKey, TimeSpan.FromSeconds(1000), out anotherLock);
+                    var isSecondLockTaken = storage.AcquireLock(lockKey, TimeSpan.FromMilliseconds(1000), out anotherLock);
                     isSecondLockTaken.ShouldBe(false);
                 }
 

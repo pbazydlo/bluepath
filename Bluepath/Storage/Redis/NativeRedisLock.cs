@@ -21,6 +21,7 @@ namespace Bluepath.Storage.Redis
         private RedisStorage redisStorage;
         private string localLockIdentifier;
         private bool wasWaitPulsed;
+        private Thread holdLockThread;
 
         public NativeRedisLock(RedisStorage redisStorage, string key)
         {
@@ -87,7 +88,7 @@ namespace Bluepath.Storage.Redis
 
             this.redisStorage.Subscribe(this.LockChannel, this.ChannelPulse);
             var start = DateTime.Now;
-            while(!this.IsAcquired)
+            while (!this.IsAcquired)
             {
                 lock (this.acquireLock)
                 {
@@ -106,17 +107,60 @@ namespace Bluepath.Storage.Redis
 
             // TODO we need to start lock renew thread (lock is taken for 1s by default) - if we lose lock we need to throw exception on main thread
             
+
             this.redisStorage.Unsubscribe(this.LockChannel, this.ChannelPulse);
+            this.holdLockThread = new Thread(() => 
+            {
+                var reacquireSleepMiliseconds = (int)Math.Floor(RedisStorage.LockTimespan.TotalMilliseconds / 2);
+                if(reacquireSleepMiliseconds==0)
+                {
+                    reacquireSleepMiliseconds=1;
+                }
+
+                while(this.IsAcquired)
+                {
+                    Thread.Sleep(reacquireSleepMiliseconds);
+                    lock(this.acquireLock)
+                    {
+                        if(!this.IsAcquired)
+                        {
+                            break;
+                        }
+
+                        if(!this.RenewLock())
+                        {
+                            break;
+                        }
+                    }
+                }
+            });
+            this.holdLockThread.Start();
+
             Log.TraceMessage(Log.Activity.Info, string.Format("Lock '{1}' acquired key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
             return this.IsAcquired;
         }
 
         public void Release()
         {
-            this.IsAcquired = false;
+            if (!this.holdLockThread.IsAlive)
+            {
+                throw new LostLockBeforeReleaseException();
+            }
+
+            lock (this.acquireLock)
+            {
+                this.IsAcquired = false;
+            }
+
+            // this.holdLockThread.Join(); -- commented out to improve performance, correctness should be provided by lock on this.IsAcquired
             this.redisStorage.LockRelease(this.LockKey, this.localLockIdentifier);
             this.redisStorage.Publish(this.LockChannel, "release");
-            Log.TraceMessage(Log.Activity.Info ,string.Format("Lock '{1}' released key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
+            Log.TraceMessage(Log.Activity.Info, string.Format("Lock '{1}' released key: '{0}'", this.LockKey, this.localLockIdentifier), logLocallyOnly: true);
+        }
+
+        private bool RenewLock()
+        {
+            return this.redisStorage.LockExtend(this.LockKey, this.localLockIdentifier);
         }
 
         private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)

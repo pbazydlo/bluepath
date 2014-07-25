@@ -32,6 +32,22 @@ namespace Bluepath.DLINQ
             return new DistributedEnumerableWrapper<TSource>(source, storage, connectionManager, scheduler);
         }
 
+        public static DistributedQuery<TSource> AsDistributed<TSource>(
+            this DistributedList<TSource> source,
+            IExtendedStorage storage,
+            IConnectionManager connectionManager = null,
+            IScheduler scheduler = null
+            )
+        //where TSource : new()
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException("source");
+            }
+
+            return new DistributedEnumerableWrapper<TSource>(source, storage, connectionManager, scheduler);
+        }
+
         public static DistributedQuery<TResult> Select<TSource, TResult>(
             this DistributedQuery<TSource> source, Func<TSource, TResult> selector)
         //where TSource : new()

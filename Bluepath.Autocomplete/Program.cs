@@ -131,6 +131,7 @@ namespace Bluepath.Autocomplete
                                     thread.Join();
                                     endResult.AddRange(thread.Result as string[]);
                                 }
+
                                 sw.Stop();
                                 Console.WriteLine("Found in {0}ms", sw.ElapsedMilliseconds);
                                 Console.WriteLine(string.Join(";", endResult.Distinct()));
@@ -162,14 +163,21 @@ namespace Bluepath.Autocomplete
             var inputList = new DistributedList<string>(bluepath.Storage as IExtendedStorage, inputKey);
             var inputCount = inputList.Count;
             var counter = new DistributedCounter(bluepath.Storage as IExtendedStorage, counterKey);
-            int indexStart = 0;
             int indexEnd = 0;
             do
             {
-                indexStart = counter.GetAndIncrease(chunkSize);
-                indexEnd = indexStart + chunkSize;
-                var inputDocuments = new string[indexEnd - indexStart];
-                inputList.CopyPartTo(indexStart, chunkSize, inputDocuments);
+                int noOfElements = chunkSize;
+                int indexStart = counter.GetAndIncrease(chunkSize);
+                indexEnd = indexStart + noOfElements;
+                if(indexEnd > inputCount)
+                {
+                    indexEnd = inputCount;
+                    noOfElements = indexEnd - indexStart;
+                }
+
+                var inputDocuments = new string[noOfElements];
+
+                inputList.CopyPartTo(indexStart, noOfElements, inputDocuments);
                 foreach (var document in inputDocuments)
                 {
                     var words = document.Split(' ');

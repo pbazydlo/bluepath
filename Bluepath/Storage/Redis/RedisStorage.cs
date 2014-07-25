@@ -14,7 +14,7 @@
     public class RedisStorage : IExtendedStorage, IStorage
     {
         private const int ConnectRetryCount = 15;
-        private static TimeSpan LockTimespan = TimeSpan.FromSeconds(10);
+        private static TimeSpan LockTimespan = TimeSpan.FromSeconds(1);
 
         private string configurationString;
 

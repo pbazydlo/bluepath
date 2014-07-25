@@ -271,5 +271,24 @@ namespace Bluepath.Tests.Integration.Storage
             //joined.ShouldBe(true);
             noFinished.ShouldBe(threadCount);
         }
+
+        [TestMethod]
+        public void RedisLockLongDurationLockShouldPrevail()
+        {
+            var lockKey = Guid.NewGuid().ToString();
+            int sleepMiliseconds = 2000;
+            using (var storage = new RedisStorage(Host))
+            {
+                using (var @lock = storage.AcquireLock(lockKey))
+                {
+                    Thread.Sleep(sleepMiliseconds);
+                    IStorageLock anotherLock;
+                    var isSecondLockTaken = storage.AcquireLock(lockKey, TimeSpan.FromSeconds(1000), out anotherLock);
+                    isSecondLockTaken.ShouldBe(false);
+                }
+
+            }
+
+        }
     }
 }

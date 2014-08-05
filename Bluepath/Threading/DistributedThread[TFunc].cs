@@ -128,7 +128,11 @@ using Bluepath.Threading.Schedulers;
                         }
                     }
 
-                    var callbackUri = this.ConnectionManager.Listener != null ? this.ConnectionManager.Listener.CallbackUri.Convert() : null;
+                    ServiceReferences.ServiceUri callbackUri = null;
+                    if(this.ConnectionManager!=null && this.ConnectionManager.Listener != null)
+                    {
+                        callbackUri = this.ConnectionManager.Listener.CallbackUri.Convert();
+                    }
 
                     remoteExecutor.Setup(service, callbackUri);
                     remoteExecutor.Initialize(this.function);

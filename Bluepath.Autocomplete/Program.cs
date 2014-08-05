@@ -23,6 +23,7 @@ namespace Bluepath.Autocomplete
 
         static void Main(string[] args)
         {
+            Program.Prefixes = new Dictionary<string, List<string>>();
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
@@ -40,13 +41,19 @@ namespace Bluepath.Autocomplete
                         remoteService: null,
                         listener: bluepathListener,
                         serviceDiscovery: serviceDiscoveryClient,
-                        serviceDiscoveryPeriod: TimeSpan.FromSeconds(30)))
+                        serviceDiscoveryPeriod: TimeSpan.FromSeconds(1)))
                     {
                         System.Threading.Thread.Sleep(1500);
 
                         string command = string.Empty;
                         string sharedStorageKey = "loadlist";
                         var sharedCounterKey = "counter";
+
+                        Console.WriteLine("Initializing Redis");
+                        var storage = new RedisStorage(options.RedisHost);
+                        var list = new DistributedList<string>(storage, sharedStorageKey);
+                        Console.WriteLine("List count: {0}", list.Count);
+
                         var commands = new Dictionary<string, Action>()
                         {
                             {"LOAD", ()=>
@@ -54,8 +61,7 @@ namespace Bluepath.Autocomplete
                                 var sw = new Stopwatch();
                                 sw.Start();
                                 var scheduler = new RoundRobinLocalScheduler(connectionManager.RemoteServices.Select(s=>s.Key).ToArray());
-                                var storage = new RedisStorage(options.RedisHost);
-                                var list = new DistributedList<string>(storage, sharedStorageKey);
+                                list.Clear();
                                 var counter = new DistributedCounter(storage, sharedCounterKey);
                                 counter.SetValue(0);
                                 var localList = new List<string>();
@@ -74,6 +80,11 @@ namespace Bluepath.Autocomplete
                                 }
 
                                 var calculatedChunkSize = (int)Math.Floor(Convert.ToDouble(list.Count) / servicesCount);
+                                if(calculatedChunkSize==0)
+                                {
+                                    calculatedChunkSize = 1;
+                                }
+
                                 var threads = new List<DistributedThread>();
                                 for(int i=0;i<servicesCount;i++)
                                 {
@@ -105,12 +116,12 @@ namespace Bluepath.Autocomplete
                                 var query = Console.ReadLine();
                                 var sw = new Stopwatch();
                                 sw.Start();
-                                for(int i=0;i<services.Length;i++)
+                                for(int i = 0;(i<services.Length) || i < 1;i++)
                                 {
                                     var searchThread = DistributedThread.Create(
                                         new Func<string,string[]>((searchPhraze) =>
                                             {
-                                                List<string> result = null;
+                                                List<string> result = new List<string>();
                                                 lock(Program.prefixesDictionaryLock)
                                                 {
                                                     if(Program.Prefixes.ContainsKey(searchPhraze))
@@ -132,9 +143,40 @@ namespace Bluepath.Autocomplete
                                     endResult.AddRange(thread.Result as string[]);
                                 }
 
+                                var distinctResult = endResult.Distinct().ToArray();
                                 sw.Stop();
+
+                                Console.WriteLine();
+                                Console.WriteLine(string.Join("||", distinctResult));
                                 Console.WriteLine("Found in {0}ms", sw.ElapsedMilliseconds);
-                                Console.WriteLine(string.Join(";", endResult.Distinct()));
+                                
+                            }},
+                            {"CLEAN", ()=>
+                            {
+                                var services = connectionManager.RemoteServices.Select(s => s.Key).ToArray();
+                                var scheduler = new RoundRobinLocalScheduler(services);
+                                var threads = new List<DistributedThread>();
+                                for(int i = 0;(i<services.Length) || i < 1;i++)
+                                {
+                                    var searchThread = DistributedThread.Create(
+                                        new Func<int>(() =>
+                                            {
+                                                List<string> result = null;
+                                                lock(Program.prefixesDictionaryLock)
+                                                {
+                                                    Program.Prefixes.Clear();
+                                                }
+
+                                                return 0;
+                                            }), null, scheduler);
+                                    searchThread.Start();
+                                    threads.Add(searchThread);
+                                }
+
+                                foreach (var thread in threads)
+                                {
+                                    thread.Join();
+                                }
                             }}
                         };
                         do
@@ -146,13 +188,13 @@ namespace Bluepath.Autocomplete
                             }
 
                             Console.Write("Command['q' to exit]: ");
-                            command = Console.ReadLine();
+                            command = Console.ReadLine().ToUpper();
                             if (commands.ContainsKey(command))
                             {
                                 commands[command]();
                             }
 
-                        } while (command != "q");
+                        } while (command != "Q");
                     }
                 }
             }
@@ -168,15 +210,19 @@ namespace Bluepath.Autocomplete
             {
                 int noOfElements = chunkSize;
                 int indexStart = counter.GetAndIncrease(chunkSize);
+                if (indexStart >= inputCount)
+                {
+                    break;
+                }
+
                 indexEnd = indexStart + noOfElements;
-                if(indexEnd > inputCount)
+                if (indexEnd > inputCount)
                 {
                     indexEnd = inputCount;
                     noOfElements = indexEnd - indexStart;
                 }
 
                 var inputDocuments = new string[noOfElements];
-
                 inputList.CopyPartTo(indexStart, noOfElements, inputDocuments);
                 foreach (var document in inputDocuments)
                 {

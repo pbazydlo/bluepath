@@ -13,7 +13,7 @@ namespace Bluepath.CentralizedDiscovery.Runner
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                Bluepath.Log.RedisHost = options.RedisConf;
+                Bluepath.Log.DistributedMemoryHost = options.RedisConf;
                 Bluepath.Log.WriteInfoToConsole = false;
                 //Bluepath.Log.WriteInfoToConsole = true;
                 var listener = new Bluepath.CentralizedDiscovery.CentralizedDiscoveryListener(options.Ip, options.Port);

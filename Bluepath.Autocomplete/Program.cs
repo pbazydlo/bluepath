@@ -27,9 +27,9 @@ namespace Bluepath.Autocomplete
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                Bluepath.Log.RedisHost = options.RedisHost;
+                Bluepath.Log.DistributedMemoryHost = options.RedisHost;
                 Bluepath.Log.WriteInfoToConsole = false;
-                Bluepath.Log.WriteToRedis = false;
+                Bluepath.Log.WriteToDistributedMemory = false;
 
                 var bluepathListener = Bluepath.Services.BluepathListener.InitializeDefaultListener(options.Ip, options.Port);
                 using (var serviceDiscoveryClient = new CentralizedDiscovery.Client.CentralizedDiscovery(

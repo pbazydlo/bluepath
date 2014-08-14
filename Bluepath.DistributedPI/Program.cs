@@ -20,7 +20,7 @@ namespace Bluepath.DistributedPI
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                Bluepath.Log.RedisHost = options.RedisHost;
+                Bluepath.Log.DistributedMemoryHost = options.RedisHost;
                 Bluepath.Log.WriteInfoToConsole = false;
                 var bluepathListener = new BluepathListener(options.Ip, options.Port);
                 using (var serviceDiscoveryClient

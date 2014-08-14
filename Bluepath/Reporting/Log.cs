@@ -18,9 +18,9 @@
     {
         private const string RedisXesLogKey = "BluepathReportingOpenXes2";
         private static bool pauseLogging = false;
-        public static string RedisHost = "localhost";
+        public static string DistributedMemoryHost = "localhost";
         public static bool WriteInfoToConsole = true;
-        public static bool WriteToRedis = true;
+        public static bool WriteToDistributedMemory = true;
 
         private Log()
         {
@@ -159,7 +159,7 @@
 
         private static void WriteToStorageList(Activity activity, string message)
         {
-            if(!Log.WriteToRedis)
+            if(!Log.WriteToDistributedMemory)
             {
                 return;
             }
@@ -179,7 +179,9 @@
                         {
                             int retryCount = 5;
                             int retryNo = 0;
-                            var storage = new RedisStorage(RedisHost);
+
+                            // jest zahardcodowany new RedisStorage!! (??)
+                            var storage = new RedisStorage(DistributedMemoryHost);
                             var counter = new Bluepath.Storage.Structures.DistributedCounter(storage, string.Format("{0}_counter", RedisXesLogKey));
                             var tmpDateTime = DateTime.Now;
                             var dateTime = new DateTime(tmpDateTime.Year, tmpDateTime.Month, tmpDateTime.Day, tmpDateTime.Hour, tmpDateTime.Minute, tmpDateTime.Second, counter.GetAndIncrease() % 1000);
@@ -229,7 +231,7 @@
 
         public static void SaveXes(string fileName, string caseName = null, bool clearListAfterSave = false)
         {
-            var storage = new RedisStorage(RedisHost);
+            var storage = new RedisStorage(DistributedMemoryHost);
             var list = new DistributedList<EventType>(storage, RedisXesLogKey);
 
             var @case = new TraceType(caseName ?? Guid.NewGuid().ToString(), list);
@@ -263,7 +265,7 @@
 
         public static void ClearXes()
         {
-            var storage = new RedisStorage(RedisHost);
+            var storage = new RedisStorage(DistributedMemoryHost);
             var list = new DistributedList<EventType>(storage, RedisXesLogKey);
             list.Clear();
         }

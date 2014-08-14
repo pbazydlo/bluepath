@@ -164,7 +164,7 @@
                 return;
             }
 
-            var resource = BluepathListener.NodeGuid.ToString().Substring(6);
+            var resource = BluepathListener.NodeGuid.ToString();
 
             if (activity != Activity.Custom)
             {

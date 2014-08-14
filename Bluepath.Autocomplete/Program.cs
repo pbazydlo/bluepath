@@ -136,18 +136,18 @@ namespace Bluepath.Autocomplete
                                     threads.Add(searchThread);
                                 }
 
-                                var endResult = new List<string>();
+                                var joinedResult = new List<string>();
                                 foreach (var thread in threads)
                                 {
                                     thread.Join();
-                                    endResult.AddRange(thread.Result as string[]);
+                                    joinedResult.AddRange(thread.Result as string[]);
                                 }
 
-                                var distinctResult = endResult.Distinct().ToArray();
+                                var endResult = joinedResult.Distinct().ToArray();
                                 sw.Stop();
 
                                 Console.WriteLine();
-                                Console.WriteLine(string.Join("||", distinctResult));
+                                Console.WriteLine(string.Join("||", endResult));
                                 Console.WriteLine("Found in {0}ms", sw.ElapsedMilliseconds);
                                 
                             }},

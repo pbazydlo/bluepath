@@ -188,12 +188,12 @@
             storageLock.Release();
         }
 
-        public void Subscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
+        public void Subscribe(object channel, Action<object, object> handler)
         {
             try
             {
                 var sub = this.Connection.GetSubscriber();
-                sub.Subscribe(channel, handler);
+                sub.Subscribe((RedisChannel)channel, (c, v) => handler.Invoke(c, v));
             }
             catch (TimeoutException)
             {
@@ -201,12 +201,12 @@
             }
         }
 
-        public void Unsubscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler)
+        public void Unsubscribe(object channel, Action<object, object> handler)
         {
             try
             {
                 var sub = this.Connection.GetSubscriber();
-                sub.Unsubscribe(channel, handler);
+                sub.Unsubscribe((RedisChannel)channel, (c, v) => handler.Invoke(c, v));
             }
             catch (TimeoutException)
             {
@@ -214,12 +214,12 @@
             }
         }
 
-        public void Publish(RedisChannel channel, string message)
+        public void Publish(object channel, string message)
         {
             var sub = this.Connection.GetSubscriber();
 
             // TODO: this message could be potentially lost
-            sub.Publish(channel, message, CommandFlags.None);
+            sub.Publish((RedisChannel)channel, message, CommandFlags.None);
         }
 
         public bool LockTake(string key, string value)

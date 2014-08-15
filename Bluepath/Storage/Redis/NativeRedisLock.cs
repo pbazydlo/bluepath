@@ -163,7 +163,7 @@ namespace Bluepath.Storage.Redis
             return this.redisStorage.LockExtend(this.LockKey, this.localLockIdentifier);
         }
 
-        private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
+        private void ChannelPulse(object redisChannel, object redisValue)
         {
             lock (this.acquireLock)
             {
@@ -171,7 +171,7 @@ namespace Bluepath.Storage.Redis
             }
         }
 
-        private void WaitChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
+        private void WaitChannelPulse(object redisChannel, object redisValue)
         {
             lock (this.waitLock)
             {

@@ -1,8 +1,11 @@
 ﻿namespace Bluepath
 {
+    using System.Linq.Expressions;
+
     using Bluepath.DLINQ;
     using Bluepath.Reporting.OpenXes;
     using Bluepath.Services;
+    using Bluepath.Storage;
     using Bluepath.Storage.Redis;
     using Bluepath.Storage.Structures.Collections;
     using System;
@@ -16,8 +19,9 @@
 
     public class Log
     {
-        private const string RedisXesLogKey = "BluepathReportingOpenXes2";
+        private const string XesLogKey = "BluepathReportingOpenXes2";
         private static bool pauseLogging = false;
+        private static bool monotonicallyIncreasingLogTime = true;
         public static string DistributedMemoryHost = "localhost";
         public static bool WriteInfoToConsole = true;
         public static bool WriteToDistributedMemory = true;
@@ -182,10 +186,13 @@
 
                             // jest zahardcodowany new RedisStorage!! (??)
                             var storage = new RedisStorage(DistributedMemoryHost);
-                            var counter = new Bluepath.Storage.Structures.DistributedCounter(storage, string.Format("{0}_counter", RedisXesLogKey));
-                            var tmpDateTime = DateTime.Now;
-                            var dateTime = new DateTime(tmpDateTime.Year, tmpDateTime.Month, tmpDateTime.Day, tmpDateTime.Hour, tmpDateTime.Minute, tmpDateTime.Second, counter.GetAndIncrease() % 1000);
-                            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+                            var dateTime = DateTime.Now;
+                            if (monotonicallyIncreasingLogTime)
+                            {
+                                dateTime = AssureTimeMonotonicity(dateTime, storage, string.Format("{0}_time", XesLogKey));
+                            }
+
+                            var list = new DistributedList<EventType>(storage, XesLogKey);
                             while (retryNo < retryCount)
                             {
                                 try
@@ -229,10 +236,34 @@
             }
         }
 
+        public static DateTime AssureTimeMonotonicity(DateTime currentTime, RedisStorage storage, string storageKey)
+        {
+            using (var l = new RedisLock(storage, string.Format("{0}_lock")))
+            {
+                var previousTime = default(DateTime);
+                try
+                {
+                    previousTime = storage.Retrieve<DateTime>(storageKey);
+                }
+                catch
+                {
+                }
+
+                if (currentTime <= previousTime)
+                {
+                    currentTime = previousTime.AddMilliseconds(1);
+                }
+
+                storage.StoreOrUpdate(storageKey, currentTime);
+            }
+
+            return currentTime;
+        }
+
         public static void SaveXes(string fileName, string caseName = null, bool clearListAfterSave = false)
         {
             var storage = new RedisStorage(DistributedMemoryHost);
-            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+            var list = new DistributedList<EventType>(storage, XesLogKey);
 
             var @case = new TraceType(caseName ?? Guid.NewGuid().ToString(), list);
             LogType log = null;
@@ -266,7 +297,7 @@
         public static void ClearXes()
         {
             var storage = new RedisStorage(DistributedMemoryHost);
-            var list = new DistributedList<EventType>(storage, RedisXesLogKey);
+            var list = new DistributedList<EventType>(storage, XesLogKey);
             list.Clear();
         }
     }

@@ -17,12 +17,12 @@
         private readonly object acquireLock = new object();
         private readonly object waitLock = new object();
         private readonly string key;
-        private readonly IExtendedStorage redisStorage;
+        private readonly RedisStorage redisStorage;
         private bool isAcquired;
         private bool wasPulsed;
         private bool wasWaitPulsed;
 
-        public RedisLock(IExtendedStorage redisStorage, string key)
+        public RedisLock(RedisStorage redisStorage, string key)
         {
             this.redisStorage = redisStorage;
             this.key = key;
@@ -169,7 +169,7 @@
             }
         }
 
-        private void ChannelPulse(object redisChannel, object redisValue)
+        private void ChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
         {
             lock (this.acquireLock)
             {
@@ -178,7 +178,7 @@
             }
         }
 
-        private void WaitChannelPulse(object redisChannel, object redisValue)
+        private void WaitChannelPulse(RedisChannel redisChannel, RedisValue redisValue)
         {
             lock (this.waitLock)
             {

@@ -236,9 +236,9 @@
             }
         }
 
-        public static DateTime AssureTimeMonotonicity(DateTime currentTime, RedisStorage storage, string storageKey)
+        public static DateTime AssureTimeMonotonicity(DateTime currentTime, IExtendedStorage storage, string storageKey)
         {
-            using (var l = new RedisLock(storage, string.Format("{0}_lock")))
+            using (var l = storage.AcquireLock(string.Format("{0}_lock", storageKey)))
             {
                 var previousTime = default(DateTime);
                 try
